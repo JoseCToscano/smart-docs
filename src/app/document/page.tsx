@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Editor, EditorTools } from "@progress/kendo-react-editor";
 import "@progress/kendo-theme-default/dist/all.css";
+import DocumentToolbar from "@/components/DocumentToolbar";
+import { Document } from "@/types";
 
 const {
   Bold, Italic, Underline,
@@ -10,7 +12,7 @@ const {
   Indent, Outdent,
   OrderedList, UnorderedList,
   Undo, Redo,
-  Link, Unlink,
+  Link: EditorLink, Unlink,
   FormatBlock,
   FontSize,
   FontName,
@@ -18,46 +20,87 @@ const {
 } = EditorTools;
 
 export default function DocumentPage() {
-  const [content, setContent] = useState("<p>Start typing your document here...</p>");
+  const [document, setDocument] = useState<Document>({
+    title: "Untitled Document",
+    content: "<p>Start typing your document here...</p>",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  });
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleContentChange = (event: any) => {
-    setContent(event.html);
+    setDocument(prev => ({
+      ...prev,
+      content: event.html,
+      updatedAt: new Date()
+    }));
   };
 
+  const handleTitleChange = useCallback((newTitle: string) => {
+    setDocument(prev => ({
+      ...prev,
+      title: newTitle,
+      updatedAt: new Date()
+    }));
+  }, []);
+
+  const handleSave = useCallback(() => {
+    setIsSaving(true);
+    
+    // Simulate saving to server
+    setTimeout(() => {
+      console.log("Document saved:", document);
+      setIsSaving(false);
+    }, 1500);
+  }, [document]);
+
+  const handleExport = useCallback(() => {
+    console.log("Exporting document...");
+    // PDF export functionality could be implemented here
+    alert("Export functionality will be implemented in a future update.");
+  }, []);
+
   return (
-    <main className="flex min-h-screen flex-col items-center p-6 bg-gray-50">
-      <div className="w-full max-w-6xl bg-white rounded-lg shadow-md p-6">
-        <h1 className="text-2xl font-bold mb-6 text-center">Smart Document Editor</h1>
-        
-        <div className="border rounded-lg overflow-hidden">
-          <Editor
-            tools={[
-              [Bold, Italic, Underline],
-              [AlignLeft, AlignCenter, AlignRight],
-              [OrderedList, UnorderedList],
-              [Indent, Outdent],
-              [Undo, Redo],
-              [Link, Unlink],
-              [FormatBlock],
-              [FontName],
-              [FontSize],
-              [InsertImage],
-            ]}
-            contentStyle={{ height: 500 }}
-            defaultContent={content}
-            onChange={handleContentChange}
-          />
-        </div>
-        
-        <div className="mt-6 flex justify-end gap-3">
-          <button className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition">
-            Save Document
-          </button>
-          <button className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition">
-            Export as PDF
-          </button>
-        </div>
+    <div className="min-h-screen flex flex-col bg-white">
+      <DocumentToolbar 
+        documentTitle={document.title}
+        onTitleChange={handleTitleChange}
+        onSave={handleSave}
+        onExport={handleExport}
+        isSaving={isSaving}
+      />
+
+      {/* Main Editor Area */}
+      <div className="flex-1 flex flex-col">
+        <Editor
+          tools={[
+            [Bold, Italic, Underline],
+            [AlignLeft, AlignCenter, AlignRight],
+            [OrderedList, UnorderedList],
+            [Indent, Outdent],
+            [Undo, Redo],
+            [EditorLink, Unlink],
+            [FormatBlock],
+            [FontName],
+            [FontSize],
+            [InsertImage],
+          ]}
+          contentStyle={{ 
+            height: 'calc(100vh - 60px)', 
+            padding: '2rem',
+            paddingTop: '1.5rem',
+            fontSize: '16px',
+            lineHeight: '1.6',
+            maxWidth: '850px',
+            margin: '0 auto',
+            boxShadow: 'none',
+            border: 'none',
+            backgroundColor: '#ffffff'
+          }}
+          defaultContent={document.content}
+          onChange={handleContentChange}
+        />
       </div>
-    </main>
+    </div>
   );
 } 
