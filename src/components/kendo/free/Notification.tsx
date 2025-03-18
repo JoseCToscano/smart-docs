@@ -1,5 +1,4 @@
 import { Notification as KendoNotification, NotificationProps as KendoNotificationProps, NotificationGroup, NotificationGroupProps } from '@progress/kendo-react-notification';
-import { Fade } from '@progress/kendo-react-animation';
 import React from 'react';
 
 // Fix the type error by making our NotificationProps properly extend KendoNotificationProps
@@ -10,57 +9,6 @@ export interface NotificationProps extends Omit<KendoNotificationProps, 'type'> 
   autoClose?: boolean;
   autoCloseTimeout?: number;
 }
-
-const getPositionStyles = (position: NotificationProps['position'] = 'top-center'): React.CSSProperties => {
-  const styles: React.CSSProperties = {
-    position: 'fixed',
-    zIndex: 9999,
-    display: 'flex', 
-    flexDirection: 'column',
-    alignItems: 'center',
-    maxWidth: '400px',
-    width: 'auto',
-  };
-
-  switch (position) {
-    case 'top-left':
-      styles.top = '20px';
-      styles.left = '20px';
-      styles.alignItems = 'flex-start';
-      break;
-    case 'top-center':
-      styles.top = '20px';
-      styles.left = '50%';
-      styles.transform = 'translateX(-50%)';
-      break;
-    case 'top-right':
-      styles.top = '20px';
-      styles.right = '20px';
-      styles.alignItems = 'flex-end';
-      break;
-    case 'bottom-left':
-      styles.bottom = '20px';
-      styles.left = '20px';
-      styles.alignItems = 'flex-start';
-      break;
-    case 'bottom-center':
-      styles.bottom = '20px';
-      styles.left = '50%';
-      styles.transform = 'translateX(-50%)';
-      break;
-    case 'bottom-right':
-      styles.bottom = '20px';
-      styles.right = '20px';
-      styles.alignItems = 'flex-end';
-      break;
-    default:
-      styles.top = '20px';
-      styles.left = '50%';
-      styles.transform = 'translateX(-50%)';
-  }
-
-  return styles;
-};
 
 const Notification = ({ 
   type, 
@@ -78,7 +26,7 @@ const Notification = ({
       const timer = setTimeout(() => {
         setIsVisible(false);
         if (onClose) {
-          onClose({} as any);  // Pass empty event object
+          onClose({} as any);
         }
       }, autoCloseTimeout);
       
@@ -90,42 +38,132 @@ const Notification = ({
     return null;
   }
 
-  // Get the appropriate class name based on the notification type
-  const getNotificationClassName = () => {
+  // Position styles
+  const positionStyle: React.CSSProperties = {
+    position: 'fixed',
+    zIndex: 9999,
+  };
+
+  switch (position) {
+    case 'top-left':
+      positionStyle.top = '20px';
+      positionStyle.left = '20px';
+      break;
+    case 'top-center':
+      positionStyle.top = '20px';
+      positionStyle.left = '50%';
+      positionStyle.transform = 'translateX(-50%)';
+      break;
+    case 'top-right':
+      positionStyle.top = '20px';
+      positionStyle.right = '20px';
+      break;
+    case 'bottom-left':
+      positionStyle.bottom = '20px';
+      positionStyle.left = '20px';
+      break;
+    case 'bottom-center':
+      positionStyle.bottom = '20px';
+      positionStyle.left = '50%';
+      positionStyle.transform = 'translateX(-50%)';
+      break;
+    case 'bottom-right':
+      positionStyle.bottom = '20px';
+      positionStyle.right = '20px';
+      break;
+    default:
+      positionStyle.top = '20px';
+      positionStyle.left = '50%';
+      positionStyle.transform = 'translateX(-50%)';
+  }
+
+  // Color styles based on type
+  const getBackgroundColor = () => {
     switch (type) {
-      case 'success':
-        return 'k-notification-success';
-      case 'info':
-        return 'k-notification-info';
-      case 'warning':
-        return 'k-notification-warning';
-      case 'error':
-        return 'k-notification-error';
-      default:
-        return 'k-notification-info';
+      case 'success': return '#d4edda';
+      case 'info': return '#d1ecf1';
+      case 'warning': return '#fff3cd';
+      case 'error': return '#f8d7da';
+      default: return '#d1ecf1';
     }
   };
 
+  const getBorderColor = () => {
+    switch (type) {
+      case 'success': return '#c3e6cb';
+      case 'info': return '#bee5eb';
+      case 'warning': return '#ffeeba';
+      case 'error': return '#f5c6cb';
+      default: return '#bee5eb';
+    }
+  };
+  
+  const getTextColor = () => {
+    switch (type) {
+      case 'success': return '#155724';
+      case 'info': return '#0c5460';
+      case 'warning': return '#856404';
+      case 'error': return '#721c24';
+      default: return '#0c5460';
+    }
+  };
+
+  // Custom notification style that doesn't rely on Kendo CSS
+  const notificationStyle: React.CSSProperties = {
+    backgroundColor: getBackgroundColor(),
+    borderColor: getBorderColor(),
+    color: getTextColor(),
+    padding: '12px 16px',
+    borderRadius: '4px',
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+    minWidth: '250px',
+    maxWidth: '400px',
+    borderLeft: `4px solid ${getBorderColor()}`,
+    position: 'relative',
+    marginBottom: '10px',
+    fontSize: '14px',
+    fontWeight: 500,
+    display: 'flex',
+    alignItems: 'center',
+  };
+
+  // Styles for the close button
+  const closeButtonStyle: React.CSSProperties = {
+    position: 'absolute',
+    top: '8px',
+    right: '8px',
+    background: 'transparent',
+    border: 'none',
+    fontSize: '16px',
+    cursor: 'pointer',
+    color: getTextColor(),
+    opacity: 0.7,
+  };
+
   return (
-    <div style={getPositionStyles(position)} className="k-notification-container">
-      <NotificationGroup style={{ width: '100%' }}>
-        <KendoNotification 
-          {...props} 
-          type={{ style: type, icon: true }}
-          closable={true}
-          className={getNotificationClassName()}
-          onClose={(e) => {
+    <div style={positionStyle} className="notification-container">
+      <div style={notificationStyle} className={`notification notification-${type}`}>
+        <div style={{ marginRight: '8px' }}>
+          {type === 'success' && '✅'}
+          {type === 'info' && 'ℹ️'}
+          {type === 'warning' && '⚠️'}
+          {type === 'error' && '❌'}
+        </div>
+        <div className="notification-content" style={{ flex: 1 }}>
+          {message}
+        </div>
+        <button 
+          style={closeButtonStyle}
+          onClick={() => {
             setIsVisible(false);
             if (onClose) {
-              onClose(e);
+              onClose({} as any);
             }
           }}
         >
-          <div className="k-notification-content" style={{ padding: '0 12px' }}>
-            {message}
-          </div>
-        </KendoNotification>
-      </NotificationGroup>
+          ×
+        </button>
+      </div>
     </div>
   );
 };
