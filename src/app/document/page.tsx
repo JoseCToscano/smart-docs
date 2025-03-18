@@ -427,8 +427,10 @@ export default function DocumentPage() {
       
       // Parse the result with XML tags
       const xmlResult = data.result;
+      console.log("[DocumentPage] Received XML result from API:", xmlResult.substring(0, 100) + "...");
       
       // Immediately apply the XML changes to the editor to show highlighting
+      // The result contains the complete document with XML tags marking changes
       applyXmlChangesToEditor(xmlResult);
       
       // Convert XML diff to a structured format for the sidebar

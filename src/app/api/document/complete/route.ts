@@ -29,10 +29,11 @@ When making changes to the document, please use these XML tags to mark your edit
 - <deletion>removed text</deletion> - For text being removed
 
 ## Response Guidelines:
-1. Return ONLY the edited document with XML tags.
-2. Do NOT include any explanations, prefixes, or phrases like "Here is the edited document..." before the content.
-3. Do NOT include any comments, notes, or explanations after the content.
-4. Your response should begin immediately with the edited document content.
+1. Return the COMPLETE document with XML tags marking changes.
+2. Include ALL original text, marking only the changes with XML tags.
+3. Do NOT include any explanations, prefixes, or phrases like "Here is the edited document..." before the content.
+4. Do NOT include any comments, notes, or explanations after the content.
+5. Your response should begin immediately with the complete document content.
 
 ## Editing Guidelines:
 1. Only use the XML tags for actual changes. Don't wrap unchanged text in tags.
@@ -63,9 +64,17 @@ ${content}
 My request:
 ${prompt}
 
-IMPORTANT: Please return ONLY the edited document with appropriate XML tags for additions and deletions. Do not include any prefixes, explanations, or notes. Your response should start immediately with the document content.`,
+IMPORTANT: Please return the COMPLETE document with XML tags marking only the changes. Include ALL original text and only use tags for additions and deletions. Do not include any prefixes, explanations, or notes. Your response should start immediately with the full document content.`,
         },
       ],
+    });
+
+    console.log("API Response from Claude:", {
+      status: "success",
+      contentLength: response.content[0]?.type === 'text' ? response.content[0].text.length : 0,
+      contentPreview: response.content[0]?.type === 'text' 
+        ? response.content[0].text.substring(0, 100) + "..." 
+        : "No text content",
     });
 
     // Get the content from the response safely
@@ -88,6 +97,11 @@ IMPORTANT: Please return ONLY the edited document with appropriate XML tags for 
         break;
       }
     }
+
+    console.log("Final processed response:", {
+      contentLength: responseText.length,
+      contentPreview: responseText.substring(0, 100) + "..."
+    });
 
     return NextResponse.json({
       result: responseText,

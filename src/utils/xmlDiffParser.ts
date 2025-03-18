@@ -109,6 +109,10 @@ function processXmlWithRecursiveRegex(input: string): string {
   // First replace all newlines with <br> tags for proper rendering
   let processedContent = input.replace(/\n/g, '<br />');
   
+  // Log the first 100 chars of content for debugging
+  console.log("[xmlDiffParser] Processing content (first 100 chars):", 
+    processedContent.substring(0, 100) + "...");
+  
   // Function to recursively replace the innermost tags first
   const processNestedTags = (content: string): string => {
     // Match the innermost addition or deletion tags (those without nested tags)
@@ -117,10 +121,12 @@ function processXmlWithRecursiveRegex(input: string): string {
     let result = content;
     let match;
     let hasMatches = false;
+    let matchCount = 0;
     
     // Replace all innermost tags with styled spans
     while ((match = innerTagRegex.exec(content)) !== null) {
       hasMatches = true;
+      matchCount++;
       const [fullMatch, tagName, innerContent = '', closingTag] = match;
       
       if (tagName !== closingTag) {
@@ -145,6 +151,8 @@ function processXmlWithRecursiveRegex(input: string): string {
       result = result.replace(fullMatch, replacement);
     }
     
+    console.log(`[xmlDiffParser] Processed ${matchCount} matches in this iteration`);
+    
     // If we found and replaced tags, process again to handle nesting
     if (hasMatches) {
       return processNestedTags(result);
@@ -153,7 +161,10 @@ function processXmlWithRecursiveRegex(input: string): string {
     return result;
   };
   
-  return processNestedTags(processedContent);
+  const finalResult = processNestedTags(processedContent);
+  console.log("[xmlDiffParser] Finished processing. Final content has length:", finalResult.length);
+  
+  return finalResult;
 }
 
 // Fallback method for parsing XML when the DOM parser fails
@@ -217,36 +228,41 @@ export function xmlDiffToChanges(diffText: string): {
       return changes;
     }
 
-    // Create a DOM parser
-    const parser = new DOMParser();
-    // Wrap the content in a root element to make it valid XML
-    const xmlDoc = parser.parseFromString(`<root>${diffText}</root>`, "text/xml");
-    
-    // Get all addition and deletion elements
-    const additions = xmlDoc.getElementsByTagName('addition');
-    const deletions = xmlDoc.getElementsByTagName('deletion');
-    
+    console.log("[xmlDiffToChanges] Processing diff text, length:", diffText.length);
+
+    // We'll use regex for a more reliable extraction that handles HTML better
+    const additionRegex = /<addition>([\s\S]*?)<\/addition>/g;
+    const deletionRegex = /<deletion>([\s\S]*?)<\/deletion>/g;
+
     // Extract additions
-    for (let i = 0; i < additions.length; i++) {
-      const addition = additions.item(i);
-      if (!addition) continue;
-      
-      const text = addition.textContent || '';
+    let additionMatch;
+    while ((additionMatch = additionRegex.exec(diffText)) !== null) {
+      const text = additionMatch[1] ?? '';
       changes.additions.push({ text });
     }
-    
+
     // Extract deletions
-    for (let i = 0; i < deletions.length; i++) {
-      const deletion = deletions.item(i);
-      if (!deletion) continue;
-      
-      const text = deletion.textContent || '';
+    let deletionMatch;
+    while ((deletionMatch = deletionRegex.exec(diffText)) !== null) {
+      const text = deletionMatch[1] ?? '';
       changes.deletions.push({ text });
     }
-    
+
     // Try to identify replacements by looking for adjacent deletion-addition pairs
-    // We'll keep this logic simpler for now, but in a real implementation
-    // you might want more sophisticated pattern matching
+    // This is a simplified approach - for production you'd want more sophisticated patterns
+    const deletionAdditionPairRegex = /<deletion>([\s\S]*?)<\/deletion>\s*<addition>([\s\S]*?)<\/addition>/g;
+    let pairMatch;
+    while ((pairMatch = deletionAdditionPairRegex.exec(diffText)) !== null) {
+      const oldText = pairMatch[1] ?? '';
+      const newText = pairMatch[2] ?? '';
+      changes.replacements.push({ oldText, newText });
+    }
+
+    console.log("[xmlDiffToChanges] Extracted changes:", {
+      additions: changes.additions.length,
+      deletions: changes.deletions.length,
+      replacements: changes.replacements.length
+    });
     
     return changes;
   } catch (error) {
