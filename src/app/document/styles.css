@@ -11,27 +11,38 @@
   border-right: none;
 }
 
-/* Hide the default Kendo Editor toolbar since we're creating our own */
+/* Style the Kendo Editor toolbar instead of hiding it */
 .k-editor-toolbar {
-  display: none !important;
+  background-color: #ffffff !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  padding: 8px !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 4px !important;
 }
 
-/* Show Kendo Editor toolbar ONLY when the editor content is focused */
-.k-editor-content:not(:focus-within) + .k-editor-toolbar {
-  display: none !important;
+/* Style toolbar groups */
+.k-button-group {
+  margin-right: 8px !important;
+  border-right: 1px solid #e2e8f0 !important;
+  padding-right: 8px !important;
 }
 
+.k-button-group:last-child {
+  border-right: none !important;
+  margin-right: 0 !important;
+}
+
+/* Remove the floating toolbar styles */
 .show-toolbar-on-focus + .k-editor-toolbar {
-  position: fixed !important;
-  top: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 1000;
-  background-color: white !important;
-  border: 1px solid #e2e8f0 !important;
-  border-radius: 4px !important;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1) !important;
-  padding: 4px !important;
+  position: relative !important;
+  top: auto;
+  left: auto;
+  transform: none;
+  z-index: auto;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
 }
 
 /* Editor page container - make it look like a document page */

@@ -5,20 +5,7 @@ import { Editor, EditorTools } from "@/components/kendo/premium";
 import { Button, Input } from "@/components/kendo/free";
 import { 
   arrowsLeftRightIcon, 
-  menuIcon,
-  boldIcon, 
-  italicIcon, 
-  underlineIcon, 
-  alignLeftIcon, 
-  alignCenterIcon, 
-  alignRightIcon,
-  listOrderedIcon, 
-  listUnorderedIcon, 
-  indentIcon, 
-  outdentIcon,
-  imageIcon, 
-  linkIcon, 
-  tableIcon 
+  menuIcon 
 } from "@/components/kendo";
 import "@progress/kendo-theme-default/dist/all.css";
 import "./styles.css";
@@ -26,6 +13,7 @@ import Link from "next/link";
 import AISidebar from "@/components/AISidebar";
 import { Document } from "@/types";
 
+// Import all necessary editor tools
 const {
   Bold, Italic, Underline,
   AlignLeft, AlignRight, AlignCenter,
@@ -37,6 +25,13 @@ const {
   FontSize,
   FontName,
   InsertImage,
+  ForeColor,
+  BackColor,
+  InsertTable,
+  AddRowBefore, AddRowAfter,
+  AddColumnBefore, AddColumnAfter,
+  DeleteRow, DeleteColumn, DeleteTable,
+  MergeCells, SplitCell
 } = EditorTools;
 
 export default function DocumentPage() {
@@ -160,33 +155,6 @@ export default function DocumentPage() {
             </Button>
           </div>
         </div>
-        
-        {/* Formatting Toolbar (Visual only, actual functionality is in the Editor's toolbar) */}
-        <div className="flex items-center px-4 py-1.5 border-b border-gray-200 overflow-x-auto">
-          <div className="flex flex-wrap gap-2">
-            <div className="flex gap-1 pr-2 border-r border-gray-300">
-              <Button themeColor="base" size="small" svgIcon={boldIcon} title="Bold" fillMode="flat" />
-              <Button themeColor="base" size="small" svgIcon={italicIcon} title="Italic" fillMode="flat" />
-              <Button themeColor="base" size="small" svgIcon={underlineIcon} title="Underline" fillMode="flat" />
-            </div>
-            <div className="flex gap-1 pr-2 border-r border-gray-300">
-              <Button themeColor="base" size="small" svgIcon={alignLeftIcon} title="Align Left" fillMode="flat" />
-              <Button themeColor="base" size="small" svgIcon={alignCenterIcon} title="Align Center" fillMode="flat" />
-              <Button themeColor="base" size="small" svgIcon={alignRightIcon} title="Align Right" fillMode="flat" />
-            </div>
-            <div className="flex gap-1 pr-2 border-r border-gray-300">
-              <Button themeColor="base" size="small" svgIcon={listOrderedIcon} title="Ordered List" fillMode="flat" />
-              <Button themeColor="base" size="small" svgIcon={listUnorderedIcon} title="Unordered List" fillMode="flat" />
-              <Button themeColor="base" size="small" svgIcon={indentIcon} title="Increase Indent" fillMode="flat" />
-              <Button themeColor="base" size="small" svgIcon={outdentIcon} title="Decrease Indent" fillMode="flat" />
-            </div>
-            <div className="flex gap-1">
-              <Button themeColor="base" size="small" svgIcon={imageIcon} title="Insert Image" fillMode="flat" />
-              <Button themeColor="base" size="small" svgIcon={linkIcon} title="Insert Link" fillMode="flat" />
-              <Button themeColor="base" size="small" svgIcon={tableIcon} title="Insert Table" fillMode="flat" />
-            </div>
-          </div>
-        </div>
       </div>
 
       <div className="flex flex-1 overflow-hidden">
@@ -194,23 +162,35 @@ export default function DocumentPage() {
         <div className="flex-1 flex flex-col relative bg-gray-200">
           <div className="relative flex-1 overflow-auto pt-6">
             <div className={`editor-page-container mx-auto shadow-md ${showSidebar ? 'sidebar-open' : ''}`}>
-              {/* Editor Content Area */}
+              {/* Editor Content Area with built-in toolbar */}
               <Editor
                 ref={editorRef}
                 tools={[
-                  [Bold, Italic, Underline],
+                  // Text formatting
+                  [Bold, Italic, Underline, ForeColor, BackColor],
+                  // Alignment
                   [AlignLeft, AlignCenter, AlignRight],
-                  [OrderedList, UnorderedList],
-                  [Indent, Outdent],
+                  // Lists and indentation
+                  [OrderedList, UnorderedList, Indent, Outdent],
+                  // History
                   [Undo, Redo],
+                  // Links
                   [EditorLink, Unlink],
-                  [FormatBlock],
-                  [FontName],
-                  [FontSize],
-                  [InsertImage],
+                  // Format and styles
+                  [FormatBlock, FontName, FontSize],
+                  // Tables
+                  [
+                    InsertTable,
+                    [AddRowBefore, AddRowAfter, DeleteRow],
+                    [AddColumnBefore, AddColumnAfter, DeleteColumn],
+                    DeleteTable,
+                    [MergeCells, SplitCell]
+                  ],
+                  // Images
+                  [InsertImage]
                 ]}
                 contentStyle={{ 
-                  minHeight: 'calc(100vh - 110px)', 
+                  minHeight: 'calc(100vh - 160px)', // Adjusted for toolbar
                   padding: '1.5rem',
                   paddingTop: '1.5rem',
                   fontSize: '16px',
@@ -221,7 +201,6 @@ export default function DocumentPage() {
                 }}
                 defaultContent={document.content}
                 onChange={handleContentChange}
-                contentClassName="show-toolbar-on-focus"
               />
             </div>
           </div>
