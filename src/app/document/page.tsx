@@ -55,6 +55,35 @@ export default function DocumentPage() {
       content: event.html,
       updatedAt: new Date()
     }));
+    
+    // Log editor properties after it's initialized
+    if (editorRef.current) {
+      console.log("Editor initialized, logging properties:");
+      console.log("Editor ref:", editorRef.current);
+      console.log("Editor properties:", Object.keys(editorRef.current));
+      
+      // Check for the contentElement or iframe
+      console.log("Editor contentElement:", editorRef.current.contentElement);
+      console.log("Editor iframe:", editorRef.current.iframe);
+      
+      // Check if there are any event handlers available
+      if (typeof editorRef.current.addEventListener === 'function') {
+        console.log("Editor has addEventListener method");
+      }
+      
+      // Trigger autocompletion on content change
+      // This is a fallback in case direct event listeners don't work
+      try {
+        // Using modern CustomEvent API
+        const autoCompleteTrigger = new CustomEvent('autocompleteTrigger', { 
+          bubbles: true, 
+          detail: { source: 'editor-content-change' } 
+        });
+        window.dispatchEvent(autoCompleteTrigger);
+      } catch (error) {
+        console.error("Failed to dispatch custom event:", error);
+      }
+    }
   };
 
   const handleTitleChange = useCallback((e: any) => {
@@ -175,7 +204,7 @@ export default function DocumentPage() {
         {/* Main Editor Area */}
         <div className="flex-1 flex flex-col relative bg-gray-200">
           <div className="relative flex-1 overflow-auto pt-6">
-            <div className={`editor-page-container mx-auto shadow-md ${showSidebar ? 'sidebar-open' : ''}`}>
+            <div className={`editor-page-container mx-auto shadow-md ${showSidebar ? 'sidebar-open' : ''} relative`}>
               {/* Editor Content Area with built-in toolbar */}
               <Editor
                 ref={editorRef}

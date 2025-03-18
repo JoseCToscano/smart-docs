@@ -10,7 +10,7 @@ const anthropic = new Anthropic({
 export async function POST(req: NextRequest) {
   try {
     const { text, language } = await req.json();
-
+    console.log("Received request with text:", text);
     if (!text) {
       return NextResponse.json(
         { error: "Text content is required" },
