@@ -1,4 +1,5 @@
 import Link from "next/link";
+import NotificationDemo from "@/components/NotificationDemo";
 
 export default function HomePage() {
   return (
@@ -28,6 +29,10 @@ export default function HomePage() {
               deploy it.
             </div>
           </Link>
+        </div>
+        
+        <div className="w-full max-w-2xl rounded-xl bg-white/10 p-4">
+          <NotificationDemo />
         </div>
       </div>
     </main>
