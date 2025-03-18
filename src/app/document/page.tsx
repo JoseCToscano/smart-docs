@@ -190,7 +190,7 @@ export default function DocumentPage() {
   }, []);
 
   // Function to get the editor document and window
-  const getEditorDocument = (): HTMLDocument | null => {
+  const getEditorDocument = (): Document | null => {
     if (!editorRef.current) return null;
     
     let iframeElement = null;
@@ -211,7 +211,7 @@ export default function DocumentPage() {
     }
     
     if (iframeElement) {
-      return iframeElement.contentDocument || (iframeElement.contentWindow?.document as HTMLDocument);
+      return iframeElement.contentDocument || (iframeElement.contentWindow?.document as Document);
     }
     
     return null;
@@ -464,7 +464,7 @@ export default function DocumentPage() {
     }
   }, []);
 
-  // Enhance applyChangesToEditor to handle the XML format
+  // Enhanced applyXmlChangesToEditor to handle the XML format
   const applyXmlChangesToEditor = (xmlContent: string) => {
     const editorDoc = getEditorDocument();
     if (!editorDoc) {
@@ -473,11 +473,72 @@ export default function DocumentPage() {
     }
     
     try {
+      // First ensure styles are injected
+      const ensureStyles = () => {
+        // Check if styles are already injected
+        if (!editorDoc.querySelector('style')) {
+          // Create a style element using window.document and then append to editor document
+          const styleEl = window.document.createElement('style');
+          styleEl.textContent = `
+            /* AI Diff Highlighting Styles */
+            .ai-addition {
+              background-color: rgba(34, 197, 94, 0.2) !important; /* Light green */
+              color: rgb(22, 101, 52) !important; /* Darker green text for better contrast */
+              border-radius: 2px !important;
+              border-bottom: 1px solid rgba(34, 197, 94, 0.5) !important;
+              text-decoration: none !important;
+              padding: 0 2px !important;
+              margin: 0 1px !important;
+              position: relative !important;
+              font-weight: 500 !important; /* Slightly bolder */
+              display: inline-block !important;
+            }
+            
+            .ai-deletion {
+              background-color: rgba(239, 68, 68, 0.2) !important; /* Light red */
+              color: rgb(153, 27, 27) !important; /* Darker red text for better contrast */
+              border-radius: 2px !important;
+              border-bottom: 1px solid rgba(239, 68, 68, 0.5) !important;
+              text-decoration: line-through !important;
+              padding: 0 2px !important;
+              margin: 0 1px !important;
+              position: relative !important;
+              display: inline-block !important;
+            }
+          `;
+          
+          // Append style to the head of the iframe document
+          editorDoc.head.appendChild(styleEl);
+        }
+      };
+      
+      // Ensure styles are present
+      ensureStyles();
+      
       // Parse XML to HTML with styled spans
       const htmlWithChanges = parseXmlDiff(xmlContent);
       
-      // Update the editor content
-      editorDoc.body.innerHTML = htmlWithChanges;
+      // Update the editor content - using a more compatible approach with Kendo
+      // First store the original content
+      const originalContent = editorDoc.body.innerHTML;
+      
+      // Create a temporary div using window.document
+      const tempDiv = window.document.createElement('div');
+      tempDiv.innerHTML = htmlWithChanges;
+      
+      // Update the editor content using a method that preserves event handlers and editor state
+      if (editorRef.current && typeof editorRef.current.value === 'function') {
+        // Try to use the Kendo API if available
+        editorRef.current.value(htmlWithChanges);
+      } else {
+        // Fallback to direct DOM manipulation
+        editorDoc.body.innerHTML = htmlWithChanges;
+        
+        // Force a refresh of the editor's content
+        if (editorRef.current && typeof editorRef.current.refresh === 'function') {
+          editorRef.current.refresh();
+        }
+      }
       
       // Update the document state
       setDocument(prev => ({
@@ -485,6 +546,8 @@ export default function DocumentPage() {
         content: htmlWithChanges,
         updatedAt: new Date()
       }));
+      
+      console.log("[DocumentPage] Successfully applied XML changes to editor");
     } catch (error) {
       console.error("Error applying XML changes to editor:", error);
     }
@@ -626,6 +689,92 @@ export default function DocumentPage() {
       }
     }
   }, [editorRef.current ? editorRef.current.id : null]); // Safer dependency that won't cause re-renders
+
+  useEffect(() => {
+    // Ensure CSS is injected into the iframe when the editor is ready
+    const injectEditorStyles = () => {
+      const editorDoc = getEditorDocument();
+      if (!editorDoc) return;
+      
+      // Create a style element using window.document
+      const styleEl = window.document.createElement('style');
+      styleEl.textContent = `
+        /* AI Diff Highlighting Styles */
+        .ai-addition {
+          background-color: rgba(34, 197, 94, 0.2) !important; /* Light green */
+          color: rgb(22, 101, 52) !important; /* Darker green text for better contrast */
+          border-radius: 2px !important;
+          border-bottom: 1px solid rgba(34, 197, 94, 0.5) !important;
+          text-decoration: none !important;
+          padding: 0 2px !important;
+          margin: 0 1px !important;
+          position: relative !important;
+          font-weight: 500 !important; /* Slightly bolder */
+          display: inline-block !important;
+        }
+        
+        .ai-deletion {
+          background-color: rgba(239, 68, 68, 0.2) !important; /* Light red */
+          color: rgb(153, 27, 27) !important; /* Darker red text for better contrast */
+          border-radius: 2px !important;
+          border-bottom: 1px solid rgba(239, 68, 68, 0.5) !important;
+          text-decoration: line-through !important;
+          padding: 0 2px !important;
+          margin: 0 1px !important;
+          position: relative !important;
+          display: inline-block !important;
+        }
+        
+        /* Add animation effects to highlight the changes */
+        @keyframes pulse-addition {
+          0% { background-color: rgba(34, 197, 94, 0.1) !important; }
+          50% { background-color: rgba(34, 197, 94, 0.3) !important; }
+          100% { background-color: rgba(34, 197, 94, 0.1) !important; }
+        }
+        
+        @keyframes pulse-deletion {
+          0% { background-color: rgba(239, 68, 68, 0.1) !important; }
+          50% { background-color: rgba(239, 68, 68, 0.3) !important; }
+          100% { background-color: rgba(239, 68, 68, 0.1) !important; }
+        }
+        
+        .ai-addition.highlight {
+          animation: pulse-addition 2s ease-in-out 3 !important;
+        }
+        
+        .ai-deletion.highlight {
+          animation: pulse-deletion 2s ease-in-out 3 !important;
+        }
+        
+        /* Add a small icon to indicate AI-generated changes */
+        .ai-badge::after {
+          content: "AI";
+          position: absolute !important;
+          top: -8px !important;
+          right: -3px !important;
+          font-size: 8px !important;
+          background-color: #4285f4 !important;
+          color: white !important;
+          border-radius: 4px !important;
+          padding: 1px 3px !important;
+          opacity: 0.8 !important; /* Make it visible by default */
+          font-weight: bold !important;
+          pointer-events: none !important; /* Prevent it from interfering with clicks */
+          z-index: 10 !important;
+        }
+      `;
+      
+      // Append style to the head of the iframe document
+      editorDoc.head.appendChild(styleEl);
+      
+      console.log("[DocumentPage] Custom styles injected into editor iframe");
+    };
+    
+    // Try to inject styles when editor is available
+    if (editorRef.current) {
+      setTimeout(injectEditorStyles, 500); // Delay to ensure editor is fully loaded
+    }
+  }, [editorRef.current]); // Re-run when editor ref changes
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-100">

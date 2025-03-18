@@ -16,6 +16,14 @@ export function parseXmlDiff(diffText: string): string {
     // Wrap the content in a root element to make it valid XML
     const xmlDoc = parser.parseFromString(`<root>${diffText}</root>`, "text/xml");
     
+    // Check for parsing errors
+    const parserErrors = xmlDoc.getElementsByTagName('parsererror');
+    if (parserErrors.length > 0) {
+      console.error("XML parsing error:", parserErrors[0]?.textContent || 'Unknown parsing error');
+      // Try to fallback to a more robust approach
+      return fallbackXmlParse(diffText);
+    }
+    
     // Get all addition and deletion elements
     const additions = xmlDoc.getElementsByTagName('addition');
     const deletions = xmlDoc.getElementsByTagName('deletion');
@@ -29,13 +37,20 @@ export function parseXmlDiff(diffText: string): string {
       if (!deletionElement) continue;
       
       const deletionText = deletionElement.textContent || '';
-      const deletionHtml = `<span class="ai-deletion ai-badge highlight">${deletionText}</span>`;
+      // Use attribute encoding to ensure HTML is preserved
+      const escapedText = deletionText
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+      
+      const deletionHtml = `<span class="ai-deletion ai-badge highlight">${escapedText}</span>`;
       
       // Replace the deletion tag with HTML
-      htmlContent = htmlContent.replace(
-        `<deletion>${deletionText}</deletion>`, 
-        deletionHtml
-      );
+      // Use a safer approach that handles potential HTML content in the deletion text
+      const tagPattern = new RegExp(`<deletion>${escapeRegExp(deletionText)}</deletion>`, 'g');
+      htmlContent = htmlContent.replace(tagPattern, deletionHtml);
     }
     
     // Then process additions
@@ -44,20 +59,55 @@ export function parseXmlDiff(diffText: string): string {
       if (!additionElement) continue;
       
       const additionText = additionElement.textContent || '';
-      const additionHtml = `<span class="ai-addition ai-badge highlight">${additionText}</span>`;
+      // Use attribute encoding to ensure HTML is preserved
+      const escapedText = additionText
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+      
+      const additionHtml = `<span class="ai-addition ai-badge highlight">${escapedText}</span>`;
       
       // Replace the addition tag with HTML
-      htmlContent = htmlContent.replace(
-        `<addition>${additionText}</addition>`, 
-        additionHtml
-      );
+      // Use a safer approach that handles potential HTML content in the addition text
+      const tagPattern = new RegExp(`<addition>${escapeRegExp(additionText)}</addition>`, 'g');
+      htmlContent = htmlContent.replace(tagPattern, additionHtml);
     }
     
     return htmlContent;
   } catch (error) {
     console.error('Error parsing XML diff:', error);
-    return diffText; // Return original text if parsing fails
+    return fallbackXmlParse(diffText); // Use fallback method if parsing fails
   }
+}
+
+// Fallback method for parsing XML when the DOM parser fails
+function fallbackXmlParse(diffText: string): string {
+  try {
+    // Simple regex-based approach as fallback
+    // Replace addition tags
+    let processed = diffText.replace(
+      /<addition>([\s\S]*?)<\/addition>/g, 
+      '<span class="ai-addition ai-badge highlight">$1</span>'
+    );
+    
+    // Replace deletion tags
+    processed = processed.replace(
+      /<deletion>([\s\S]*?)<\/deletion>/g, 
+      '<span class="ai-deletion ai-badge highlight">$1</span>'
+    );
+    
+    return processed;
+  } catch (error) {
+    console.error('Error in fallback XML parsing:', error);
+    return diffText; // Return original if all else fails
+  }
+}
+
+// Helper function to escape special characters in regex patterns
+function escapeRegExp(string: string): string {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
 }
 
 /**
