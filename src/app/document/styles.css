@@ -14,4 +14,50 @@
 /* Hide the default Kendo Editor toolbar since we're creating our own */
 .k-editor-toolbar {
   display: none !important;
+}
+
+/* Editor page container - make it look like a document page */
+.editor-page-container {
+  width: 8.5in;
+  max-width: calc(100vw - 220px);
+  transition: width 0.3s ease-in-out, max-width 0.3s ease-in-out;
+  background-color: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+}
+
+/* When sidebar is closed, adjust the maximum width */
+body:has(.editor-page-container:not(.sidebar-open)) .editor-page-container {
+  max-width: calc(100vw - 120px);
+}
+
+/* Override Kendo editor content styles */
+.k-editor-content {
+  border: none !important;
+}
+
+/* Make the toolbar buttons appear cleaner */
+.k-button.k-button-md {
+  padding: 6px 12px;
+}
+
+/* Styling for the formatting toolbar */
+.formatting-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 6px 8px;
+}
+
+.formatting-toolbar-group {
+  display: flex;
+  gap: 2px;
+  padding-right: 8px;
+  margin-right: 8px;
+  border-right: 1px solid #e2e8f0;
+}
+
+.formatting-toolbar-group:last-child {
+  border-right: none;
+  margin-right: 0;
+  padding-right: 0;
 } 

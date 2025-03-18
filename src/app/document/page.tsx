@@ -2,11 +2,11 @@
 
 import { useState, useCallback } from "react";
 import { Editor, EditorTools } from "@/components/kendo/premium";
-import { Button } from "@/components/kendo/free";
+import { Button, Input } from "@/components/kendo/free";
 import { arrowsLeftRightIcon, menuIcon } from "@/components/kendo";
 import "@progress/kendo-theme-default/dist/all.css";
 import "./styles.css";
-import DocumentToolbar from "@/components/DocumentToolbar";
+import Link from "next/link";
 import AISidebar from "@/components/AISidebar";
 import { Document } from "@/types";
 
@@ -33,6 +33,7 @@ export default function DocumentPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [showSidebar, setShowSidebar] = useState(true);
   const [isAIProcessing, setIsAIProcessing] = useState(false);
+  const [lastSaved, setLastSaved] = useState<string | null>(null);
 
   const handleContentChange = (event: any) => {
     setDocument(prev => ({
@@ -42,13 +43,24 @@ export default function DocumentPage() {
     }));
   };
 
-  const handleTitleChange = useCallback((newTitle: string) => {
+  const handleTitleChange = useCallback((e: any) => {
+    const newTitle = e.value;
     setDocument(prev => ({
       ...prev,
       title: newTitle,
       updatedAt: new Date()
     }));
   }, []);
+
+  const handleTitleBlur = useCallback(() => {
+    // Ensure title is not empty
+    if (!document.title.trim()) {
+      setDocument(prev => ({
+        ...prev,
+        title: "Untitled Document",
+      }));
+    }
+  }, [document.title]);
 
   const handleSave = useCallback(() => {
     setIsSaving(true);
@@ -57,6 +69,10 @@ export default function DocumentPage() {
     setTimeout(() => {
       console.log("Document saved:", document);
       setIsSaving(false);
+      
+      // Update last saved time
+      const now = new Date();
+      setLastSaved(`Last saved at ${now.toLocaleTimeString()}`);
     }, 1500);
   }, [document]);
 
@@ -83,81 +99,111 @@ export default function DocumentPage() {
   return (
     <div className="min-h-screen flex flex-col bg-gray-100">
       {/* Main App Toolbar */}
-      <div className="bg-white border-b border-gray-300 shadow-sm">
-        <DocumentToolbar 
-          documentTitle={document.title}
-          onTitleChange={handleTitleChange}
-          onSave={handleSave}
-          onExport={handleExport}
-          isSaving={isSaving}
-        />
+      <div className="bg-white border-b border-gray-200 shadow-sm">
+        {/* Document Title and Menu Row */}
+        <div className="flex items-center px-4 py-2 border-b border-gray-200">
+          <Link href="/" className="flex items-center mr-6">
+            <span className="self-center text-xl font-semibold whitespace-nowrap text-blue-600">
+              SmartDocs
+            </span>
+          </Link>
+          <Input
+            value={document.title}
+            onChange={handleTitleChange}
+            onBlur={handleTitleBlur}
+            className="w-64 font-medium"
+            style={{ 
+              border: 'none', 
+              boxShadow: 'none', 
+              background: 'transparent',
+              fontSize: '14px'
+            }}
+            aria-label="Document title"
+          />
+          {lastSaved && (
+            <span className="ml-4 text-xs text-gray-500">{lastSaved}</span>
+          )}
+          <div className="ml-auto flex items-center space-x-2">
+            <Button 
+              themeColor="primary"
+              disabled={isSaving}
+              onClick={handleSave}
+              icon={isSaving ? "refresh" : "save"}
+              className="k-button-md"
+            >
+              {isSaving ? "Saving..." : "Save"}
+            </Button>
+            <Button 
+              themeColor="base"
+              onClick={handleExport}
+              icon="pdf"
+              className="k-button-md"
+            >
+              Export
+            </Button>
+          </div>
+        </div>
+        
+        {/* Formatting Toolbar */}
+        <div className="flex items-center px-4 py-1.5 border-b border-gray-200 overflow-x-auto">
+          <div className="flex flex-wrap gap-2">
+            <div className="flex gap-1 pr-2 border-r border-gray-300">
+              <Button themeColor="base" size="small" icon="bold" title="Bold" />
+              <Button themeColor="base" size="small" icon="italic" title="Italic" />
+              <Button themeColor="base" size="small" icon="underline" title="Underline" />
+            </div>
+            <div className="flex gap-1 pr-2 border-r border-gray-300">
+              <Button themeColor="base" size="small" icon="align-left" title="Align Left" />
+              <Button themeColor="base" size="small" icon="align-center" title="Align Center" />
+              <Button themeColor="base" size="small" icon="align-right" title="Align Right" />
+            </div>
+            <div className="flex gap-1 pr-2 border-r border-gray-300">
+              <Button themeColor="base" size="small" icon="list-ordered" title="Ordered List" />
+              <Button themeColor="base" size="small" icon="list-unordered" title="Unordered List" />
+              <Button themeColor="base" size="small" icon="increase-indent" title="Increase Indent" />
+              <Button themeColor="base" size="small" icon="decrease-indent" title="Decrease Indent" />
+            </div>
+            <div className="flex gap-1">
+              <Button themeColor="base" size="small" icon="image" title="Insert Image" />
+              <Button themeColor="base" size="small" icon="hyperlink-sm" title="Insert Link" />
+              <Button themeColor="base" size="small" icon="table-column-groups" title="Insert Table" />
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="flex flex-1 overflow-hidden">
         {/* Main Editor Area */}
-        <div className="flex-1 flex flex-col relative bg-gray-200 pt-8">
-          <div className="relative flex-1 overflow-auto">
-            <div 
-              className="mx-auto shadow-md"
-              style={{ 
-                width: showSidebar ? '700px' : '850px',
-                transition: 'width 0.3s ease-in-out',
-              }}
-            >
-              {/* Editor Container with Custom Toolbar */}
-              <div className="bg-white">
-                {/* Custom Editor Toolbar */}
-                <div className="bg-gray-50 border-b border-gray-200 p-2 rounded-t-sm">
-                  <div className="flex flex-wrap gap-2">
-                    <div className="flex gap-1 pr-2 border-r border-gray-300">
-                      <Button themeColor="base" size="small" icon="bold" title="Bold" />
-                      <Button themeColor="base" size="small" icon="italic" title="Italic" />
-                      <Button themeColor="base" size="small" icon="underline" title="Underline" />
-                    </div>
-                    <div className="flex gap-1 pr-2 border-r border-gray-300">
-                      <Button themeColor="base" size="small" icon="align-left" title="Align Left" />
-                      <Button themeColor="base" size="small" icon="align-center" title="Align Center" />
-                      <Button themeColor="base" size="small" icon="align-right" title="Align Right" />
-                    </div>
-                    <div className="flex gap-1 pr-2 border-r border-gray-300">
-                      <Button themeColor="base" size="small" icon="list-ordered" title="Ordered List" />
-                      <Button themeColor="base" size="small" icon="list-unordered" title="Unordered List" />
-                    </div>
-                    <div className="flex gap-1">
-                      <Button themeColor="base" size="small" icon="image" title="Insert Image" />
-                      <Button themeColor="base" size="small" icon="link-horizontal" title="Insert Link" />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Editor Content Area */}
-                <Editor
-                  tools={[
-                    [Bold, Italic, Underline],
-                    [AlignLeft, AlignCenter, AlignRight],
-                    [OrderedList, UnorderedList],
-                    [Indent, Outdent],
-                    [Undo, Redo],
-                    [EditorLink, Unlink],
-                    [FormatBlock],
-                    [FontName],
-                    [FontSize],
-                    [InsertImage],
-                  ]}
-                  contentStyle={{ 
-                    minHeight: 'calc(100vh - 200px)', 
-                    padding: '2rem',
-                    paddingTop: '1.5rem',
-                    fontSize: '16px',
-                    lineHeight: '1.6',
-                    boxShadow: 'none',
-                    border: 'none',
-                    backgroundColor: '#ffffff',
-                  }}
-                  defaultContent={document.content}
-                  onChange={handleContentChange}
-                />
-              </div>
+        <div className="flex-1 flex flex-col relative bg-gray-200">
+          <div className="relative flex-1 overflow-auto pt-6">
+            <div className="editor-page-container mx-auto shadow-md">
+              {/* Editor Content Area */}
+              <Editor
+                tools={[
+                  [Bold, Italic, Underline],
+                  [AlignLeft, AlignCenter, AlignRight],
+                  [OrderedList, UnorderedList],
+                  [Indent, Outdent],
+                  [Undo, Redo],
+                  [EditorLink, Unlink],
+                  [FormatBlock],
+                  [FontName],
+                  [FontSize],
+                  [InsertImage],
+                ]}
+                contentStyle={{ 
+                  minHeight: 'calc(100vh - 110px)', 
+                  padding: '1.5rem',
+                  paddingTop: '1.5rem',
+                  fontSize: '16px',
+                  lineHeight: '1.6',
+                  boxShadow: 'none',
+                  border: 'none',
+                  backgroundColor: '#ffffff',
+                }}
+                defaultContent={document.content}
+                onChange={handleContentChange}
+              />
             </div>
           </div>
           
