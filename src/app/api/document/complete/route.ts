@@ -75,6 +75,18 @@ If the user's request doesn't involve document changes (just a conversation or q
 4. If you're not changing anything, don't use the XML tags.
 5. Be careful with formatting - make sure your XML tags don't break existing HTML/markdown.
 
+## CRITICAL PHRASES TO AVOID:
+Do NOT include any of these phrases (or similar variations) in your response:
+- "Here is the edited document..."
+- "Here's the edited document with your requested changes:"
+- "Here is the document with the changes you requested:"
+- "I've edited the document according to your request:"
+- "Here's the document with dummy data:"
+- "I've made the following changes to the document:"
+- "Below is the updated document:"
+
+Instead, simply start directly with the document content with XML tags for changes, followed by the USER_MESSAGE section.
+
 ## Example Format
 For document changes:
 "The quick <deletion>fox</deletion> <addition>brown fox</addition> jumps over the <deletion>lazy</deletion> <addition>sleeping</addition> dog.
@@ -154,9 +166,21 @@ If my request is just a question with no document changes, only include the seco
       const parts = responseText.split(messageSeparator);
       xmlContent = parts[0]?.trim() || '';
       userMessage = parts[1]?.trim() || '';
+      
+      console.log("Response successfully split using separator:", {
+        xmlContentLength: xmlContent.length,
+        userMessageLength: userMessage.length,
+        hasXmlTags: /<(addition|deletion)>/.test(xmlContent)
+      });
     } else {
       // Fallback: try to determine if it's XML content or just a message
-      const hasXmlTags = /<(addition|deletion|move|format|comment)/.test(responseText);
+      const hasXmlTags = /<(addition|deletion)>/.test(responseText);
+      
+      console.log("No separator found in response, using fallback logic:", {
+        responseLength: responseText.length,
+        hasXmlTags
+      });
+      
       if (hasXmlTags) {
         xmlContent = responseText;
         userMessage = "I've processed your document with the requested changes.";
@@ -171,14 +195,28 @@ If my request is just a question with no document changes, only include the seco
       "Here's the edited document with your requested changes:",
       "Here is the document with the changes you requested:",
       "Here's the document with the changes you requested:",
-      "I've edited the document according to your request:"
+      "I've edited the document according to your request:",
+      "Here's the document with dummy data:",
+      "Here is the document with dummy data:",
+      "I've made the following changes to the document:",
+      "Below is the updated document:",
+      "Here's the updated document:"
     ];
     
-    for (const prefix of prefixesToRemove) {
-      if (xmlContent.trim().startsWith(prefix)) {
-        xmlContent = xmlContent.trim().substring(prefix.length).trim();
-        break;
-      }
+    // More thorough approach to remove prefixes from XML content
+    if (xmlContent) {
+      // Create a regex pattern that matches any of the prefixes followed by optional whitespace
+      const prefixPattern = new RegExp(`^(${prefixesToRemove.map(p => p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})\\s*`, 'i');
+      
+      // Apply the regex to remove the prefix if it exists
+      xmlContent = xmlContent.replace(prefixPattern, '');
+      
+      // Also try to find and remove any generic introduction phrases
+      const genericIntroPattern = /^(here('s| is| are)|i('ve| have)|below is|the following is|as requested|as per your request)[^<]*(document|content|text|changes|edits|revisions)[^<]*:/i;
+      xmlContent = xmlContent.replace(genericIntroPattern, '');
+      
+      // Clean up any leading newlines or whitespace after removing prefixes
+      xmlContent = xmlContent.trim();
     }
     
     // Handle placeholders in the XML content
