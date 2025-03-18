@@ -34,13 +34,23 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
 
   const getSuggestion = useCallback(
     debounce(async (text: string) => {
+      console.log("[AutoCompletion] getSuggestion called with text:", text.substring(0, 50) + (text.length > 50 ? "..." : ""));
+      
       if (!text.trim() || !enabled || !isMountedRef.current) {
+        console.log("[AutoCompletion] getSuggestion early return:", {
+          textEmpty: !text.trim(),
+          enabled,
+          isMounted: isMountedRef.current
+        });
         return;
       }
 
       setLoading(true);
       try {
         const language = detectLanguage(text);
+        console.log("[AutoCompletion] Detected language:", language);
+        
+        console.log("[AutoCompletion] Calling /api/autocomplete endpoint");
         const response = await fetch('/api/autocomplete', {
           method: 'POST',
           headers: {
@@ -50,6 +60,12 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
         });
 
         const data = await response.json();
+        console.log("[AutoCompletion] API response:", {
+          status: response.status,
+          hasCompletion: Boolean(data.completion),
+          completion: data.completion ? data.completion.substring(0, 30) + (data.completion.length > 30 ? "..." : "") : null,
+          error: data.error
+        });
         
         // Only update state if component is still mounted
         if (isMountedRef.current) {
@@ -60,7 +76,7 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
           }
         }
       } catch (error) {
-        console.error('Error fetching autocompletion:', error);
+        console.error('[AutoCompletion] Error fetching autocompletion:', error);
         if (isMountedRef.current) {
           setSuggestion(null);
         }
@@ -104,7 +120,16 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
 
   // Define a function to show the inline suggestion
   const showInlineSuggestion = useCallback(() => {
-    if (!currentSuggestionRef.current || !selectionRange || !cursorPosition) return;
+    console.log("[AutoCompletion] showInlineSuggestion called", {
+      hasSuggestion: Boolean(currentSuggestionRef.current),
+      hasSelectionRange: Boolean(selectionRange),
+      hasCursorPosition: Boolean(cursorPosition)
+    });
+    
+    if (!currentSuggestionRef.current || !selectionRange || !cursorPosition) {
+      console.log("[AutoCompletion] Cannot show suggestion - missing data");
+      return;
+    }
     
     try {
       // Get the editor document
@@ -215,7 +240,16 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
   
   // Define the handler function
   handleEditorChangeRef.current = () => {
-    if (!editorRef.current || !enabled || !isMountedRef.current) return;
+    console.log("[AutoCompletion] handleEditorChangeRef called", {
+      editorRefExists: Boolean(editorRef.current),
+      enabled,
+      isMounted: isMountedRef.current
+    });
+
+    if (!editorRef.current || !enabled || !isMountedRef.current) {
+      console.log("[AutoCompletion] Early return due to missing prerequisites");
+      return;
+    }
     
     // First, remove any existing inline suggestion
     removeInlineSuggestion();
@@ -224,20 +258,36 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
       // Get the editor document
       const doc = getEditorDocument();
       if (!doc) {
-        console.log("Could not get editor document");
+        console.log("[AutoCompletion] Could not get editor document");
         return;
       }
       
       // Get selection from document
       const selection = doc.getSelection();
       if (!selection) {
-        console.log("No selection found");
+        console.log("[AutoCompletion] No selection found");
         return;
       }
       
+      console.log("[AutoCompletion] Selection found", {
+        type: selection.type,
+        rangeCount: selection.rangeCount
+      });
+      
       // Get text from the current selection point
       let currentText = '';
+      
+      if (selection.rangeCount === 0) {
+        console.log("[AutoCompletion] No range in selection");
+        return;
+      }
+      
       const range = selection.getRangeAt(0);
+      console.log("[AutoCompletion] Range:", {
+        startContainer: range.startContainer,
+        startOffset: range.startOffset,
+        endOffset: range.endOffset
+      });
       
       // Store the current range for later use when showing the suggestion
       if (isMountedRef.current) {
@@ -311,9 +361,19 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
 
   // Effect to show the inline suggestion when a suggestion is available
   useEffect(() => {
+    console.log("[AutoCompletion] Suggestion effect triggered:", {
+      hasSuggestion: Boolean(suggestion),
+      isLoading: loading
+    });
+    
     if (suggestion && !loading) {
       // Add the inline suggestion to the document
-      showInlineSuggestion();
+      console.log("[AutoCompletion] Going to show inline suggestion:", suggestion.substring(0, 30));
+      
+      // Add a slight delay to ensure DOM is ready
+      setTimeout(() => {
+        showInlineSuggestion();
+      }, 50);
     } else {
       // Remove any existing inline suggestion
       removeInlineSuggestion();
@@ -325,17 +385,33 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
     // Set mounted flag
     isMountedRef.current = true;
     
-    console.log("Setting up editor event listeners", { enabled, hasEditor: Boolean(editorRef.current) });
-    if (!editorRef.current || !enabled) return;
+    console.log("[AutoCompletion] Setting up editor event listeners", { 
+      enabled, 
+      hasEditor: Boolean(editorRef.current),
+      editorProps: editorRef.current ? Object.keys(editorRef.current).join(', ') : 'none'
+    });
+    
+    if (!editorRef.current || !enabled) {
+      console.log("[AutoCompletion] Not setting up event listeners - editor or enabled missing");
+      return;
+    }
     
     // Get the editor document
     const doc = getEditorDocument();
     if (!doc) {
-      console.log("Could not find editor document to attach events");
+      console.log("[AutoCompletion] Could not find editor document to attach events");
       return;
     }
     
-    console.log("Found editor document, adding keyup listener");
+    console.log("[AutoCompletion] Found editor document, adding event listeners");
+    
+    // Test with a direct manual call after a delay to ensure things are working
+    setTimeout(() => {
+      console.log("[AutoCompletion] Testing with direct manual test input");
+      // Sample text for testing - simple JavaScript code snippet
+      const testInput = "function calculateSum(a, b) {\n  return a + ";
+      getSuggestion(testInput);
+    }, 2000);
     
     // Throttled selectionchange handler to prevent too many calls
     const throttledSelectionChange = debounce(() => {
@@ -407,11 +483,18 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
   useEffect(() => {
     if (!enabled) return;
     
-    console.log("Setting up custom event listener for editor changes");
+    console.log("[AutoCompletion] Setting up custom event listener for editor changes");
     
     // Listen for the custom event from document page
     const handleCustomEvent = () => {
-      console.log("Custom autocompleteTrigger event received");
+      console.log("[AutoCompletion] Custom autocompleteTrigger event received");
+      
+      // For debugging - ensure we can get suggestions when manual event is triggered
+      const testString = "const handleClick = (event) => {\n  event.";
+      console.log("[AutoCompletion] Testing with event trigger sample data");
+      getSuggestion(testString);
+      
+      // Normal editor change handling
       handleEditorChange();
     };
     
@@ -420,7 +503,7 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
     return () => {
       window.removeEventListener('autocompleteTrigger', handleCustomEvent);
     };
-  }, [handleEditorChange, enabled]);
+  }, [handleEditorChange, enabled, getSuggestion]);
 
   // Add CSS to the iframe document
   useEffect(() => {

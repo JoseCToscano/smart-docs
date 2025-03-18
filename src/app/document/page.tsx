@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { Editor, EditorTools } from "@/components/kendo/premium";
 import { Button, Input } from "@/components/kendo/free";
 import { 
@@ -55,20 +55,87 @@ export default function DocumentPage() {
       content: event.html,
       updatedAt: new Date()
     }));
-    
-    // Log editor properties after it's initialized
+
+    // Add more detailed logging of editor iframe initialization
     if (editorRef.current) {
-      console.log("Editor initialized, logging properties:");
-      console.log("Editor ref:", editorRef.current);
-      console.log("Editor properties:", Object.keys(editorRef.current));
+      // Get more details about the editor structure
+      console.log("[DocumentPage] Editor contentChange event triggered");
+      console.log("[DocumentPage] Editor ref keys:", Object.keys(editorRef.current));
       
-      // Check for the contentElement or iframe
-      console.log("Editor contentElement:", editorRef.current.contentElement);
-      console.log("Editor iframe:", editorRef.current.iframe);
+      // Check editor DOM structure
+      if (editorRef.current.element) {
+        console.log("[DocumentPage] Editor element found:", editorRef.current.element);
+        
+        // Try to locate the iframe
+        const iframe = editorRef.current.element.querySelector('iframe');
+        console.log("[DocumentPage] Editor iframe via element query:", iframe);
+        
+        if (iframe) {
+          console.log("[DocumentPage] Iframe contentDocument:", Boolean(iframe.contentDocument));
+          console.log("[DocumentPage] Iframe contentWindow:", Boolean(iframe.contentWindow));
+        }
+      }
       
-      // Check if there are any event handlers available
-      if (typeof editorRef.current.addEventListener === 'function') {
-        console.log("Editor has addEventListener method");
+      // Direct iframe access attempt
+      console.log("[DocumentPage] Editor direct iframe property:", editorRef.current.iframe);
+      
+      // Try to access document through any available method
+      try {
+        // Get the iframe using different methods
+        let iframeElement = null;
+        
+        // Method 1: Direct iframe property
+        if (editorRef.current.iframe) {
+          iframeElement = editorRef.current.iframe;
+        } 
+        // Method 2: Via element property
+        else if (editorRef.current.element?.querySelector) {
+          iframeElement = editorRef.current.element.querySelector('iframe');
+        }
+        // Method 3: DOM query as last resort (only in browser)
+        else if (typeof window !== 'undefined') {
+          // This will only run in browser context
+          const editorElements = window.document.getElementsByClassName('k-editor');
+          if (editorElements.length > 0) {
+            const iframes = editorElements[0].getElementsByTagName('iframe');
+            if (iframes.length > 0) {
+              iframeElement = iframes[0];
+            }
+          }
+        }
+                         
+        if (iframeElement) {
+          const editorDoc = iframeElement.contentDocument || iframeElement.contentWindow?.document;
+          console.log("[DocumentPage] Successfully accessed editor document:", Boolean(editorDoc));
+          
+          // Check if there's any content in the editor
+          if (editorDoc) {
+            console.log("[DocumentPage] Editor body:", editorDoc.body.innerHTML.substring(0, 100) + "...");
+          }
+        } else {
+          console.log("[DocumentPage] Could not locate iframe element by any method");
+        }
+      } catch (err) {
+        console.error("[DocumentPage] Error accessing editor document:", err);
+      }
+      
+      // Try to find any info about editor's structure and API
+      try {
+        if (typeof editorRef.current.getSelection === 'function') {
+          console.log("[DocumentPage] Editor has getSelection method");
+        }
+        
+        if (typeof editorRef.current.getDocument === 'function') {
+          console.log("[DocumentPage] Editor has getDocument method");
+          try {
+            const doc = editorRef.current.getDocument();
+            console.log("[DocumentPage] Got document via getDocument:", Boolean(doc));
+          } catch (e) {
+            console.error("[DocumentPage] Error calling getDocument:", e);
+          }
+        }
+      } catch (err) {
+        console.error("[DocumentPage] Error examining editor API methods:", err);
       }
       
       // Trigger autocompletion on content change
@@ -79,9 +146,10 @@ export default function DocumentPage() {
           bubbles: true, 
           detail: { source: 'editor-content-change' } 
         });
+        console.log("[DocumentPage] Dispatching autocompleteTrigger event");
         window.dispatchEvent(autoCompleteTrigger);
       } catch (error) {
-        console.error("Failed to dispatch custom event:", error);
+        console.error("[DocumentPage] Failed to dispatch custom event:", error);
       }
     }
   };
@@ -138,6 +206,34 @@ export default function DocumentPage() {
   const toggleSidebar = useCallback(() => {
     setShowSidebar(prev => !prev);
   }, []);
+
+  // Add a useEffect to manually trigger a focus and autocompletion on initial load
+  useEffect(() => {
+    // Wait for the editor to be fully initialized
+    if (editorRef.current) {
+      console.log("[DocumentPage] Editor ref is available in useEffect");
+      
+      // Try to focus the editor
+      try {
+        if (typeof editorRef.current.focus === 'function') {
+          console.log("[DocumentPage] Focusing editor");
+          editorRef.current.focus();
+        }
+        
+        // Manually dispatch an autocompleteTrigger event after a short delay
+        setTimeout(() => {
+          console.log("[DocumentPage] Dispatching delayed autocompleteTrigger event");
+          const autoCompleteTrigger = new CustomEvent('autocompleteTrigger', { 
+            bubbles: true, 
+            detail: { source: 'initial-editor-load' } 
+          });
+          window.dispatchEvent(autoCompleteTrigger);
+        }, 1000);
+      } catch (err) {
+        console.error("[DocumentPage] Error focusing editor:", err);
+      }
+    }
+  }, [editorRef.current ? editorRef.current.id : null]); // Safer dependency that won't cause re-renders
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-100">
