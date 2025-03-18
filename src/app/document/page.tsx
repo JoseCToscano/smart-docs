@@ -548,6 +548,10 @@ IMPORTANT GUIDELINES:
               font-weight: 500 !important; /* Slightly bolder */
               display: inline !important;
               white-space: pre-wrap !important; /* Respect line breaks */
+              user-select: auto !important;
+              -webkit-user-select: auto !important;
+              -moz-user-select: auto !important;
+              pointer-events: auto !important;
             }
             
             .ai-deletion {
@@ -561,6 +565,10 @@ IMPORTANT GUIDELINES:
               position: relative !important;
               display: inline !important;
               white-space: pre-wrap !important; /* Respect line breaks */
+              user-select: auto !important;
+              -webkit-user-select: auto !important;
+              -moz-user-select: auto !important;
+              pointer-events: auto !important;
             }
             
             /* Make sure all spans are properly displayed */
@@ -615,6 +623,15 @@ IMPORTANT GUIDELINES:
       
       // Try using the most reliable method to update the editor content
       try {
+        // Store the original selection and cursor position if possible
+        let savedSelection = null;
+        try {
+          const editorWindow = editorDoc.defaultView || window;
+          savedSelection = editorWindow.getSelection ? editorWindow.getSelection() : null;
+        } catch (err) {
+          console.log("[DocumentPage] Could not save selection:", err);
+        }
+        
         // Method 1: Use editorRef.current.value if available (most reliable)
         if (typeof editorRef.current.value === 'function') {
           editorRef.current.value(htmlWithChanges);
@@ -631,12 +648,37 @@ IMPORTANT GUIDELINES:
           console.log("[DocumentPage] Updated editor content using direct DOM manipulation");
         }
         
-        // Force a refresh if available
-        if (typeof editorRef.current.refresh === 'function') {
-          setTimeout(() => {
+        // Re-initialize the editor to ensure toolbar commands work with the new content
+        // This is a crucial step to make sure the editor's internal state is updated
+        if (typeof editorRef.current.recreate === 'function') {
+          editorRef.current.recreate();
+          console.log("[DocumentPage] Recreated editor after content update");
+        } else {
+          // Force a refresh if available
+          if (typeof editorRef.current.refresh === 'function') {
             editorRef.current.refresh();
             console.log("[DocumentPage] Refreshed editor after content update");
-          }, 50);
+          }
+        }
+        
+        // Restore selection if possible
+        if (savedSelection && savedSelection.rangeCount > 0) {
+          try {
+            const range = savedSelection.getRangeAt(0);
+            const newSelection = editorDoc.getSelection();
+            if (newSelection) {
+              newSelection.removeAllRanges();
+              newSelection.addRange(range);
+            }
+          } catch (err) {
+            console.log("[DocumentPage] Could not restore selection:", err);
+          }
+        }
+        
+        // Make sure the editor body is editable
+        if (editorDoc && editorDoc.body) {
+          editorDoc.body.contentEditable = 'true';
+          editorDoc.designMode = 'on';
         }
         
         // Update the document state
@@ -654,6 +696,11 @@ IMPORTANT GUIDELINES:
           const hasChanges = hasAIChanges();
           setHasActiveChanges(hasChanges);
           console.log("[DocumentPage] Updated hasActiveChanges:", hasChanges);
+          
+          // Give the editor focus again
+          if (typeof editorRef.current.focus === 'function') {
+            editorRef.current.focus();
+          }
         }, 100);
         
       } catch (err) {
@@ -662,6 +709,12 @@ IMPORTANT GUIDELINES:
         try {
           editorDoc.body.innerHTML = htmlWithChanges;
           console.log("[DocumentPage] Used direct DOM manipulation as fallback");
+          
+          // Make sure the editor body is editable
+          if (editorDoc && editorDoc.body) {
+            editorDoc.body.contentEditable = 'true';
+            editorDoc.designMode = 'on';
+          }
           
           // Update the document state
           setDocument(prev => ({
@@ -798,6 +851,34 @@ IMPORTANT GUIDELINES:
       // Get the updated content with proper line breaks
       const updatedContent = ensureLineBreaks(editorDoc.body.innerHTML);
       
+      // Make sure the editor body is editable
+      if (editorDoc && editorDoc.body) {
+        editorDoc.body.contentEditable = 'true';
+        editorDoc.designMode = 'on';
+      }
+      
+      // Re-initialize the editor to ensure toolbar commands work with the new content
+      if (editorRef.current) {
+        if (typeof editorRef.current.value === 'function') {
+          // Update the editor with clean content
+          editorRef.current.value(updatedContent);
+          
+          // Recreate editor to ensure proper toolbar functionality
+          if (typeof editorRef.current.recreate === 'function') {
+            editorRef.current.recreate();
+          } else if (typeof editorRef.current.refresh === 'function') {
+            editorRef.current.refresh();
+          }
+          
+          // Give focus back to the editor
+          if (typeof editorRef.current.focus === 'function') {
+            setTimeout(() => {
+              editorRef.current.focus();
+            }, 100);
+          }
+        }
+      }
+      
       // Update the document state with the finalized content
       setDocument(prev => ({
         ...prev,
@@ -878,6 +959,34 @@ IMPORTANT GUIDELINES:
       
       // Get the updated content with proper line breaks
       const updatedContent = ensureLineBreaks(editorDoc.body.innerHTML);
+      
+      // Make sure the editor body is editable
+      if (editorDoc && editorDoc.body) {
+        editorDoc.body.contentEditable = 'true';
+        editorDoc.designMode = 'on';
+      }
+      
+      // Re-initialize the editor to ensure toolbar commands work with the new content
+      if (editorRef.current) {
+        if (typeof editorRef.current.value === 'function') {
+          // Update the editor with clean content
+          editorRef.current.value(updatedContent);
+          
+          // Recreate editor to ensure proper toolbar functionality
+          if (typeof editorRef.current.recreate === 'function') {
+            editorRef.current.recreate();
+          } else if (typeof editorRef.current.refresh === 'function') {
+            editorRef.current.refresh();
+          }
+          
+          // Give focus back to the editor
+          if (typeof editorRef.current.focus === 'function') {
+            setTimeout(() => {
+              editorRef.current.focus();
+            }, 100);
+          }
+        }
+      }
       
       // Update the document state with the reverted content
       setDocument(prev => ({
