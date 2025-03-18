@@ -1,108 +1,100 @@
-"use client";
-
-import React, { useState, useEffect } from 'react';
-import { 
-  Notification as KendoNotification,
-  NotificationGroup
-} from '@progress/kendo-react-notification';
+import { Notification as KendoNotification, NotificationProps as KendoNotificationProps, NotificationGroup, NotificationGroupProps } from '@progress/kendo-react-notification';
 import { Fade } from '@progress/kendo-react-animation';
-import '@progress/kendo-theme-default/dist/all.css';
+import React from 'react';
 
-export interface NotificationProps {
-  type?: 'success' | 'info' | 'warning' | 'error';
+// Fix the type error by making our NotificationProps properly extend KendoNotificationProps
+export interface NotificationProps extends Omit<KendoNotificationProps, 'type'> {
   message: string;
-  position?: 'top-start' | 'top-center' | 'top-end' | 'bottom-start' | 'bottom-center' | 'bottom-end';
+  type: 'success' | 'info' | 'warning' | 'error';
+  position?: 'top-left' | 'top-center' | 'top-right' | 'bottom-left' | 'bottom-center' | 'bottom-right';
   autoClose?: boolean;
   autoCloseTimeout?: number;
-  onClose?: () => void;
 }
 
-const defaultProps = {
-  type: 'info' as const,
-  position: 'top-end' as const,
-  autoClose: true,
-  autoCloseTimeout: 5000,
+const getPositionStyles = (position: NotificationProps['position'] = 'top-center'): React.CSSProperties => {
+  const styles: React.CSSProperties = {
+    position: 'fixed',
+    zIndex: 9999,
+  };
+
+  switch (position) {
+    case 'top-left':
+      styles.top = '20px';
+      styles.left = '20px';
+      break;
+    case 'top-center':
+      styles.top = '20px';
+      styles.left = '50%';
+      styles.transform = 'translateX(-50%)';
+      break;
+    case 'top-right':
+      styles.top = '20px';
+      styles.right = '20px';
+      break;
+    case 'bottom-left':
+      styles.bottom = '20px';
+      styles.left = '20px';
+      break;
+    case 'bottom-center':
+      styles.bottom = '20px';
+      styles.left = '50%';
+      styles.transform = 'translateX(-50%)';
+      break;
+    case 'bottom-right':
+      styles.bottom = '20px';
+      styles.right = '20px';
+      break;
+    default:
+      styles.top = '20px';
+      styles.left = '50%';
+      styles.transform = 'translateX(-50%)';
+  }
+
+  return styles;
 };
 
-const Notification: React.FC<NotificationProps> = (props) => {
-  const { 
-    type, 
-    message, 
-    position, 
-    autoClose, 
-    autoCloseTimeout, 
-    onClose 
-  } = { ...defaultProps, ...props };
-  
-  const [visible, setVisible] = useState(true);
+const Notification = ({ 
+  type, 
+  message, 
+  position = 'top-center',
+  autoClose = true,
+  autoCloseTimeout = 5000,
+  onClose,
+  ...props 
+}: NotificationProps) => {
+  const [isVisible, setIsVisible] = React.useState(true);
 
-  // Auto-close functionality
-  useEffect(() => {
-    let timeout: NodeJS.Timeout;
-    if (autoClose && visible) {
-      timeout = setTimeout(() => {
-        setVisible(false);
-        if (onClose) onClose();
+  React.useEffect(() => {
+    if (autoClose && autoCloseTimeout > 0) {
+      const timer = setTimeout(() => {
+        setIsVisible(false);
+        if (onClose) {
+          onClose({} as any);  // Pass empty event object
+        }
       }, autoCloseTimeout);
+      
+      return () => clearTimeout(timer);
     }
-    return () => {
-      if (timeout) {
-        clearTimeout(timeout);
-      }
-    };
-  }, [autoClose, autoCloseTimeout, onClose, visible]);
+  }, [autoClose, autoCloseTimeout, onClose]);
 
-  const handleClose = () => {
-    setVisible(false);
-    if (onClose) onClose();
-  };
-
-  // Render directly with proper positioning
-  const getNotificationStyle = (): React.CSSProperties => {
-    let style: React.CSSProperties = {
-      position: 'fixed',
-      zIndex: 9999,
-    };
-
-    switch (position) {
-      case 'top-start':
-        style = { ...style, top: '30px', left: '30px' };
-        break;
-      case 'top-center':
-        style = { ...style, top: '30px', left: '50%', transform: 'translateX(-50%)' };
-        break;
-      case 'top-end':
-        style = { ...style, top: '30px', right: '30px' };
-        break;
-      case 'bottom-start':
-        style = { ...style, bottom: '30px', left: '30px' };
-        break;
-      case 'bottom-center':
-        style = { ...style, bottom: '30px', left: '50%', transform: 'translateX(-50%)' };
-        break;
-      case 'bottom-end':
-        style = { ...style, bottom: '30px', right: '30px' };
-        break;
-      default:
-        style = { ...style, top: '30px', right: '30px' };
-    }
-
-    return style;
-  };
-
-  if (!visible) {
+  if (!isVisible) {
     return null;
   }
 
   return (
-    <div style={getNotificationStyle()} className="k-notification-container">
+    <div style={getPositionStyles(position)} className="k-notification-container">
       <Fade>
         <NotificationGroup>
-          <KendoNotification
+          <KendoNotification 
+            {...props} 
             type={{ style: type, icon: true }}
             closable={true}
-            onClose={handleClose}
-            className={`k-notification-${type}`}
+            onClose={(e) => {
+              setIsVisible(false);
+              if (onClose) {
+                onClose(e);
+              }
+            }}
           >
             <div className="k-notification-content">
               {message}
@@ -114,4 +106,4 @@ const Notification: React.FC<NotificationProps> = (props) => {
   );
 };
 
-export default Notification; 
+export { Notification, NotificationGroup, type NotificationGroupProps };
