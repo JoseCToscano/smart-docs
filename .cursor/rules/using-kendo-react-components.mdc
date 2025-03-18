@@ -1,0 +1,10 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+
+# Your rule content
+When creating a new component, let's prioritize using Kendo Components (ref: https://www.telerik.com/kendo-react-ui/components/)
+- Let's not use primitive Kendo components directly on our application but rather have them imported within `src/components/kendo` and then used from these files
+- Let's keep track of each Kendo component used under `src/components/kendo/premium` and `src/components/kendo/free`

@@ -11,6 +11,7 @@ import "@progress/kendo-theme-default/dist/all.css";
 import "./styles.css";
 import Link from "next/link";
 import AISidebar from "@/components/AISidebar";
+import AutoCompletion from "@/components/AutoCompletion";
 import { Document } from "@/types";
 
 // Import all necessary editor tools
@@ -45,6 +46,7 @@ export default function DocumentPage() {
   const [showSidebar, setShowSidebar] = useState(true);
   const [isAIProcessing, setIsAIProcessing] = useState(false);
   const [lastSaved, setLastSaved] = useState<string | null>(null);
+  const [autoCompleteEnabled, setAutoCompleteEnabled] = useState(true);
   const editorRef = useRef<any>(null);
 
   const handleContentChange = (event: any) => {
@@ -136,6 +138,18 @@ export default function DocumentPage() {
             <span className="ml-4 text-xs text-gray-500">{lastSaved}</span>
           )}
           <div className="ml-auto flex items-center space-x-2">
+            <div className="mr-4 flex items-center">
+              <input
+                type="checkbox"
+                id="enableAutoComplete"
+                checked={autoCompleteEnabled}
+                onChange={(e) => setAutoCompleteEnabled(e.target.checked)}
+                className="mr-2"
+              />
+              <label htmlFor="enableAutoComplete" className="text-sm text-gray-600">
+                AI Autocomplete
+              </label>
+            </div>
             <Button 
               themeColor="primary"
               disabled={isSaving}
@@ -204,6 +218,14 @@ export default function DocumentPage() {
                 defaultContent={document.content}
                 onChange={handleContentChange}
               />
+              
+              {/* Add AutoCompletion component */}
+              {autoCompleteEnabled && (
+                <AutoCompletion 
+                  editorRef={editorRef}
+                  enabled={autoCompleteEnabled}
+                />
+              )}
             </div>
           </div>
           

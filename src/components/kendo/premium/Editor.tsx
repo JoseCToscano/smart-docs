@@ -12,7 +12,6 @@ export interface EditorProps {
   contentStyle?: React.CSSProperties;
   onChange?: (event: any) => void;
   tools?: any[];
-  children?: React.ReactNode;
   [key: string]: any;
 }
 
@@ -34,9 +33,7 @@ const Editor: React.FC<EditorProps> = ({
       defaultContent={defaultContent}
       onChange={onChange}
       {...props}
-    >
-      {children}
-    </KendoEditor>
+    />
   );
 };
 
