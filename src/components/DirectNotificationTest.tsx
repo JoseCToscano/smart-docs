@@ -35,7 +35,7 @@ const DirectNotificationTest: React.FC = () => {
       
       {visible && (
         <div 
-          style={{ position: 'fixed', bottom: '20px', left: '50%', transform: 'translateX(-50%)', zIndex: 9999 }}
+          style={{ position: 'fixed', bottom: '30px', left: '50%', transform: 'translateX(-50%)', zIndex: 9999 }}
           className="k-notification-container"
         >
           <Fade>
@@ -47,7 +47,7 @@ const DirectNotificationTest: React.FC = () => {
                 className="k-notification-info"
               >
                 <div className="k-notification-content">
-                  This notification appears at the bottom center.
+                  <strong>Bottom Center!</strong> This notification appears at the bottom center of the screen.
                 </div>
               </KendoNotification>
             </NotificationGroup>

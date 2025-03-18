@@ -62,30 +62,29 @@ const Notification: React.FC<NotificationProps> = (props) => {
     let style: React.CSSProperties = {
       position: 'fixed',
       zIndex: 9999,
-      maxWidth: '400px',
     };
 
     switch (position) {
       case 'top-start':
-        style = { ...style, top: '20px', left: '20px' };
+        style = { ...style, top: '30px', left: '30px' };
         break;
       case 'top-center':
-        style = { ...style, top: '20px', left: '50%', transform: 'translateX(-50%)' };
+        style = { ...style, top: '30px', left: '50%', transform: 'translateX(-50%)' };
         break;
       case 'top-end':
-        style = { ...style, top: '20px', right: '20px' };
+        style = { ...style, top: '30px', right: '30px' };
         break;
       case 'bottom-start':
-        style = { ...style, bottom: '20px', left: '20px' };
+        style = { ...style, bottom: '30px', left: '30px' };
         break;
       case 'bottom-center':
-        style = { ...style, bottom: '20px', left: '50%', transform: 'translateX(-50%)' };
+        style = { ...style, bottom: '30px', left: '50%', transform: 'translateX(-50%)' };
         break;
       case 'bottom-end':
-        style = { ...style, bottom: '20px', right: '20px' };
+        style = { ...style, bottom: '30px', right: '30px' };
         break;
       default:
-        style = { ...style, top: '20px', right: '20px' };
+        style = { ...style, top: '30px', right: '30px' };
     }
 
     return style;

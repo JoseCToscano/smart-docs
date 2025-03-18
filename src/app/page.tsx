@@ -1,6 +1,7 @@
 import Link from "next/link";
 import NotificationDemo from "@/components/NotificationDemo";
 import DirectNotificationTest from "@/components/DirectNotificationTest";
+import NotificationDebugger from "@/components/NotificationDebugger";
 
 export default function HomePage() {
   return (
@@ -33,12 +34,18 @@ export default function HomePage() {
           </Link>
         </div>
         
-        <div className="w-full max-w-4xl mx-auto rounded-xl border border-gray-200 p-6 bg-white">
+        <div className="w-full max-w-4xl mx-auto rounded-xl border border-gray-200 p-6 bg-white shadow-md">
           <h2 className="text-2xl font-bold mb-6 text-center">Notification Testing</h2>
-          <NotificationDemo />
-          <DirectNotificationTest />
+          <div className="border-b border-gray-200 pb-6 mb-6">
+            <NotificationDemo />
+          </div>
+          <div className="border-b border-gray-200 pb-6">
+            <DirectNotificationTest />
+          </div>
         </div>
       </div>
+      
+      <NotificationDebugger />
     </main>
   );
 }
