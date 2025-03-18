@@ -228,165 +228,260 @@ export default function DocumentPage() {
     return document.content;
   };
 
+  // Helper function to find a node and offset within container based on absolute character offset
+  const findNodeAndOffset = (container: HTMLElement, targetOffset: number): { node: Node; offset: number } | null => {
+    // Walks through all text nodes in the container and finds the one containing the target offset
+    let currentOffset = 0;
+    
+    const walkNodes = (node: Node): { node: Node; offset: number } | null => {
+      // If this is a text node, check if the target offset is within it
+      if (node.nodeType === Node.TEXT_NODE) {
+        const length = node.textContent?.length || 0;
+        
+        // If the target offset is within this text node, return it
+        if (currentOffset <= targetOffset && targetOffset <= currentOffset + length) {
+          return {
+            node,
+            offset: targetOffset - currentOffset
+          };
+        }
+        
+        // Otherwise, advance the offset
+        currentOffset += length;
+        return null;
+      }
+      
+      // Otherwise, recurse into child nodes
+      const childNodes = node.childNodes;
+      for (let i = 0; i < childNodes.length; i++) {
+        const result = walkNodes(childNodes[i] as Node);
+        if (result) {
+          return result;
+        }
+      }
+      
+      return null;
+    };
+    
+    return walkNodes(container);
+  };
+
   // Apply changes to the editor
-  const applyChangesToEditor = (changes: DocumentChanges) => {
-    const editorDoc = getEditorDocument();
-    if (!editorDoc) {
-      console.error("Failed to get editor document for applying changes");
+  const applyChangesToEditor = (changes: DocumentChanges | null) => {
+    if (!changes) {
+      console.log("[DocumentPage] No changes to apply to editor");
       return;
     }
-    
+
     try {
-      // Get the current selection or create a new one
-      let selection = editorDoc.getSelection();
-      if (!selection) {
-        console.error("Could not get selection from document");
+      // Get the current editor document
+      const editorDoc = getEditorDocument();
+      if (!editorDoc) {
+        console.error("[DocumentPage] Failed to get editor document");
         return;
       }
+
+      // Create a new container to work with the HTML
+      const tempContainer = document.createElement('div');
       
-      // Get the editor body to work with
-      const editorBody = editorDoc.body;
-      const content = editorBody.innerHTML;
+      // Get the current content
+      const currentHTML = editorDoc.body.innerHTML;
+      tempContainer.innerHTML = currentHTML;
       
-      // Create a temporary container for manipulating the content
-      const tempContainer = editorDoc.createElement('div');
-      tempContainer.innerHTML = content;
+      // Track if we made any changes
+      let hasChanges = false;
       
-      // Process content replacements (these are prioritized over direct additions/deletions)
+      // Process replacements (highest priority)
       if (changes.replacements && changes.replacements.length > 0) {
-        for (const replace of changes.replacements) {
-          // Find the text to replace using a basic text search (could be improved with regex)
-          // This is a simplified approach - for production, you'd want more advanced text matching
-          // that respects HTML structure
-          const textNodes = getAllTextNodes(tempContainer);
-          let foundAndReplaced = false;
-          
-          for (const textNode of textNodes) {
-            const nodeText = textNode.nodeValue || "";
-            if (nodeText.includes(replace.oldText)) {
-              // Create elements for highlighting the replaced text
-              const span = editorDoc.createElement('span');
-              span.className = 'ai-addition ai-badge highlight';
-              
-              // Preserve newlines by replacing them with <br> tags
-              const textWithPreservedNewlines = replace.newText.replace(/\n/g, '<br />');
-              span.innerHTML = textWithPreservedNewlines;
-              
-              // Split the text node and insert our highlighted content
-              const beforeText = nodeText.substring(0, nodeText.indexOf(replace.oldText));
-              const afterText = nodeText.substring(nodeText.indexOf(replace.oldText) + replace.oldText.length);
-              
-              const beforeNode = editorDoc.createTextNode(beforeText);
-              const afterNode = editorDoc.createTextNode(afterText);
-              
-              // Replace the text node with our three new nodes
-              textNode.parentNode?.insertBefore(beforeNode, textNode);
-              textNode.parentNode?.insertBefore(span, textNode);
-              textNode.parentNode?.insertBefore(afterNode, textNode);
-              textNode.parentNode?.removeChild(textNode);
-              
-              foundAndReplaced = true;
-              break;
-            }
-          }
-          
-          if (!foundAndReplaced) {
-            console.log(`Couldn't find text to replace: ${replace.oldText}`);
-          }
-        }
-      }
-      
-      // Process additions (inserting at cursor or at the end of the document)
-      if (changes.additions && changes.additions.length > 0) {
-        for (const addition of changes.additions) {
-          // Create a new span element with the addition highlighting
-          const span = editorDoc.createElement('span');
-          span.className = 'ai-addition ai-badge highlight';
-          
-          // Preserve newlines by replacing them with <br> tags
-          const textWithPreservedNewlines = addition.text.replace(/\n/g, '<br />');
-          span.innerHTML = textWithPreservedNewlines;
-          
-          // If there's a range specified, try to insert at that position
-          if (addition.range) {
-            // Advanced positioning logic would go here
-            // For now, we'll simply append to the end
-            editorBody.appendChild(span);
-          } else {
-            // If the selection is collapsed (just a cursor)
-            if (selection.rangeCount > 0) {
-              const range = selection.getRangeAt(0);
-              range.insertNode(span);
-              
-              // Move selection to after the inserted content
-              range.setStartAfter(span);
-              range.setEndAfter(span);
-              selection.removeAllRanges();
-              selection.addRange(range);
-            } else {
-              // Otherwise append to the end
-              editorBody.appendChild(span);
-            }
-          }
-        }
-      }
-      
-      // Process deletions (marking text as deleted but not removing it)
-      if (changes.deletions && changes.deletions.length > 0) {
-        for (const deletion of changes.deletions) {
-          // Find the text to delete
-          const textNodes = getAllTextNodes(tempContainer);
-          let foundAndMarked = false;
-          
-          for (const textNode of textNodes) {
-            const nodeText = textNode.nodeValue || "";
-            if (nodeText.includes(deletion.text)) {
-              // Create element for highlighting the deleted text
-              const span = editorDoc.createElement('span');
-              span.className = 'ai-deletion ai-badge highlight';
-              
-              // Preserve newlines by replacing them with <br> tags
-              const textWithPreservedNewlines = deletion.text.replace(/\n/g, '<br />');
-              span.innerHTML = textWithPreservedNewlines;
-              
-              // Split the text node and insert our highlighted content
-              const beforeText = nodeText.substring(0, nodeText.indexOf(deletion.text));
-              const afterText = nodeText.substring(nodeText.indexOf(deletion.text) + deletion.text.length);
-              
-              const beforeNode = editorDoc.createTextNode(beforeText);
-              const afterNode = editorDoc.createTextNode(afterText);
-              
-              // Replace the text node with our three new nodes
-              textNode.parentNode?.insertBefore(beforeNode, textNode);
-              textNode.parentNode?.insertBefore(span, textNode);
-              textNode.parentNode?.insertBefore(afterNode, textNode);
-              textNode.parentNode?.removeChild(textNode);
-              
-              foundAndMarked = true;
-              break;
-            }
-          }
-          
-          if (!foundAndMarked) {
-            console.log(`Couldn't find text to delete: ${deletion.text}`);
-          }
-        }
-      }
-      
-      // Update the content in the editor
-      if (changes.replacements?.length || changes.additions?.length || changes.deletions?.length) {
-        // Get updated content from our temp container
-        editorBody.innerHTML = tempContainer.innerHTML;
+        console.log("[DocumentPage] Applying replacements:", changes.replacements);
         
-        // Update the document state
-        setDocument(prev => ({
-          ...prev,
-          content: editorBody.innerHTML,
-          updatedAt: new Date()
-        }));
+        for (const replacement of changes.replacements) {
+          const { oldText, newText } = replacement;
+          
+          // Create a span for the new text
+          const span = document.createElement('span');
+          span.className = 'ai-addition';
+          span.innerHTML = newText.replace(/\n/g, '<br />');
+          
+          // Find the text to replace
+          const textNodes = Array.from(tempContainer.querySelectorAll('*'))
+            .filter(node => node.nodeType === Node.TEXT_NODE || node.children.length === 0)
+            .map(node => node.textContent || '')
+            .join('');
+            
+          const textContent = tempContainer.textContent || '';
+          const index = textContent.indexOf(oldText);
+          
+          if (index !== -1) {
+            // We need more advanced logic here to replace text that spans multiple nodes
+            // For simplicity, we're just going to update the whole HTML for now
+            const htmlContent = tempContainer.innerHTML;
+            const newHtml = htmlContent.replace(
+              oldText,
+              `<span class="ai-addition">${newText.replace(/\n/g, '<br />')}</span>`
+            );
+            tempContainer.innerHTML = newHtml;
+            hasChanges = true;
+          }
+        }
       }
+      
+      // Process additions
+      if (changes.additions && changes.additions.length > 0) {
+        console.log("[DocumentPage] Applying additions:", changes.additions);
+        hasChanges = true;
+        
+        // For this simplified version, we'll just append additions to the end
+        // A more complex version would use the range property to insert at the correct position
+        for (const addition of changes.additions) {
+          const { text, range } = addition;
+          
+          // Create span for the addition
+          const span = document.createElement('span');
+          span.className = 'ai-addition';
+          span.innerHTML = text.replace(/\n/g, '<br />');
+          
+          // Append to the end or try to use the range
+          if (range) {
+            // Try to find where to insert using the simplified range
+            // This is a simplified approach - production code would be more sophisticated
+            const position = range.start;
+            const nodeInfo = findNodeAndOffset(tempContainer, position);
+            
+            if (nodeInfo) {
+              const { node, offset } = nodeInfo;
+              
+              if (node.nodeType === Node.TEXT_NODE) {
+                // Split the text node
+                const textNode = node as Text;
+                const beforeText = textNode.nodeValue?.substring(0, offset) || '';
+                const afterText = textNode.nodeValue?.substring(offset) || '';
+                
+                const beforeNode = document.createTextNode(beforeText);
+                const afterNode = document.createTextNode(afterText);
+                
+                const parent = textNode.parentNode;
+                if (parent) {
+                  parent.insertBefore(beforeNode, textNode);
+                  parent.insertBefore(span, textNode);
+                  parent.insertBefore(afterNode, textNode);
+                  parent.removeChild(textNode);
+                }
+              } else {
+                // Insert into element
+                const children = node.childNodes;
+                if (offset >= 0 && offset <= children.length) {
+                  node.insertBefore(span, children[offset] || null);
+                } else {
+                  node.appendChild(span);
+                }
+              }
+            } else {
+              // Fallback: append to the end
+              tempContainer.appendChild(span);
+            }
+          } else {
+            // If no range is specified, append to the end
+            tempContainer.appendChild(span);
+          }
+        }
+      }
+      
+      // Process deletions
+      if (changes.deletions && changes.deletions.length > 0) {
+        console.log("[DocumentPage] Applying deletions:", changes.deletions);
+        hasChanges = true;
+        
+        for (const deletion of changes.deletions) {
+          const { text, range } = deletion;
+          
+          // Create span for the deletion
+          const span = document.createElement('span');
+          span.className = 'ai-deletion';
+          span.innerHTML = text.replace(/\n/g, '<br />');
+          
+          // Try to use the range if available
+          if (range) {
+            // Find the range in the content
+            const startPos = range.start;
+            const endPos = range.end;
+            
+            const startInfo = findNodeAndOffset(tempContainer, startPos);
+            
+            if (startInfo) {
+              const { node, offset } = startInfo;
+              
+              if (node.nodeType === Node.TEXT_NODE) {
+                // Split the text node
+                const textNode = node as Text;
+                const beforeText = textNode.nodeValue?.substring(0, offset) || '';
+                
+                // Calculate where deletion ends
+                const length = endPos - startPos;
+                const afterText = textNode.nodeValue?.substring(offset + length) || '';
+                
+                const beforeNode = document.createTextNode(beforeText);
+                const afterNode = document.createTextNode(afterText);
+                
+                const parent = textNode.parentNode;
+                if (parent) {
+                  parent.insertBefore(beforeNode, textNode);
+                  parent.insertBefore(span, textNode);
+                  parent.insertBefore(afterNode, textNode);
+                  parent.removeChild(textNode);
+                }
+              } else {
+                // For now, just insert the deletion marker at the position
+                const children = node.childNodes;
+                if (offset >= 0 && offset <= children.length) {
+                  node.insertBefore(span, children[offset] || null);
+                } else {
+                  node.appendChild(span);
+                }
+              }
+            } else {
+              // Fallback: append to the end
+              tempContainer.appendChild(span);
+            }
+          } else {
+            // If no range is provided, try to find the text in the content
+            const textContent = tempContainer.textContent || '';
+            const index = textContent.indexOf(text);
+            
+            if (index !== -1) {
+              // Use a simple string replacement for now
+              // A more advanced implementation would carefully handle DOM nodes
+              const htmlContent = tempContainer.innerHTML;
+              const newHtml = htmlContent.replace(
+                text,
+                `<span class="ai-deletion">${text.replace(/\n/g, '<br />')}</span>`
+              );
+              tempContainer.innerHTML = newHtml;
+            } else {
+              // Fallback: append to the end
+              tempContainer.appendChild(span);
+            }
+          }
+        }
+      }
+      
+      // If we made changes, update the editor
+      if (hasChanges) {
+        // Get the updated HTML and update the editor
+        const updatedHTML = tempContainer.innerHTML;
+        console.log("[DocumentPage] Applying updated HTML to editor");
+        
+        // Update editor content using our new method
+        updateEditorContent(updatedHTML);
+        
+        // Set the has changes flag
+        setHasActiveChanges(true);
+      } else {
+        console.log("[DocumentPage] No changes were applied to the editor");
+      }
+      
     } catch (err) {
-      console.error("Error applying AI changes to editor:", err);
+      console.error("[DocumentPage] Error applying changes to editor:", err);
     }
   };
   
@@ -653,12 +748,14 @@ IMPORTANT GUIDELINES:
           el.removeAttribute('contenteditable');
         }
         
-        // Remove any inline event handlers
+        // Remove any inline event handlers - with proper null check for attributes
         const attributes = el.attributes;
-        for (let i = attributes.length - 1; i >= 0; i--) {
-          const attrName = attributes[i].name;
-          if (attrName.startsWith('on')) {
-            el.removeAttribute(attrName);
+        if (attributes) {
+          for (let i = attributes.length - 1; i >= 0; i--) {
+            const attr = attributes[i];
+            if (attr && attr.name && attr.name.startsWith('on')) {
+              el.removeAttribute(attr.name);
+            }
           }
         }
       });
@@ -668,53 +765,116 @@ IMPORTANT GUIDELINES:
       
       console.log("[DocumentPage] Updating editor with cleaned content");
       
-      // First try using Kendo's API
-      if (typeof editorRef.current?.value === 'function') {
-        // Check if we can access the props
-        if (editorRef.current && 'props' in editorRef.current) {
-          // Store the original onChange handler
-          const originalOnChange = editorRef.current.props?.onChange;
-          
-          // Temporarily disable the onChange handler
-          if (editorRef.current.props) {
-            editorRef.current.props.onChange = null;
-          }
-          
-          // Update the content
-          editorRef.current.value(cleanedContent);
-          
-          // Restore the original onChange handler
-          setTimeout(() => {
-            if (editorRef.current && editorRef.current.props) {
-              editorRef.current.props.onChange = originalOnChange;
-            }
-          }, 50);
-        } else {
-          // If we can't access props, just update the content
-          editorRef.current.value(cleanedContent);
-        }
-        
-        console.log("[DocumentPage] Updated editor content via value() method");
-      } else {
-        // Fallback to direct DOM manipulation
-        const editorDoc = getEditorDocument();
-        if (editorDoc && editorDoc.body) {
-          editorDoc.body.innerHTML = cleanedContent;
-          console.log("[DocumentPage] Updated editor content via direct DOM manipulation");
-        }
+      // Get the editor document
+      const editorDoc = getEditorDocument();
+      if (!editorDoc || !editorDoc.body) {
+        console.error("[DocumentPage] Cannot get editor document");
+        return;
       }
       
-      // Ensure the editor is properly re-initialized
-      reinitializeEditor();
+      // Find the first text node function to help with selection later
+      const findFirstTextNode = (node: Node): Node | null => {
+        if (node.nodeType === Node.TEXT_NODE && node.textContent?.trim()) {
+          return node;
+        }
+        
+        let result: Node | null = null;
+        const children = node.childNodes;
+        for (let i = 0; i < children.length && !result; i++) {
+          // Use childNodes[i] directly, which is always a Node
+          const childNode = children[i] as Node;
+          result = findFirstTextNode(childNode);
+        }
+        
+        return result;
+      };
       
-      // Update the document state
-      setDocument(prev => ({
-        ...prev,
-        content: cleanedContent,
-        updatedAt: new Date()
-      }));
+      // The proper way to update the content based on Kendo React documentation
+      try {
+        // 1. Temporarily disable contentEditable to prevent Kendo from interfering
+        editorDoc.body.contentEditable = 'false';
+        
+        // 2. Update the content
+        editorDoc.body.innerHTML = cleanedContent;
+        
+        // 3. Wait a moment to ensure content is properly set
+        setTimeout(() => {
+          try {
+            // 4. Re-enable editing
+            editorDoc.body.contentEditable = 'true';
+            
+            // 5. Force Kendo to recognize content by simulating user interaction
+            // Clear any current selection
+            if (editorDoc.getSelection()) {
+              editorDoc.getSelection()?.removeAllRanges();
+            }
+            
+            // Create a new selection at the beginning of the document
+            const range = editorDoc.createRange();
+            const firstTextNode = findFirstTextNode(editorDoc.body);
+            
+            if (firstTextNode) {
+              range.setStart(firstTextNode, 0);
+              range.setEnd(firstTextNode, 0);
+              
+              // Apply the selection
+              const selection = editorDoc.getSelection();
+              if (selection) {
+                selection.removeAllRanges();
+                selection.addRange(range);
+              }
+            }
+            
+            // 6. Manually trigger focus and a click to make sure toolbar buttons work
+            editorDoc.body.focus();
+            
+            // 7. Simulate mouse events to force toolbar refresh
+            const mouseUpEvent = new MouseEvent('mouseup', {
+              bubbles: true,
+              cancelable: true,
+              view: editorDoc.defaultView
+            });
+            
+            const clickEvent = new MouseEvent('click', {
+              bubbles: true,
+              cancelable: true,
+              view: editorDoc.defaultView
+            });
+            
+            editorDoc.body.dispatchEvent(mouseUpEvent);
+            editorDoc.body.dispatchEvent(clickEvent);
+            
+            // 8. Update the document state
+            setDocument(prev => ({
+              ...prev,
+              content: cleanedContent,
+              updatedAt: new Date()
+            }));
+            
+            console.log("[DocumentPage] Editor content updated successfully using Kendo's approach");
+          } catch (innerErr) {
+            console.error("[DocumentPage] Error during final editor setup:", innerErr);
+          }
+        }, 50);
+      } catch (err) {
+        console.error("[DocumentPage] Error updating editor content with Kendo approach:", err);
+        
+        // Fallback to direct content update
+        try {
+          editorDoc.body.innerHTML = cleanedContent;
+          
+          // Update the document state
+          setDocument(prev => ({
+            ...prev,
+            content: cleanedContent,
+            updatedAt: new Date()
+          }));
+        } catch (fallbackErr) {
+          console.error("[DocumentPage] Error in fallback editor update:", fallbackErr);
+        }
+      }
     } catch (err) {
-      console.error("[DocumentPage] Error updating editor content:", err);
+      console.error("[DocumentPage] Error in updateEditorContent:", err);
     }
   };
   
