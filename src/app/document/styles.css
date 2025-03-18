@@ -159,6 +159,7 @@
 /* Make sure all spans are properly displayed */
 span.ai-addition, span.ai-deletion {
   display: inline !important;
+  white-space: pre-wrap !important; /* Respect line breaks */
 }
 
 /* Fix line breaks inside additions and deletions */
@@ -172,6 +173,7 @@ span.ai-addition, span.ai-deletion {
 .ai-addition p, .ai-deletion p {
   display: block !important;
   margin: 0.5em 0 !important;
+  white-space: pre-wrap !important; /* Respect line breaks */
 }
 
 /* Force the correct display in the Kendo editor */

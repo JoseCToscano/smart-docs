@@ -266,7 +266,10 @@ export default function DocumentPage() {
               // Create elements for highlighting the replaced text
               const span = editorDoc.createElement('span');
               span.className = 'ai-addition ai-badge highlight';
-              span.innerHTML = replace.newText;
+              
+              // Preserve newlines by replacing them with <br> tags
+              const textWithPreservedNewlines = replace.newText.replace(/\n/g, '<br />');
+              span.innerHTML = textWithPreservedNewlines;
               
               // Split the text node and insert our highlighted content
               const beforeText = nodeText.substring(0, nodeText.indexOf(replace.oldText));
@@ -298,7 +301,10 @@ export default function DocumentPage() {
           // Create a new span element with the addition highlighting
           const span = editorDoc.createElement('span');
           span.className = 'ai-addition ai-badge highlight';
-          span.innerHTML = addition.text;
+          
+          // Preserve newlines by replacing them with <br> tags
+          const textWithPreservedNewlines = addition.text.replace(/\n/g, '<br />');
+          span.innerHTML = textWithPreservedNewlines;
           
           // If there's a range specified, try to insert at that position
           if (addition.range) {
@@ -337,7 +343,10 @@ export default function DocumentPage() {
               // Create element for highlighting the deleted text
               const span = editorDoc.createElement('span');
               span.className = 'ai-deletion ai-badge highlight';
-              span.innerHTML = deletion.text;
+              
+              // Preserve newlines by replacing them with <br> tags
+              const textWithPreservedNewlines = deletion.text.replace(/\n/g, '<br />');
+              span.innerHTML = textWithPreservedNewlines;
               
               // Split the text node and insert our highlighted content
               const beforeText = nodeText.substring(0, nodeText.indexOf(deletion.text));

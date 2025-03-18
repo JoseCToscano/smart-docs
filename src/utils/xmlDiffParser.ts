@@ -228,6 +228,9 @@ export function xmlDiffToChanges(diffText: string): {
     }
 
     console.log("[xmlDiffToChanges] Processing diff text, length:", diffText.length);
+    
+    // First, ensure that any ___NEWLINE___ placeholders are converted to actual newlines
+    diffText = diffText.replace(/___NEWLINE___/g, '\n');
 
     // We'll use regex for a more reliable extraction that handles HTML better
     const additionRegex = /<addition>([\s\S]*?)<\/addition>/g;
@@ -237,6 +240,10 @@ export function xmlDiffToChanges(diffText: string): {
     let additionMatch;
     while ((additionMatch = additionRegex.exec(diffText)) !== null) {
       const text = additionMatch[1] ?? '';
+      // Log if the content contains newlines
+      if (text.includes('\n')) {
+        console.log("[xmlDiffToChanges] Addition contains newlines");
+      }
       changes.additions.push({ text });
     }
 
@@ -244,6 +251,10 @@ export function xmlDiffToChanges(diffText: string): {
     let deletionMatch;
     while ((deletionMatch = deletionRegex.exec(diffText)) !== null) {
       const text = deletionMatch[1] ?? '';
+      // Log if the content contains newlines
+      if (text.includes('\n')) {
+        console.log("[xmlDiffToChanges] Deletion contains newlines");
+      }
       changes.deletions.push({ text });
     }
 
@@ -254,7 +265,22 @@ export function xmlDiffToChanges(diffText: string): {
     while ((pairMatch = deletionAdditionPairRegex.exec(diffText)) !== null) {
       const oldText = pairMatch[1] ?? '';
       const newText = pairMatch[2] ?? '';
+      // Log if the content contains newlines
+      if (oldText.includes('\n') || newText.includes('\n')) {
+        console.log("[xmlDiffToChanges] Replacement contains newlines");
+      }
       changes.replacements.push({ oldText, newText });
+    }
+
+    // Log sample of extracted content to verify newlines
+    if (changes.additions && changes.additions.length > 0 && changes.additions[0]?.text) {
+      console.log("[xmlDiffToChanges] Sample addition:", 
+        JSON.stringify(changes.additions[0].text.substring(0, 50)));
+    }
+    
+    if (changes.deletions && changes.deletions.length > 0 && changes.deletions[0]?.text) {
+      console.log("[xmlDiffToChanges] Sample deletion:", 
+        JSON.stringify(changes.deletions[0].text.substring(0, 50)));
     }
 
     console.log("[xmlDiffToChanges] Extracted changes:", {
