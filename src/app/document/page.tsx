@@ -1032,13 +1032,27 @@ IMPORTANT GUIDELINES:
       console.log(`[finalizeChanges] Found ${additions.length} additions to apply`);
       
       additions.forEach((addition) => {
-        // Create a simple node with the inner content
+        // Keep the HTML content (including <br> tags) but remove the span
         const content = addition.innerHTML;
-        const textNode = window.document.createTextNode(content);
         
-        // Replace the span with just its text content
+        // Create a new temporary container to handle the HTML content properly
+        const contentContainer = window.document.createElement('span');
+        contentContainer.innerHTML = content;
+        
+        // Replace the AI addition span with its inner HTML content
         if (addition.parentNode) {
-          addition.parentNode.replaceChild(textNode, addition);
+          // Use replaceWith to preserve HTML structure including <br> tags
+          addition.parentNode.replaceChild(contentContainer, addition);
+          
+          // Now move all children out of the temporary span to the parent
+          while (contentContainer.firstChild && contentContainer.parentNode) {
+            contentContainer.parentNode.insertBefore(contentContainer.firstChild, contentContainer);
+          }
+          
+          // Remove the empty temporary container
+          if (contentContainer.parentNode) {
+            contentContainer.parentNode.removeChild(contentContainer);
+          }
         }
       });
       
@@ -1114,13 +1128,27 @@ IMPORTANT GUIDELINES:
       console.log(`[revertChanges] Found ${deletions.length} deletions to restore`);
       
       deletions.forEach((deletion) => {
-        // Create a simple node with the inner content
+        // Keep the HTML content (including <br> tags) but remove the span
         const content = deletion.innerHTML;
-        const textNode = window.document.createTextNode(content);
         
-        // Replace the span with just its text content
+        // Create a new temporary container to handle the HTML content properly
+        const contentContainer = window.document.createElement('span');
+        contentContainer.innerHTML = content;
+        
+        // Replace the AI deletion span with its inner HTML content
         if (deletion.parentNode) {
-          deletion.parentNode.replaceChild(textNode, deletion);
+          // Use replaceWith to preserve HTML structure including <br> tags
+          deletion.parentNode.replaceChild(contentContainer, deletion);
+          
+          // Now move all children out of the temporary span to the parent
+          while (contentContainer.firstChild && contentContainer.parentNode) {
+            contentContainer.parentNode.insertBefore(contentContainer.firstChild, contentContainer);
+          }
+          
+          // Remove the empty temporary container
+          if (contentContainer.parentNode) {
+            contentContainer.parentNode.removeChild(contentContainer);
+          }
         }
       });
       
