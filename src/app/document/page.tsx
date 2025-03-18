@@ -2,6 +2,8 @@
 
 import { useState, useCallback } from "react";
 import { Editor, EditorTools } from "@progress/kendo-react-editor";
+import { Button } from "@progress/kendo-react-buttons";
+import { arrowsLeftRightIcon, menuIcon } from "@progress/kendo-svg-icons";
 import "@progress/kendo-theme-default/dist/all.css";
 import DocumentToolbar from "@/components/DocumentToolbar";
 import AISidebar from "@/components/AISidebar";
@@ -121,35 +123,15 @@ export default function DocumentPage() {
           />
           
           {/* Toggle Sidebar Button */}
-          <button 
+          <Button 
             onClick={toggleSidebar}
-            className="absolute top-2 right-2 p-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors"
-            aria-label={showSidebar ? "Hide AI Assistant" : "Show AI Assistant"}
-          >
-            <svg 
-              xmlns="http://www.w3.org/2000/svg" 
-              className="h-5 w-5" 
-              fill="none" 
-              viewBox="0 0 24 24" 
-              stroke="currentColor"
-            >
-              {showSidebar ? (
-                <path 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  strokeWidth={2} 
-                  d="M13 5l7 7-7 7M5 5l7 7-7 7" 
-                />
-              ) : (
-                <path 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  strokeWidth={2} 
-                  d="M11 19l-7-7 7-7m8 14l-7-7 7-7" 
-                />
-              )}
-            </svg>
-          </button>
+            themeColor="base"
+            rounded="full"
+            size="small"
+            svgIcon={showSidebar ? arrowsLeftRightIcon : menuIcon}
+            className="absolute top-2 right-2 bg-gray-100 hover:bg-gray-200 z-10"
+            title={showSidebar ? "Hide AI Assistant" : "Show AI Assistant"}
+          />
         </div>
         
         {/* AI Sidebar */}

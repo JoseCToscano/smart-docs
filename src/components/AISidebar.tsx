@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { TextArea } from "@progress/kendo-react-inputs";
+import { Button } from "@progress/kendo-react-buttons";
 
 interface AISidebarProps {
   onPromptSubmit: (prompt: string) => void;
@@ -87,6 +89,10 @@ export default function AISidebar({ onPromptSubmit, isLoading = false }: AISideb
     }
   };
 
+  const handleChange = (e: any) => {
+    setPrompt(e.value);
+  };
+
   return (
     <div className="h-full flex flex-col bg-gray-50 border-l border-gray-200 w-80">
       <div className="p-4 border-b border-gray-200 bg-white">
@@ -131,24 +137,29 @@ export default function AISidebar({ onPromptSubmit, isLoading = false }: AISideb
       <div className="p-4 border-t border-gray-200 bg-white">
         <form onSubmit={handleSubmit}>
           <div className="relative">
-            <textarea
-              ref={textareaRef}
+            <TextArea
               value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
+              onChange={handleChange}
               onKeyDown={handleKeyDown}
-              className="w-full border border-gray-300 rounded-lg p-3 pr-12 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none min-h-[60px]"
               placeholder="Ask the AI assistant..."
               disabled={isLoading}
+              rows={3}
+              minLength={1}
+              maxLength={1000}
+              style={{ paddingRight: '3rem' }}
+              className="w-full"
             />
-            <button
-              type="submit"
-              disabled={isLoading || prompt.trim() === ""}
-              className="absolute right-2 bottom-2 p-2 bg-blue-500 text-white rounded-lg disabled:bg-blue-300 hover:bg-blue-600 transition"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
-              </svg>
-            </button>
+            <div className="absolute right-2 bottom-2">
+              <Button
+                type="submit"
+                disabled={isLoading || prompt.trim() === ""}
+                themeColor="primary"
+                rounded="full"
+                size="small"
+                icon="caret-alt-up"
+                className="p-2"
+              />
+            </div>
           </div>
           <div className="mt-2 text-xs text-gray-500 flex justify-between">
             <span>Press Enter to send</span>
