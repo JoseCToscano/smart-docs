@@ -48,6 +48,7 @@ export default function DocumentPage() {
   const [showSidebar, setShowSidebar] = useState(true);
   const [isAIProcessing, setIsAIProcessing] = useState(false);
   const [lastSaved, setLastSaved] = useState<string | null>(null);
+  const [helpDialogVisible, setHelpDialogVisible] = useState(false);
   const editorRef = useRef<any>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -100,9 +101,12 @@ export default function DocumentPage() {
           // This will only run in browser context
           const editorElements = window.document.getElementsByClassName('k-editor');
           if (editorElements.length > 0) {
-            const iframes = editorElements[0].getElementsByTagName('iframe');
-            if (iframes.length > 0) {
-              iframeElement = iframes[0];
+            const firstElement = editorElements[0];
+            if (firstElement) {
+              const iframes = firstElement.getElementsByTagName('iframe');
+              if (iframes.length > 0) {
+                iframeElement = iframes[0];
+              }
             }
           }
         }
@@ -258,6 +262,15 @@ export default function DocumentPage() {
               className="k-button-md"
             >
               Export
+            </Button>
+            <Button
+              themeColor="base"
+              onClick={() => setHelpDialogVisible(true)}
+              icon="question-circle"
+              className="k-button-md"
+              title="Show Help"
+            >
+              Help
             </Button>
           </div>
         </div>
