@@ -183,6 +183,34 @@ span.ai-addition, span.ai-deletion {
   white-space: pre-wrap !important; /* Allow wrapping within the editor */
 }
 
+/* Special styling for pre-formatted text like poetry or code within additions/deletions */
+.ai-addition pre, .ai-deletion pre,
+pre.ai-addition, pre.ai-deletion {
+  white-space: pre !important;
+  display: block !important;
+  margin: 0.5em 0 !important;
+  font-family: monospace !important;
+}
+
+/* Make sure <br> tags after accepting/reverting changes display properly */
+.k-editor-content br {
+  display: block !important;
+  content: "" !important;
+  margin-top: 0.5em !important;
+}
+
+/* Ensure new paragraphs are properly displayed */
+.k-editor-content p {
+  display: block !important;
+  margin: 0.5em 0 !important;
+  min-height: 1em !important;
+}
+
+/* Force all spans to inherit white-space properties correctly */
+.k-editor-content span {
+  white-space: inherit !important;
+}
+
 /* Add animation effects to highlight the changes */
 @keyframes pulse-addition {
   0% { background-color: rgba(34, 197, 94, 0.1); }

@@ -712,20 +712,41 @@ IMPORTANT: When including line breaks in your response, please use actual newlin
     }
     
     try {
+      console.log("[finalizeChanges] Starting to process changes");
+      
       // Find all addition and deletion elements
       const additions = editorDoc.querySelectorAll('.ai-addition');
       const deletions = editorDoc.querySelectorAll('.ai-deletion');
       
+      console.log(`[finalizeChanges] Found ${additions.length} additions and ${deletions.length} deletions`);
+      
       // Process additions - keep content but remove highlighting
-      additions.forEach((addition: Element) => {
+      additions.forEach((addition: Element, index) => {
         const parent = addition.parentNode;
         if (!parent) return;
         
-        const textContent = addition.textContent || '';
-        const textNode = editorDoc.createTextNode(textContent);
+        console.log(`[finalizeChanges] Processing addition #${index + 1}:`);
+        console.log(`[finalizeChanges] Original innerHTML: ${addition.innerHTML.substring(0, 100)}...`);
+        console.log(`[finalizeChanges] Contains <br>: ${addition.innerHTML.includes('<br')}`)
         
-        // Replace the highlighted element with plain text
-        parent.replaceChild(textNode, addition);
+        // Instead of using textContent which loses formatting,
+        // we'll create a document fragment to preserve HTML elements like <br />
+        const tempDiv = editorDoc.createElement('div');
+        
+        // Ensure any literal newlines are converted to <br> tags
+        const contentWithLineBreaks = ensureLineBreaks(addition.innerHTML);
+        tempDiv.innerHTML = contentWithLineBreaks;
+        
+        // Create a document fragment to hold all the child nodes
+        const fragment = editorDoc.createDocumentFragment();
+        
+        // Move all child nodes to the fragment, which will preserve <br> tags
+        while (tempDiv.firstChild) {
+          fragment.appendChild(tempDiv.firstChild);
+        }
+        
+        // Replace the highlighted element with our fragment that preserves line breaks
+        parent.replaceChild(fragment, addition);
       });
       
       // Process deletions - remove them completely
@@ -737,10 +758,15 @@ IMPORTANT: When including line breaks in your response, please use actual newlin
         parent.removeChild(deletion);
       });
       
+      console.log("[finalizeChanges] Changes applied successfully");
+      
+      // Get the updated content with proper line breaks
+      const updatedContent = ensureLineBreaks(editorDoc.body.innerHTML);
+      
       // Update the document state with the finalized content
       setDocument(prev => ({
         ...prev,
-        content: editorDoc.body.innerHTML,
+        content: updatedContent,
         updatedAt: new Date()
       }));
       
@@ -764,9 +790,13 @@ IMPORTANT: When including line breaks in your response, please use actual newlin
     }
     
     try {
+      console.log("[revertChanges] Starting to process changes");
+      
       // Find all addition and deletion elements
       const additions = editorDoc.querySelectorAll('.ai-addition');
       const deletions = editorDoc.querySelectorAll('.ai-deletion');
+      
+      console.log(`[revertChanges] Found ${additions.length} additions and ${deletions.length} deletions`);
       
       // Process additions - remove them entirely
       additions.forEach((addition: Element) => {
@@ -778,21 +808,43 @@ IMPORTANT: When including line breaks in your response, please use actual newlin
       });
       
       // Process deletions - keep content but remove highlighting
-      deletions.forEach((deletion: Element) => {
+      deletions.forEach((deletion: Element, index) => {
         const parent = deletion.parentNode;
         if (!parent) return;
         
-        const textContent = deletion.textContent || '';
-        const textNode = editorDoc.createTextNode(textContent);
+        console.log(`[revertChanges] Processing deletion #${index + 1}:`);
+        console.log(`[revertChanges] Original innerHTML: ${deletion.innerHTML.substring(0, 100)}...`);
+        console.log(`[revertChanges] Contains <br>: ${deletion.innerHTML.includes('<br')}`)
         
-        // Replace the highlighted element with plain text
-        parent.replaceChild(textNode, deletion);
+        // Instead of using textContent which loses formatting,
+        // we'll create a document fragment to preserve HTML elements like <br />
+        const tempDiv = editorDoc.createElement('div');
+        
+        // Ensure any literal newlines are converted to <br> tags
+        const contentWithLineBreaks = ensureLineBreaks(deletion.innerHTML);
+        tempDiv.innerHTML = contentWithLineBreaks;
+        
+        // Create a document fragment to hold all the child nodes
+        const fragment = editorDoc.createDocumentFragment();
+        
+        // Move all child nodes to the fragment, which will preserve <br> tags
+        while (tempDiv.firstChild) {
+          fragment.appendChild(tempDiv.firstChild);
+        }
+        
+        // Replace the highlighted element with our fragment that preserves line breaks
+        parent.replaceChild(fragment, deletion);
       });
+      
+      console.log("[revertChanges] Changes reverted successfully");
+      
+      // Get the updated content with proper line breaks
+      const updatedContent = ensureLineBreaks(editorDoc.body.innerHTML);
       
       // Update the document state with the reverted content
       setDocument(prev => ({
         ...prev,
-        content: editorDoc.body.innerHTML,
+        content: updatedContent,
         updatedAt: new Date()
       }));
       
@@ -806,6 +858,20 @@ IMPORTANT: When including line breaks in your response, please use actual newlin
       console.error("Error reverting changes:", error);
     }
   }, []);
+
+  // Helper function to ensure line breaks are properly converted to <br> tags
+  const ensureLineBreaks = (htmlContent: string): string => {
+    // First handle any literal newlines (these can come from innerHTML sometimes depending on the browser)
+    let content = htmlContent.replace(/\n/g, '<br />');
+    
+    // Also handle any remaining ___NEWLINE___ placeholders that might be in the content
+    content = content.replace(/___NEWLINE___/g, '<br />');
+    
+    // Log the transformation
+    console.log('[ensureLineBreaks] Processed line breaks, contains <br>:', content.includes('<br'));
+    
+    return content;
+  };
 
   // Update toggleSidebar to work with Splitter
   const toggleSidebar = useCallback(() => {
