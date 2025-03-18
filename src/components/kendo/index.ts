@@ -2,11 +2,6 @@
 export * from './premium';
 export * from './free';
 
-// Export layout components that we use
-export { Splitter } from "@progress/kendo-react-layout";
-export { Popup } from "@progress/kendo-react-popup";
-export { Tooltip } from "@progress/kendo-react-tooltip";
-
 // Also re-export svg icons that we use
 export { 
   arrowsLeftRightIcon, 
