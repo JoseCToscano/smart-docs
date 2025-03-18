@@ -427,20 +427,23 @@ export default function DocumentPage() {
       // Parse the result with XML tags
       const xmlResult = data.result;
       
+      // Immediately apply the XML changes to the editor to show highlighting
+      applyXmlChangesToEditor(xmlResult);
+      
       // Convert XML diff to a structured format for the sidebar
       const changes = xmlDiffToChanges(xmlResult);
       
       // Create response for the AI sidebar
-      const mockResponse = {
-        text: "I've analyzed your document and have suggested some changes.",
+      const responseText = "I've applied the suggested changes to your document. You can see additions highlighted in green and deletions in red.";
+      
+      setAIResponse({
+        text: responseText,
         suggestions: changes
-      };
+      });
       
-      setAIResponse(mockResponse);
-      
-      // Add the AI response to the sidebar
+      // Add the AI response to the sidebar without the raw XML since it's already applied
       if (aiSidebarRef.current && typeof aiSidebarRef.current.addAIResponse === 'function') {
-        aiSidebarRef.current.addAIResponse(mockResponse.text, changes, xmlResult);
+        aiSidebarRef.current.addAIResponse(responseText, changes);
       }
       
     } catch (error) {
@@ -496,6 +499,110 @@ export default function DocumentPage() {
   // Add a new function to apply XML diff directly
   const handleApplyXmlChanges = useCallback((xmlContent: string) => {
     applyXmlChangesToEditor(xmlContent);
+  }, []);
+
+  // Function to finalize and accept all AI changes
+  const finalizeChanges = useCallback(() => {
+    const editorDoc = getEditorDocument();
+    if (!editorDoc) {
+      console.error("Failed to get editor document for finalizing changes");
+      return;
+    }
+    
+    try {
+      // Find all addition and deletion elements
+      const additions = editorDoc.querySelectorAll('.ai-addition');
+      const deletions = editorDoc.querySelectorAll('.ai-deletion');
+      
+      // Process additions - keep content but remove highlighting
+      additions.forEach((addition: Element) => {
+        const parent = addition.parentNode;
+        if (!parent) return;
+        
+        const textContent = addition.textContent || '';
+        const textNode = editorDoc.createTextNode(textContent);
+        
+        // Replace the highlighted element with plain text
+        parent.replaceChild(textNode, addition);
+      });
+      
+      // Process deletions - remove them completely
+      deletions.forEach((deletion: Element) => {
+        const parent = deletion.parentNode;
+        if (!parent) return;
+        
+        // Simply remove the deleted text
+        parent.removeChild(deletion);
+      });
+      
+      // Update the document state with the finalized content
+      setDocument(prev => ({
+        ...prev,
+        content: editorDoc.body.innerHTML,
+        updatedAt: new Date()
+      }));
+      
+      // Add a confirmation message to the AI sidebar
+      if (aiSidebarRef.current && typeof aiSidebarRef.current.addAIResponse === 'function') {
+        aiSidebarRef.current.addAIResponse(
+          "I've finalized all the suggested changes. Additions have been incorporated, and deletions have been removed."
+        );
+      }
+    } catch (error) {
+      console.error("Error finalizing changes:", error);
+    }
+  }, []);
+  
+  // Function to revert all AI changes
+  const revertChanges = useCallback(() => {
+    const editorDoc = getEditorDocument();
+    if (!editorDoc) {
+      console.error("Failed to get editor document for reverting changes");
+      return;
+    }
+    
+    try {
+      // Find all addition and deletion elements
+      const additions = editorDoc.querySelectorAll('.ai-addition');
+      const deletions = editorDoc.querySelectorAll('.ai-deletion');
+      
+      // Process additions - remove them entirely
+      additions.forEach((addition: Element) => {
+        const parent = addition.parentNode;
+        if (!parent) return;
+        
+        // Remove the added text
+        parent.removeChild(addition);
+      });
+      
+      // Process deletions - keep content but remove highlighting
+      deletions.forEach((deletion: Element) => {
+        const parent = deletion.parentNode;
+        if (!parent) return;
+        
+        const textContent = deletion.textContent || '';
+        const textNode = editorDoc.createTextNode(textContent);
+        
+        // Replace the highlighted element with plain text
+        parent.replaceChild(textNode, deletion);
+      });
+      
+      // Update the document state with the reverted content
+      setDocument(prev => ({
+        ...prev,
+        content: editorDoc.body.innerHTML,
+        updatedAt: new Date()
+      }));
+      
+      // Add a confirmation message to the AI sidebar
+      if (aiSidebarRef.current && typeof aiSidebarRef.current.addAIResponse === 'function') {
+        aiSidebarRef.current.addAIResponse(
+          "I've reverted all the suggested changes. The document has been restored to its original state."
+        );
+      }
+    } catch (error) {
+      console.error("Error reverting changes:", error);
+    }
   }, []);
 
   const toggleSidebar = useCallback(() => {
@@ -649,6 +756,8 @@ export default function DocumentPage() {
             editorRef={editorRef}
             onApplyChanges={handleApplyChanges}
             onApplyXmlChanges={handleApplyXmlChanges}
+            onFinalizeChanges={finalizeChanges}
+            onRevertChanges={revertChanges}
             ref={aiSidebarRef}
           />
         )}

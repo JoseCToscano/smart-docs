@@ -119,65 +119,86 @@
 /* AI Diff Highlighting Styles */
 .ai-addition {
   background-color: rgba(34, 197, 94, 0.2); /* Light green */
+  color: rgb(22, 101, 52); /* Darker green text for better contrast */
+  border-radius: 2px;
+  border-bottom: 1px solid rgba(34, 197, 94, 0.5);
   text-decoration: none;
   padding: 0 2px;
-  transition: background-color 0.3s ease;
+  margin: 0 1px;
+  transition: all 0.3s ease;
   position: relative;
+  font-weight: 500; /* Slightly bolder */
 }
 
 .ai-addition:hover {
   background-color: rgba(34, 197, 94, 0.3); /* Slightly darker green on hover */
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.1);
 }
 
 .ai-deletion {
   background-color: rgba(239, 68, 68, 0.2); /* Light red */
+  color: rgb(153, 27, 27); /* Darker red text for better contrast */
+  border-radius: 2px;
+  border-bottom: 1px solid rgba(239, 68, 68, 0.5);
   text-decoration: line-through;
   padding: 0 2px;
-  transition: background-color 0.3s ease;
+  margin: 0 1px;
+  transition: all 0.3s ease;
   position: relative;
 }
 
 .ai-deletion:hover {
   background-color: rgba(239, 68, 68, 0.3); /* Slightly darker red on hover */
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.1);
 }
 
 /* Add animation effects to highlight the changes */
 @keyframes pulse-addition {
-  0% { background-color: rgba(34, 197, 94, 0.4); }
-  50% { background-color: rgba(34, 197, 94, 0.2); }
-  100% { background-color: rgba(34, 197, 94, 0.4); }
+  0% { background-color: rgba(34, 197, 94, 0.1); }
+  50% { background-color: rgba(34, 197, 94, 0.3); }
+  100% { background-color: rgba(34, 197, 94, 0.1); }
 }
 
 @keyframes pulse-deletion {
-  0% { background-color: rgba(239, 68, 68, 0.4); }
-  50% { background-color: rgba(239, 68, 68, 0.2); }
-  100% { background-color: rgba(239, 68, 68, 0.4); }
+  0% { background-color: rgba(239, 68, 68, 0.1); }
+  50% { background-color: rgba(239, 68, 68, 0.3); }
+  100% { background-color: rgba(239, 68, 68, 0.1); }
 }
 
 .ai-addition.highlight {
-  animation: pulse-addition 1.5s ease-in-out 3;
+  animation: pulse-addition 2s ease-in-out 3;
 }
 
 .ai-deletion.highlight {
-  animation: pulse-deletion 1.5s ease-in-out 3;
+  animation: pulse-deletion 2s ease-in-out 3;
 }
 
 /* Add a small icon to indicate AI-generated changes */
 .ai-badge::after {
   content: "AI";
   position: absolute;
-  top: -10px;
-  right: -5px;
+  top: -8px;
+  right: -3px;
   font-size: 8px;
   background-color: #4285f4;
   color: white;
   border-radius: 4px;
   padding: 1px 3px;
-  opacity: 0;
+  opacity: 0.8; /* Make it visible by default */
   transition: opacity 0.3s ease;
+  font-weight: bold;
+  pointer-events: none; /* Prevent it from interfering with clicks */
+  z-index: 1;
 }
 
 .ai-addition:hover::after,
 .ai-deletion:hover::after {
   opacity: 1;
+}
+
+/* Make sure the AI changes are clearly visible even in the editor */
+.k-editor-content .ai-addition,
+.k-editor-content .ai-deletion {
+  display: inline-block; /* Ensure proper display in the editor */
+  white-space: normal; /* Allow wrapping within the editor */
 } 
