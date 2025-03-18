@@ -103,80 +103,20 @@
   padding-right: 0;
 }
 
-/* AutoCompletion Component Styles */
+/* AutoCompletion Component Styles - Not needed for inline version */
 .autocomplete-container {
+  display: none; /* Hide the old popup */
+}
+
+/* Screen reader only class for accessibility */
+.sr-only {
   position: absolute;
-  z-index: 1000;
-  max-width: 50%;
-  width: auto;
-  border-radius: 4px;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  background-color: white;
-  border: 1px solid #e5e7eb;
-  bottom: 40px;
-  right: 40px;
-}
-
-.autocomplete-loading {
-  padding: 8px 12px;
-  display: flex;
-  align-items: center;
-  font-size: 0.875rem;
-  color: #6b7280;
-}
-
-.autocomplete-suggestion {
-  display: flex;
-  flex-direction: column;
-}
-
-.suggestion-content {
-  padding: 8px 12px;
-  border-bottom: 1px solid #e5e7eb;
-  background-color: #f9fafb;
-  color: #6b7280;
-  font-size: 0.875rem;
-  max-height: 200px;
-  overflow-y: auto;
-  white-space: pre-wrap;
-}
-
-.suggestion-text {
-  opacity: 0.8;
-}
-
-.suggestion-actions {
-  display: flex;
-  padding: 8px;
-  background-color: white;
-}
-
-.suggestion-accept-btn,
-.suggestion-reject-btn {
-  padding: 4px 8px;
-  font-size: 0.75rem;
-  border-radius: 4px;
-  cursor: pointer;
-  border: none;
-  outline: none;
-}
-
-.suggestion-accept-btn {
-  background-color: #3b82f6;
-  color: white;
-  margin-right: 8px;
-}
-
-.suggestion-accept-btn:hover {
-  background-color: #2563eb;
-}
-
-.suggestion-reject-btn {
-  background-color: #f3f4f6;
-  color: #374151;
-}
-
-.suggestion-reject-btn:hover {
-  background-color: #e5e7eb;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
 } 
