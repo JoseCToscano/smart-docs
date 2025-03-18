@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import Notification, { NotificationProps } from '../components/kendo/free/Notification';
 
 interface NotificationItem extends NotificationProps {
@@ -28,9 +28,16 @@ export const useNotifications = () => {
 
 export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  
+  // Debug: log whenever notifications change
+  useEffect(() => {
+    console.log('Current notifications:', notifications);
+  }, [notifications]);
 
   const showNotification = (notification: Omit<NotificationProps, 'onClose'>) => {
     const id = Date.now().toString();
+    console.log('Adding notification:', { id, ...notification });
+    
     setNotifications((prevNotifications) => [
       ...prevNotifications,
       { ...notification, id },
@@ -39,6 +46,7 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
   };
 
   const closeNotification = (id: string) => {
+    console.log('Removing notification:', id);
     setNotifications((prevNotifications) =>
       prevNotifications.filter((notification) => notification.id !== id)
     );
@@ -46,6 +54,7 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
 
   // Helper functions for common notification types
   const success = (message: string, options?: Partial<Omit<NotificationProps, 'message' | 'type'>>) => {
+    console.log('Showing success notification:', message);
     return showNotification({ 
       message, 
       type: 'success', 
@@ -54,6 +63,7 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
   };
   
   const info = (message: string, options?: Partial<Omit<NotificationProps, 'message' | 'type'>>) => {
+    console.log('Showing info notification:', message);
     return showNotification({ 
       message, 
       type: 'info', 
@@ -62,6 +72,7 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
   };
   
   const warning = (message: string, options?: Partial<Omit<NotificationProps, 'message' | 'type'>>) => {
+    console.log('Showing warning notification:', message);
     return showNotification({ 
       message, 
       type: 'warning', 
@@ -70,6 +81,7 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
   };
   
   const error = (message: string, options?: Partial<Omit<NotificationProps, 'message' | 'type'>>) => {
+    console.log('Showing error notification:', message);
     return showNotification({ 
       message, 
       type: 'error', 
@@ -89,17 +101,24 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
   return (
     <NotificationContext.Provider value={contextValue}>
       {children}
-      {notifications.map((notification) => (
-        <Notification
-          key={notification.id}
-          type={notification.type}
-          message={notification.message}
-          position={notification.position}
-          autoClose={notification.autoClose}
-          autoCloseTimeout={notification.autoCloseTimeout}
-          onClose={() => closeNotification(notification.id)}
-        />
-      ))}
+      {notifications.length > 0 && (
+        <>
+          {notifications.map((notification) => {
+            console.log(`Rendering notification: ${notification.id}`);
+            return (
+              <Notification
+                key={notification.id}
+                type={notification.type}
+                message={notification.message}
+                position={notification.position}
+                autoClose={notification.autoClose}
+                autoCloseTimeout={notification.autoCloseTimeout}
+                onClose={() => closeNotification(notification.id)}
+              />
+            );
+          })}
+        </>
+      )}
     </NotificationContext.Provider>
   );
 };
