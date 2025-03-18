@@ -25,10 +25,16 @@ function hasRepeatingPattern(text: string, minPatternLength = 10): boolean {
   return false;
 }
 
+// Track cache hit rate for analytics
+let totalRequests = 0;
+let cacheHits = 0;
+
 export async function POST(req: NextRequest) {
   try {
-    const { text, contextType } = await req.json();
+    totalRequests++;
+    const { text, contextType, style, tone } = await req.json();
     console.log("[API:Autocomplete] Received request with text:", text);
+    console.log("[API:Autocomplete] Context information:", { contextType, style, tone });
     
     if (!text) {
       console.log("[API:Autocomplete] Error: Text content is required");
@@ -44,6 +50,49 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ completion: '' });
     }
 
+    // Build a contextual instruction based on detected style and tone
+    let contextualInstruction = `Context type: ${contextType || 'text'}`;
+    
+    if (style) {
+      contextualInstruction += `\nWriting style: ${style}`;
+      
+      // Add specific style guidance
+      switch(style) {
+        case 'academic':
+          contextualInstruction += `\nUse an objective, scholarly tone with precise language and formal phrasing.`;
+          break;
+        case 'technical':
+          contextualInstruction += `\nUse clear, precise terminology with a focus on accuracy and technical details.`;
+          break;
+        case 'business':
+          contextualInstruction += `\nUse professional, results-oriented language focused on value and outcomes.`;
+          break;
+        case 'creative':
+          contextualInstruction += `\nMaintain the narrative voice and creative elements present in the text.`;
+          break;
+      }
+    }
+    
+    if (tone) {
+      contextualInstruction += `\nTone: ${tone}`;
+      
+      // Add specific tone guidance
+      switch(tone) {
+        case 'formal':
+          contextualInstruction += `\nUse authoritative, direct language with proper grammar and structure.`;
+          break;
+        case 'tentative':
+          contextualInstruction += `\nUse measured, thoughtful language that acknowledges nuance and alternatives.`;
+          break;
+        case 'casual':
+          contextualInstruction += `\nUse approachable, conversational language that feels natural and engaging.`;
+          break;
+        case 'personal':
+          contextualInstruction += `\nMaintain the first-person perspective and subjective viewpoint.`;
+          break;
+      }
+    }
+
     // Using Haiku model for fast, concise text completions
     console.log("[API:Autocomplete] Calling Anthropic API with model: claude-3-haiku-20240307");
     
@@ -51,13 +100,11 @@ export async function POST(req: NextRequest) {
       model: "claude-3-haiku-20240307",
       max_tokens: 100, // Reduced for more concise completions (15-50 words)
       temperature: 0.7, // Slightly more creative for natural writing
-      messages: [
+      system: [
+        // Cache the core instructions and guidelines as they're static across requests
         {
-          role: "user",
-          content: `Continue this text with a natural, non-repetitive completion (1-3 sentences, about 15-50 words):\n\n${text}`
-        }
-      ],
-      system: `You are an AI writing assistant integrated directly into a document editor, designed to help users complete their thoughts and improve their writing in real-time.
+          type: "text",
+          text: `You are an AI writing assistant integrated directly into a document editor, designed to help users complete their thoughts and improve their writing in real-time.
 
 Core responsibilities:
 - Generate natural, high-quality text completions based on the document context
@@ -74,16 +121,56 @@ Guidelines:
 - If the text is technical, maintain appropriate terminology and precision
 - If the text is creative, maintain the narrative voice and stylistic elements
 - Adapt to different document types (academic papers, business reports, creative writing, emails)
-- Never complete text in ways that could create harmful or misleading content
-- IMPORTANT: DO NOT repeat phrases or sentences that already exist in the input text
-- IMPORTANT: Ensure your completion avoids circular or repetitive patterns`
+- Never complete text in ways that could create harmful or misleading content`,
+          cache_control: { type: "ephemeral" }
+        },
+        // Non-cached specific instructions for this particular request
+        {
+          type: "text",
+          text: `IMPORTANT: DO NOT repeat phrases or sentences that already exist in the input text
+IMPORTANT: Ensure your completion avoids circular or repetitive patterns
+
+${contextualInstruction}`
+        }
+      ],
+      messages: [
+        {
+          role: "user",
+          content: `Continue this text with a natural, non-repetitive completion (1-3 sentences, about 15-50 words):\n\n${text}`
+        }
+      ]
+    });
+
+    // Log cache usage statistics
+    const cacheCreationTokens = response.usage?.cache_creation_input_tokens || 0;
+    const cacheReadTokens = response.usage?.cache_read_input_tokens || 0;
+    const inputTokens = response.usage?.input_tokens || 0;
+    const outputTokens = response.usage?.output_tokens || 0;
+    
+    // Determine if this was a cache hit
+    if (cacheReadTokens > 0 && cacheCreationTokens === 0) {
+      cacheHits++;
+    }
+    
+    const cacheHitRate = totalRequests > 0 ? (cacheHits / totalRequests) * 100 : 0;
+    
+    console.log("[API:Autocomplete] Usage statistics:", {
+      cacheCreationTokens,
+      cacheReadTokens,
+      inputTokens,
+      outputTokens,
+      totalRequests,
+      cacheHits,
+      cacheHitRate: `${cacheHitRate.toFixed(2)}%`
     });
 
     console.log("[API:Autocomplete] Received response from Anthropic API:", {
       id: response.id,
       model: response.model,
       contentType: response.content?.[0]?.type,
-      hasContent: Boolean(response.content?.length)
+      hasContent: Boolean(response.content?.length),
+      usage: response.usage,
+      cacheUsed: cacheReadTokens > 0
     });
 
     // Try to extract the completion text using try/catch to handle type issues

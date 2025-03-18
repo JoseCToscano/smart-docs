@@ -6,6 +6,10 @@ interface AutoCompletionProps {
   enabled: boolean;
 }
 
+// Define types for context detection
+type ContextStyle = 'academic' | 'technical' | 'business' | 'creative' | undefined;
+type ContextTone = 'formal' | 'tentative' | 'casual' | 'personal' | undefined;
+
 const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) => {
   const [loading, setLoading] = useState(false);
   const [suggestion, setSuggestion] = useState<string | null>(null);
@@ -43,16 +47,50 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
   };
 
   // Get contextual information about the text to improve completions
-  const getContextType = (text: string): string => {
-    // Check if the text appears to be in a specific format
-    if (/^\s*[\d]+[\.\)]\s+/.test(text)) return 'list-numbered';
-    if (/^\s*[\-\*\•]\s+/.test(text)) return 'list-bullet';
-    if (/^\s*#+\s+/.test(text)) return 'heading';
-    if (/^(Dear|Hello|Hi)\s+/.test(text)) return 'email';
-    if (/^(abstract|introduction|conclusion|references):/i.test(text)) return 'academic';
+  const getContextType = (text: string): { type: string; style?: ContextStyle; tone?: ContextTone } => {
+    // Initialize context object
+    const context = {
+      type: 'text' as string,
+      style: undefined as ContextStyle,
+      tone: undefined as ContextTone
+    };
     
-    // Default context is general text
-    return 'text';
+    // Check if the text appears to be in a specific format
+    if (/^\s*[\d]+[\.\)]\s+/.test(text)) {
+      context.type = 'list-numbered';
+    } else if (/^\s*[\-\*\•]\s+/.test(text)) {
+      context.type = 'list-bullet';
+    } else if (/^\s*#+\s+/.test(text)) {
+      context.type = 'heading';
+    } else if (/^(Dear|Hello|Hi)\s+/.test(text)) {
+      context.type = 'email';
+    } else if (/^(abstract|introduction|conclusion|references):/i.test(text)) {
+      context.type = 'academic';
+    }
+    
+    // Detect writing style
+    if (/\b(theorem|lemma|proof|equation|cite|et al\.)\b/i.test(text)) {
+      context.style = 'academic';
+    } else if (/\b(code|function|variable|algorithm|implementation)\b/i.test(text)) {
+      context.style = 'technical';
+    } else if (/\b(sales|market|customer|revenue|business|ROI)\b/i.test(text)) {
+      context.style = 'business';
+    } else if (/[""].+?[""]|['''].+?[''']/.test(text)) {
+      context.style = 'creative';
+    }
+    
+    // Detect tone
+    if (/\b(must|should|need to|important|critical)\b/i.test(text)) {
+      context.tone = 'formal';
+    } else if (/\b(perhaps|maybe|might|could|possibly)\b/i.test(text)) {
+      context.tone = 'tentative';
+    } else if (/\b(awesome|amazing|cool|great|fantastic)\b/i.test(text)) {
+      context.tone = 'casual';
+    } else if (/\b(I think|I feel|I believe|in my opinion)\b/i.test(text)) {
+      context.tone = 'personal';
+    }
+    
+    return context;
   };
 
   const getSuggestion = useCallback(
@@ -87,8 +125,8 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
       
       setLoading(true);
       try {
-        const contextType = getContextType(text);
-        console.log("[AutoCompletion] Detected context type:", contextType);
+        const contextInfo = getContextType(text);
+        console.log("[AutoCompletion] Detected context:", contextInfo);
         
         console.log("[AutoCompletion] Calling /api/autocomplete endpoint");
         const response = await fetch('/api/autocomplete', {
@@ -96,7 +134,12 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ text, contextType }),
+          body: JSON.stringify({ 
+            text, 
+            contextType: contextInfo.type,
+            style: contextInfo.style,
+            tone: contextInfo.tone
+          }),
         });
 
         const data = await response.json();
