@@ -167,25 +167,27 @@ export default function DocumentPage() {
                 ref={editorRef}
                 tools={[
                   // Text formatting
-                  [Bold, Italic, Underline, ForeColor, BackColor],
+                  [Bold, Italic, Underline],
+                  [ForeColor, BackColor],
                   // Alignment
                   [AlignLeft, AlignCenter, AlignRight],
                   // Lists and indentation
-                  [OrderedList, UnorderedList, Indent, Outdent],
+                  [OrderedList, UnorderedList],
+                  [Indent, Outdent],
                   // History
                   [Undo, Redo],
                   // Links
                   [EditorLink, Unlink],
                   // Format and styles
-                  [FormatBlock, FontName, FontSize],
+                  [FormatBlock],
+                  [FontName],
+                  [FontSize],
                   // Tables
-                  [
-                    InsertTable,
-                    [AddRowBefore, AddRowAfter, DeleteRow],
-                    [AddColumnBefore, AddColumnAfter, DeleteColumn],
-                    DeleteTable,
-                    [MergeCells, SplitCell]
-                  ],
+                  [InsertTable],
+                  [AddRowBefore, AddRowAfter, DeleteRow],
+                  [AddColumnBefore, AddColumnAfter, DeleteColumn],
+                  [DeleteTable],
+                  [MergeCells, SplitCell],
                   // Images
                   [InsertImage]
                 ]}
