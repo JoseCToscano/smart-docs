@@ -1,20 +1,39 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from "react";
 import { TextArea, Button } from "@/components/kendo/free";
 
 interface AISidebarProps {
   onPromptSubmit: (prompt: string) => void;
   isLoading?: boolean;
+  editorRef?: React.RefObject<any>;
+  onApplyChanges?: (changes: DocumentChanges) => void;
 }
 
 type Message = {
   role: "user" | "assistant";
   content: string;
   timestamp?: Date;
+  suggestions?: DocumentChanges | null;
 };
 
-export default function AISidebar({ onPromptSubmit, isLoading = false }: AISidebarProps) {
+export type DocumentChanges = {
+  additions?: { text: string; range?: { start: number; end: number } }[];
+  deletions?: { text: string; range?: { start: number; end: number } }[];
+  replacements?: { oldText: string; newText: string; range?: { start: number; end: number } }[];
+};
+
+export interface AISidebarHandle {
+  addAIResponse: (content: string, suggestions?: DocumentChanges | null) => void;
+}
+
+// Convert to forwardRef to allow the parent component to access methods
+const AISidebar = forwardRef<AISidebarHandle, AISidebarProps>(({
+  onPromptSubmit, 
+  isLoading = false,
+  editorRef,
+  onApplyChanges 
+}, ref) => {
   const [prompt, setPrompt] = useState("");
   const [chatHistory, setChatHistory] = useState<Message[]>([
     { 
@@ -26,6 +45,20 @@ export default function AISidebar({ onPromptSubmit, isLoading = false }: AISideb
   
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Expose methods to parent component via ref
+  useImperativeHandle(ref, () => ({
+    addAIResponse: (content: string, suggestions?: DocumentChanges | null) => {
+      const assistantMessage: Message = {
+        role: "assistant", 
+        content,
+        timestamp: new Date(),
+        suggestions
+      };
+      
+      setChatHistory(prev => [...prev, assistantMessage]);
+    }
+  }));
 
   // Auto-scroll chat to bottom when new messages appear
   useEffect(() => {
@@ -53,17 +86,6 @@ export default function AISidebar({ onPromptSubmit, isLoading = false }: AISideb
     
     // Clear the input
     setPrompt("");
-    
-    // Simulate AI response (this will be replaced with actual AI integration)
-    setTimeout(() => {
-      const assistantMessage: Message = {
-        role: "assistant", 
-        content: "I'll help you with that! This is a placeholder response. In the future, I'll be able to help you edit your document, answer questions, and provide suggestions.",
-        timestamp: new Date()
-      };
-      
-      setChatHistory(prev => [...prev, assistantMessage]);
-    }, 1000);
   };
 
   // Handle keyboard shortcuts
@@ -76,6 +98,12 @@ export default function AISidebar({ onPromptSubmit, isLoading = false }: AISideb
 
   const handleChange = (e: any) => {
     setPrompt(e.value);
+  };
+
+  const handleApplySuggestion = (suggestions: DocumentChanges) => {
+    if (onApplyChanges) {
+      onApplyChanges(suggestions);
+    }
   };
 
   return (
@@ -100,6 +128,66 @@ export default function AISidebar({ onPromptSubmit, isLoading = false }: AISideb
             }`}
           >
             <div>{message.content}</div>
+            {message.suggestions && (
+              <div className="mt-2 pt-2 border-t border-gray-200">
+                <div className="text-xs font-medium mb-1">Suggested changes:</div>
+                
+                {message.suggestions.additions && message.suggestions.additions.length > 0 && (
+                  <div className="mb-1">
+                    <div className="text-xs text-green-600">Additions:</div>
+                    {message.suggestions.additions.map((addition, i) => (
+                      <div key={i} className="text-xs rounded p-1 bg-green-50 text-green-800 my-1">
+                        + {addition.text.length > 40 
+                          ? addition.text.substring(0, 40) + '...' 
+                          : addition.text}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                {message.suggestions.deletions && message.suggestions.deletions.length > 0 && (
+                  <div className="mb-1">
+                    <div className="text-xs text-red-600">Deletions:</div>
+                    {message.suggestions.deletions.map((deletion, i) => (
+                      <div key={i} className="text-xs rounded p-1 bg-red-50 text-red-800 my-1">
+                        - {deletion.text.length > 40 
+                          ? deletion.text.substring(0, 40) + '...' 
+                          : deletion.text}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                {message.suggestions.replacements && message.suggestions.replacements.length > 0 && (
+                  <div className="mb-1">
+                    <div className="text-xs text-amber-600">Replacements:</div>
+                    {message.suggestions.replacements.map((replacement, i) => (
+                      <div key={i} className="text-xs my-1">
+                        <div className="rounded p-1 bg-red-50 text-red-800">
+                          - {replacement.oldText.length > 40 
+                              ? replacement.oldText.substring(0, 40) + '...' 
+                              : replacement.oldText}
+                        </div>
+                        <div className="rounded p-1 bg-green-50 text-green-800">
+                          + {replacement.newText.length > 40 
+                              ? replacement.newText.substring(0, 40) + '...' 
+                              : replacement.newText}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                <Button
+                  onClick={() => handleApplySuggestion(message.suggestions!)}
+                  themeColor="primary"
+                  size="small"
+                  className="mt-1 w-full"
+                >
+                  Apply Changes
+                </Button>
+              </div>
+            )}
             {message.timestamp && (
               <div className={`text-xs mt-1 ${message.role === "user" ? "text-blue-200" : "text-gray-400"}`}>
                 {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -154,4 +242,9 @@ export default function AISidebar({ onPromptSubmit, isLoading = false }: AISideb
       </div>
     </div>
   );
-} 
+});
+
+// Add display name for React dev tools
+AISidebar.displayName = 'AISidebar';
+
+export default AISidebar; 

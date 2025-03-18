@@ -114,4 +114,70 @@
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border-width: 0;
+}
+
+/* AI Diff Highlighting Styles */
+.ai-addition {
+  background-color: rgba(34, 197, 94, 0.2); /* Light green */
+  text-decoration: none;
+  padding: 0 2px;
+  transition: background-color 0.3s ease;
+  position: relative;
+}
+
+.ai-addition:hover {
+  background-color: rgba(34, 197, 94, 0.3); /* Slightly darker green on hover */
+}
+
+.ai-deletion {
+  background-color: rgba(239, 68, 68, 0.2); /* Light red */
+  text-decoration: line-through;
+  padding: 0 2px;
+  transition: background-color 0.3s ease;
+  position: relative;
+}
+
+.ai-deletion:hover {
+  background-color: rgba(239, 68, 68, 0.3); /* Slightly darker red on hover */
+}
+
+/* Add animation effects to highlight the changes */
+@keyframes pulse-addition {
+  0% { background-color: rgba(34, 197, 94, 0.4); }
+  50% { background-color: rgba(34, 197, 94, 0.2); }
+  100% { background-color: rgba(34, 197, 94, 0.4); }
+}
+
+@keyframes pulse-deletion {
+  0% { background-color: rgba(239, 68, 68, 0.4); }
+  50% { background-color: rgba(239, 68, 68, 0.2); }
+  100% { background-color: rgba(239, 68, 68, 0.4); }
+}
+
+.ai-addition.highlight {
+  animation: pulse-addition 1.5s ease-in-out 3;
+}
+
+.ai-deletion.highlight {
+  animation: pulse-deletion 1.5s ease-in-out 3;
+}
+
+/* Add a small icon to indicate AI-generated changes */
+.ai-badge::after {
+  content: "AI";
+  position: absolute;
+  top: -10px;
+  right: -5px;
+  font-size: 8px;
+  background-color: #4285f4;
+  color: white;
+  border-radius: 4px;
+  padding: 1px 3px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.ai-addition:hover::after,
+.ai-deletion:hover::after {
+  opacity: 1;
 } 

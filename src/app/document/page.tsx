@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, forwardRef } from "react";
 import { Editor, EditorTools } from "@/components/kendo/premium";
 import { Button, Input } from "@/components/kendo/free";
 import { 
@@ -10,8 +10,8 @@ import {
 import "@progress/kendo-theme-default/dist/all.css";
 import "./styles.css";
 import Link from "next/link";
-import AISidebar from "@/components/AISidebar";
-import { Document } from "@/types";
+import AISidebar, { DocumentChanges, AISidebarHandle } from "@/components/AISidebar";
+import { Document as DocType } from "@/types";
 import DocumentToolbar from "@/components/DocumentToolbar";
 import { Window } from "@progress/kendo-react-dialogs";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -38,7 +38,7 @@ const {
 } = EditorTools;
 
 export default function DocumentPage() {
-  const [document, setDocument] = useState<Document>({
+  const [document, setDocument] = useState<DocType>({
     title: "Untitled Document",
     content: "<p></p>",
     createdAt: new Date(),
@@ -49,7 +49,9 @@ export default function DocumentPage() {
   const [isAIProcessing, setIsAIProcessing] = useState(false);
   const [lastSaved, setLastSaved] = useState<string | null>(null);
   const [helpDialogVisible, setHelpDialogVisible] = useState(false);
+  const [aiResponse, setAIResponse] = useState<{ text: string, suggestions: DocumentChanges | null }>({ text: "", suggestions: null });
   const editorRef = useRef<any>(null);
+  const aiSidebarRef = useRef<AISidebarHandle>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -186,14 +188,298 @@ export default function DocumentPage() {
     alert("Export functionality will be implemented in a future update.");
   }, []);
 
+  // Function to get the editor document and window
+  const getEditorDocument = (): HTMLDocument | null => {
+    if (!editorRef.current) return null;
+    
+    let iframeElement = null;
+    
+    // Try to get the iframe element
+    if (editorRef.current.iframe) {
+      iframeElement = editorRef.current.iframe;
+    } else if (editorRef.current.element?.querySelector) {
+      iframeElement = editorRef.current.element.querySelector('iframe');
+    } else if (typeof window !== 'undefined') {
+      const editorElements = window.document.getElementsByClassName('k-editor');
+      if (editorElements.length > 0) {
+        const iframes = (editorElements[0] as HTMLElement).getElementsByTagName('iframe');
+        if (iframes.length > 0) {
+          iframeElement = iframes[0];
+        }
+      }
+    }
+    
+    if (iframeElement) {
+      return iframeElement.contentDocument || (iframeElement.contentWindow?.document as HTMLDocument);
+    }
+    
+    return null;
+  };
+
+  // Get the editor's content as HTML string
+  const getEditorContent = (): string => {
+    const doc = getEditorDocument();
+    if (doc && doc.body) {
+      return doc.body.innerHTML;
+    }
+    return document.content;
+  };
+
+  // Apply changes to the editor
+  const applyChangesToEditor = (changes: DocumentChanges) => {
+    const editorDoc = getEditorDocument();
+    if (!editorDoc) {
+      console.error("Failed to get editor document for applying changes");
+      return;
+    }
+    
+    try {
+      // Get the current selection or create a new one
+      let selection = editorDoc.getSelection();
+      if (!selection) {
+        console.error("Could not get selection from document");
+        return;
+      }
+      
+      // Get the editor body to work with
+      const editorBody = editorDoc.body;
+      const content = editorBody.innerHTML;
+      
+      // Create a temporary container for manipulating the content
+      const tempContainer = editorDoc.createElement('div');
+      tempContainer.innerHTML = content;
+      
+      // Process content replacements (these are prioritized over direct additions/deletions)
+      if (changes.replacements && changes.replacements.length > 0) {
+        for (const replace of changes.replacements) {
+          // Find the text to replace using a basic text search (could be improved with regex)
+          // This is a simplified approach - for production, you'd want more advanced text matching
+          // that respects HTML structure
+          const textNodes = getAllTextNodes(tempContainer);
+          let foundAndReplaced = false;
+          
+          for (const textNode of textNodes) {
+            const nodeText = textNode.nodeValue || "";
+            if (nodeText.includes(replace.oldText)) {
+              // Create elements for highlighting the replaced text
+              const span = editorDoc.createElement('span');
+              span.className = 'ai-addition ai-badge highlight';
+              span.innerHTML = replace.newText;
+              
+              // Split the text node and insert our highlighted content
+              const beforeText = nodeText.substring(0, nodeText.indexOf(replace.oldText));
+              const afterText = nodeText.substring(nodeText.indexOf(replace.oldText) + replace.oldText.length);
+              
+              const beforeNode = editorDoc.createTextNode(beforeText);
+              const afterNode = editorDoc.createTextNode(afterText);
+              
+              // Replace the text node with our three new nodes
+              textNode.parentNode?.insertBefore(beforeNode, textNode);
+              textNode.parentNode?.insertBefore(span, textNode);
+              textNode.parentNode?.insertBefore(afterNode, textNode);
+              textNode.parentNode?.removeChild(textNode);
+              
+              foundAndReplaced = true;
+              break;
+            }
+          }
+          
+          if (!foundAndReplaced) {
+            console.log(`Couldn't find text to replace: ${replace.oldText}`);
+          }
+        }
+      }
+      
+      // Process additions (inserting at cursor or at the end of the document)
+      if (changes.additions && changes.additions.length > 0) {
+        for (const addition of changes.additions) {
+          // Create a new span element with the addition highlighting
+          const span = editorDoc.createElement('span');
+          span.className = 'ai-addition ai-badge highlight';
+          span.innerHTML = addition.text;
+          
+          // If there's a range specified, try to insert at that position
+          if (addition.range) {
+            // Advanced positioning logic would go here
+            // For now, we'll simply append to the end
+            editorBody.appendChild(span);
+          } else {
+            // If the selection is collapsed (just a cursor)
+            if (selection.rangeCount > 0) {
+              const range = selection.getRangeAt(0);
+              range.insertNode(span);
+              
+              // Move selection to after the inserted content
+              range.setStartAfter(span);
+              range.setEndAfter(span);
+              selection.removeAllRanges();
+              selection.addRange(range);
+            } else {
+              // Otherwise append to the end
+              editorBody.appendChild(span);
+            }
+          }
+        }
+      }
+      
+      // Process deletions (marking text as deleted but not removing it)
+      if (changes.deletions && changes.deletions.length > 0) {
+        for (const deletion of changes.deletions) {
+          // Find the text to delete
+          const textNodes = getAllTextNodes(tempContainer);
+          let foundAndMarked = false;
+          
+          for (const textNode of textNodes) {
+            const nodeText = textNode.nodeValue || "";
+            if (nodeText.includes(deletion.text)) {
+              // Create element for highlighting the deleted text
+              const span = editorDoc.createElement('span');
+              span.className = 'ai-deletion ai-badge highlight';
+              span.innerHTML = deletion.text;
+              
+              // Split the text node and insert our highlighted content
+              const beforeText = nodeText.substring(0, nodeText.indexOf(deletion.text));
+              const afterText = nodeText.substring(nodeText.indexOf(deletion.text) + deletion.text.length);
+              
+              const beforeNode = editorDoc.createTextNode(beforeText);
+              const afterNode = editorDoc.createTextNode(afterText);
+              
+              // Replace the text node with our three new nodes
+              textNode.parentNode?.insertBefore(beforeNode, textNode);
+              textNode.parentNode?.insertBefore(span, textNode);
+              textNode.parentNode?.insertBefore(afterNode, textNode);
+              textNode.parentNode?.removeChild(textNode);
+              
+              foundAndMarked = true;
+              break;
+            }
+          }
+          
+          if (!foundAndMarked) {
+            console.log(`Couldn't find text to delete: ${deletion.text}`);
+          }
+        }
+      }
+      
+      // Update the content in the editor
+      if (changes.replacements?.length || changes.additions?.length || changes.deletions?.length) {
+        // Get updated content from our temp container
+        editorBody.innerHTML = tempContainer.innerHTML;
+        
+        // Update the document state
+        setDocument(prev => ({
+          ...prev,
+          content: editorBody.innerHTML,
+          updatedAt: new Date()
+        }));
+      }
+    } catch (err) {
+      console.error("Error applying AI changes to editor:", err);
+    }
+  };
+  
+  // Helper function to get all text nodes under a parent element
+  const getAllTextNodes = (node: Node): Text[] => {
+    const textNodes: Text[] = [];
+    
+    if (node.nodeType === Node.TEXT_NODE) {
+      textNodes.push(node as Text);
+    } else {
+      const children = node.childNodes;
+      for (let i = 0; i < children.length; i++) {
+        const child = children[i];
+        if (child) {
+          textNodes.push(...getAllTextNodes(child));
+        }
+      }
+    }
+    
+    return textNodes;
+  };
+
   const handleAIPrompt = useCallback((prompt: string) => {
     console.log("AI Prompt:", prompt);
     setIsAIProcessing(true);
     
-    // Simulate AI processing
+    // Get current content from the editor
+    const currentContent = getEditorContent();
+    
+    // Simulate AI processing with mock suggestions
     setTimeout(() => {
+      // Generate some mock suggestions based on the prompt
+      let mockResponse: { text: string, suggestions: DocumentChanges | null } = {
+        text: "I've analyzed your document and have some suggestions.",
+        suggestions: null
+      };
+      
+      if (prompt.toLowerCase().includes("add") || prompt.toLowerCase().includes("insert")) {
+        // Mock an addition suggestion
+        const contentToAdd = prompt.includes("paragraph") 
+          ? "<p>This is a suggested paragraph that could be added to your document based on context. It's being highlighted to show it's AI-generated content.</p>"
+          : "This is suggested text from AI";
+        
+        mockResponse = {
+          text: "I've created the content you requested. Would you like to add it to your document?",
+          suggestions: {
+            additions: [{ text: contentToAdd }]
+          }
+        };
+      } else if (prompt.toLowerCase().includes("fix") || prompt.toLowerCase().includes("correct")) {
+        // Mock a replacement suggestion
+        // Try to find something in the document to "fix"
+        let oldText = "document";
+        if (currentContent.includes("paragraph")) {
+          oldText = "paragraph";
+        } else if (currentContent.includes("text")) {
+          oldText = "text";
+        }
+        
+        mockResponse = {
+          text: `I found potential issues with the word "${oldText}" and suggest replacing it with a more precise term.`,
+          suggestions: {
+            replacements: [{ 
+              oldText: oldText, 
+              newText: oldText + " (improved by AI)" 
+            }]
+          }
+        };
+      } else if (prompt.toLowerCase().includes("remove") || prompt.toLowerCase().includes("delete")) {
+        // Mock a deletion suggestion
+        // Try to find something in the document to "delete"
+        let textToDelete = "document";
+        if (currentContent.includes("paragraph")) {
+          textToDelete = "paragraph";
+        } else if (currentContent.includes("text")) {
+          textToDelete = "text";
+        }
+        
+        mockResponse = {
+          text: `I found the text "${textToDelete}" which could be removed based on your request.`,
+          suggestions: {
+            deletions: [{ text: textToDelete }]
+          }
+        };
+      } else {
+        // Default response
+        mockResponse = {
+          text: "I've analyzed your document. Let me know if you want me to make specific changes, add content, or fix issues.",
+          suggestions: null
+        };
+      }
+      
+      setAIResponse(mockResponse);
       setIsAIProcessing(false);
+      
+      // Add the AI response to the sidebar
+      if (aiSidebarRef.current && typeof aiSidebarRef.current.addAIResponse === 'function') {
+        aiSidebarRef.current.addAIResponse(mockResponse.text, mockResponse.suggestions);
+      }
     }, 2000);
+  }, []);
+
+  const handleApplyChanges = useCallback((changes: DocumentChanges) => {
+    // Apply the suggested changes to the editor
+    applyChangesToEditor(changes);
   }, []);
 
   const toggleSidebar = useCallback(() => {
@@ -341,8 +627,12 @@ export default function DocumentPage() {
         {/* AI Sidebar */}
         {showSidebar && (
           <AISidebar 
+            key="ai-sidebar"
             onPromptSubmit={handleAIPrompt}
             isLoading={isAIProcessing}
+            editorRef={editorRef}
+            onApplyChanges={handleApplyChanges}
+            ref={aiSidebarRef}
           />
         )}
       </div>
@@ -371,6 +661,14 @@ export default function DocumentPage() {
               <li>Use the toolbar to format your text and add elements</li>
               <li>Click the AI Assistant button to get help with your document</li>
               <li>All changes are automatically saved</li>
+            </ul>
+            
+            <h3 className="text-lg font-semibold mb-2">AI Features</h3>
+            <ul className="mb-4">
+              <li>Ask the AI to add, remove, or modify text in your document</li>
+              <li>Added content will be highlighted in <span className="bg-green-100 text-green-800 px-1">green</span></li>
+              <li>Deleted content will be highlighted in <span className="bg-red-100 text-red-800 px-1">red</span></li>
+              <li>Review and accept changes before they become permanent</li>
             </ul>
           </div>
         </Window>
