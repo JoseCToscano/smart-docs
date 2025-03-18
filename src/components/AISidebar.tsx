@@ -76,7 +76,7 @@ const AISidebar = forwardRef<AISidebarHandle, AISidebarProps>(({
           }
           return prev; // Stay at 95% until complete
         });
-      }, 300);
+      }, 200);
     } else {
       // Clear interval when loading finishes
       if (progressIntervalRef.current) {
@@ -266,8 +266,7 @@ const AISidebar = forwardRef<AISidebarHandle, AISidebarProps>(({
         {isLoading && (
           <div className="bg-white border border-gray-200 p-3 rounded-lg max-w-[90%] mr-auto shadow-sm">
             <div className="mb-2 text-xs text-gray-600 flex justify-between">
-              <span>AI is thinking...</span>
-              <span>{Math.round(artificialProgress)}%</span>
+              <span>{artificialProgress < 20 ? 'Processing request...' : 'Generating response...'}</span>
             </div>
             <ProgressBar 
               size="small"

@@ -2,7 +2,14 @@
 
 import { useState, useCallback, useRef, useEffect, forwardRef } from "react";
 import { Editor, EditorTools } from "@/components/kendo/premium";
-import { Button, Input } from "@/components/kendo/free";
+import { 
+  Button, 
+  Input, 
+  AppBar, 
+  AppBarSection, 
+  AppBarSpacer, 
+  AppBarSeparator 
+} from "@/components/kendo/free";
 import { 
   arrowsLeftRightIcon, 
   menuIcon,
@@ -1408,9 +1415,8 @@ IMPORTANT GUIDELINES:
   return (
     <div className="min-h-screen flex flex-col bg-gray-100">
       {/* Main App Toolbar */}
-      <div className="bg-white border-b border-gray-200 shadow-sm">
-        {/* Document Title and Menu Row */}
-        <div className="flex items-center px-4 py-2 border-b border-gray-200">
+      <AppBar position="sticky" themeColor="light">
+        <AppBarSection>
           <Link href="/" className="flex items-center mr-6">
             <span className="self-center text-xl font-semibold whitespace-nowrap text-blue-600">
               SmartDocs
@@ -1434,96 +1440,99 @@ IMPORTANT GUIDELINES:
           {lastSaved && (
             <span className="ml-4 text-xs text-gray-500">{lastSaved}</span>
           )}
-          <div className="ml-auto flex items-center space-x-2">
-            <Tooltip anchorElement="target" position="bottom" content={() => "Save your document to the cloud"}>
-              <Button 
-                themeColor="primary"
-                disabled={isSaving}
-                onClick={handleSave}
-                icon={isSaving ? "refresh" : "save"}
-                className="k-button-md"
+        </AppBarSection>
+        
+        <AppBarSpacer />
+        
+        <AppBarSection>
+          <Tooltip anchorElement="target" position="bottom" content={() => "Save your document to the cloud"}>
+            <Button 
+              themeColor="primary"
+              disabled={isSaving}
+              onClick={handleSave}
+              icon={isSaving ? "refresh" : "save"}
+              className="k-button-md"
+            >
+              {isSaving ? "Saving..." : "Save"}
+            </Button>
+          </Tooltip>
+          
+          <AppBarSeparator />
+          
+          <Tooltip anchorElement="target" position="bottom" content={() => "Export document as PDF"}>
+            <Button 
+              themeColor="base"
+              onClick={handleExport}
+              icon="pdf"
+              className="k-button-md"
+            >
+              Export
+            </Button>
+          </Tooltip>
+          
+          <Tooltip anchorElement="target" position="bottom" content={() => "View help documentation"}>
+            <Button
+              themeColor="base"
+              onClick={() => setHelpDialogVisible(true)}
+              icon="question-circle"
+              className="k-button-md"
+              title="Show Help"
+            >
+              Help
+            </Button>
+          </Tooltip>
+          
+          <Tooltip anchorElement="target" position="bottom" content={() => showSidebar ? "Hide AI Assistant sidebar" : "Show AI Assistant sidebar"}>
+            <Button
+              themeColor="base"
+              onClick={toggleSidebar}
+              icon={showSidebar ? "collapse" : "expand"}
+              className="k-button-md"
+              title={showSidebar ? "Hide AI Assistant" : "Show AI Assistant"}
+            >
+              {showSidebar ? "Hide AI" : "Show AI"}
+            </Button>
+          </Tooltip>
+          
+          <div className="ml-3 relative" ref={avatarRef}>
+            <div 
+              className="cursor-pointer"
+              onClick={toggleUserMenu}
+              aria-haspopup="true"
+              aria-expanded={showUserMenu}
+            >
+              <Avatar
+                type="image"
+                size="medium"
+                rounded="full"
+                style={{ backgroundColor: "#0747A6" }}
+                themeColor="info"
+                showTooltip={true}
+                tooltip="John Doe - Account Settings"
               >
-                {isSaving ? "Saving..." : "Save"}
-              </Button>
-            </Tooltip>
-            
-            <Tooltip anchorElement="target" position="bottom" content={() => "Export document as PDF"}>
-              <Button 
-                themeColor="base"
-                onClick={handleExport}
-                icon="pdf"
-                className="k-button-md"
-              >
-                Export
-              </Button>
-            </Tooltip>
-            
-            <Tooltip anchorElement="target" position="bottom" content={() => "View help documentation"}>
-              <Button
-                themeColor="base"
-                onClick={() => setHelpDialogVisible(true)}
-                icon="question-circle"
-                className="k-button-md"
-                title="Show Help"
-              >
-                Help
-              </Button>
-            </Tooltip>
-            
-            {/* Add the toggle sidebar button to the toolbar */}
-            <Tooltip anchorElement="target" position="bottom" content={() => showSidebar ? "Hide AI Assistant sidebar" : "Show AI Assistant sidebar"}>
-              <Button
-                themeColor="base"
-                onClick={toggleSidebar}
-                icon={showSidebar ? "collapse" : "expand"}
-                className="k-button-md"
-                title={showSidebar ? "Hide AI Assistant" : "Show AI Assistant"}
-              >
-                {showSidebar ? "Hide AI" : "Show AI"}
-              </Button>
-            </Tooltip>
-            
-            {/* Avatar component with dropdown */}
-            <div className="ml-3 relative" ref={avatarRef}>
-              <div 
-                className="cursor-pointer"
-                onClick={toggleUserMenu}
-                aria-haspopup="true"
-                aria-expanded={showUserMenu}
-              >
-                <Avatar
-                  type="image"
-                  size="medium"
-                  rounded="full"
-                  style={{ backgroundColor: "#0747A6" }}
-                  themeColor="info"
-                  showTooltip={true}
-                  tooltip="John Doe - Account Settings"
-                >
-                  JD
-                </Avatar>
-              </div>
-              <Popup
-                anchor={avatarRef.current}
-                show={showUserMenu}
-                popupClass="popup-content"
-                animate={true}
-                anchorAlign={{ horizontal: 'right', vertical: 'bottom' }}
-                popupAlign={{ horizontal: 'right', vertical: 'top' }}
-                onClose={() => setShowUserMenu(false)}
-              >
-                {userMenu}
-              </Popup>
+                JD
+              </Avatar>
             </div>
+            <Popup
+              anchor={avatarRef.current}
+              show={showUserMenu}
+              popupClass="popup-content"
+              animate={true}
+              anchorAlign={{ horizontal: 'right', vertical: 'bottom' }}
+              popupAlign={{ horizontal: 'right', vertical: 'top' }}
+              onClose={() => setShowUserMenu(false)}
+            >
+              {userMenu}
+            </Popup>
           </div>
-        </div>
-      </div>
+        </AppBarSection>
+      </AppBar>
 
       {/* Main content area with Splitter */}
       <div className="flex-1 overflow-hidden">
         {/* Use Splitter component for resizable panels */}
         <Splitter
-          style={{ height: 'calc(100vh - 49px)' }} // Adjust for header height
+          style={{ height: 'calc(100vh - 56px)' }} // Adjusted for AppBar height
           orientation="horizontal"
           panes={[
             { collapsible: false }, // Main editor pane - flexible size (no fixed size)
@@ -1565,14 +1574,10 @@ IMPORTANT GUIDELINES:
                     [InsertImage]
                   ]}
                   contentStyle={{ 
-                    minHeight: 'calc(100vh - 160px)', // Adjusted for toolbar
-                    padding: '1.5rem',
-                    paddingTop: '1.5rem',
-                    fontSize: '16px',
-                    lineHeight: '1.6',
-                    boxShadow: 'none',
                     border: 'none',
-                    backgroundColor: '#ffffff',
+                    boxShadow: 'none',
+                    padding: '24px',
+                    minHeight: 'calc(100vh - 164px)', // Adjusted for AppBar height
                   }}
                   defaultContent={document.content}
                   onChange={handleContentChange}
@@ -1602,35 +1607,19 @@ IMPORTANT GUIDELINES:
       {/* Help Dialog */}
       {helpDialogVisible && (
         <Window
-          title="Editor Help"
+          title="SmartDocs Help"
           onClose={() => setHelpDialogVisible(false)}
+          initialWidth={600}
           initialHeight={400}
-          initialWidth={500}
         >
-          <div className="p-3">
-            <h3 className="text-lg font-semibold mb-2">Keyboard Shortcuts</h3>
-            <ul className="mb-4">
-              <li><strong>Ctrl+B</strong>: Bold text</li>
-              <li><strong>Ctrl+I</strong>: Italic text</li>
-              <li><strong>Ctrl+U</strong>: Underline text</li>
-              <li><strong>Ctrl+K</strong>: Insert link</li>
-              <li><strong>Ctrl+Shift+7</strong>: Numbered list</li>
-              <li><strong>Ctrl+Shift+8</strong>: Bullet list</li>
-            </ul>
-            
-            <h3 className="text-lg font-semibold mb-2">Tips</h3>
-            <ul className="mb-4">
+          <div className="p-4">
+            <h2 className="text-lg font-semibold mb-4">How to use SmartDocs</h2>
+            <ul className="list-disc pl-5 space-y-2">
+              <li>Click anywhere in the document to start writing</li>
               <li>Use the toolbar to format your text and add elements</li>
-              <li>Click the AI Assistant button to get help with your document</li>
-              <li>All changes are automatically saved</li>
-            </ul>
-            
-            <h3 className="text-lg font-semibold mb-2">AI Features</h3>
-            <ul className="mb-4">
-              <li>Ask the AI to add, remove, or modify text in your document</li>
-              <li>Added content will be highlighted in <span className="bg-green-100 text-green-800 px-1">green</span></li>
-              <li>Deleted content will be highlighted in <span className="bg-red-100 text-red-800 px-1">red</span></li>
-              <li>Review and accept changes before they become permanent</li>
+              <li>The AI assistant can help you with writing and editing</li>
+              <li>Save your work regularly using the Save button</li>
+              <li>Export to PDF when you're ready to share your document</li>
             </ul>
           </div>
         </Window>
