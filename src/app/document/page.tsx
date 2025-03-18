@@ -492,6 +492,7 @@ export default function DocumentPage() {
               position: relative !important;
               font-weight: 500 !important; /* Slightly bolder */
               display: inline-block !important;
+              white-space: pre-wrap !important; /* Respect line breaks */
             }
             
             .ai-deletion {
@@ -504,6 +505,20 @@ export default function DocumentPage() {
               margin: 0 1px !important;
               position: relative !important;
               display: inline-block !important;
+              white-space: pre-wrap !important; /* Respect line breaks */
+            }
+            
+            /* Ensure <p> tags inside additions/deletions display properly */
+            .ai-addition p, .ai-deletion p {
+              margin: 0.5em 0 !important;
+              display: block !important;
+            }
+
+            /* Ensure <br> tags inside additions/deletions display properly */
+            .ai-addition br, .ai-deletion br {
+              display: block !important;
+              content: "" !important;
+              margin-top: 0.5em !important;
             }
           `;
           
@@ -515,8 +530,11 @@ export default function DocumentPage() {
       // Ensure styles are present
       ensureStyles();
       
+      // Preserve any newlines in the XML content by replacing with placeholder before parsing
+      const normalizedXmlContent = xmlContent.replace(/\\n/g, '\n'); // First convert escaped newlines
+      
       // Parse XML to HTML with styled spans
-      const htmlWithChanges = parseXmlDiff(xmlContent);
+      const htmlWithChanges = parseXmlDiff(normalizedXmlContent);
       
       // Update the editor content - using a more compatible approach with Kendo
       // First store the original content
@@ -529,14 +547,26 @@ export default function DocumentPage() {
       // Update the editor content using a method that preserves event handlers and editor state
       if (editorRef.current && typeof editorRef.current.value === 'function') {
         // Try to use the Kendo API if available
-        editorRef.current.value(htmlWithChanges);
+        try {
+          editorRef.current.value(htmlWithChanges);
+          console.log("[DocumentPage] Updated editor content using Kendo API");
+        } catch (err) {
+          console.error("[DocumentPage] Error updating editor with Kendo API:", err);
+          // Fallback to direct DOM manipulation
+          editorDoc.body.innerHTML = htmlWithChanges;
+        }
       } else {
         // Fallback to direct DOM manipulation
         editorDoc.body.innerHTML = htmlWithChanges;
         
         // Force a refresh of the editor's content
         if (editorRef.current && typeof editorRef.current.refresh === 'function') {
-          editorRef.current.refresh();
+          try {
+            editorRef.current.refresh();
+            console.log("[DocumentPage] Refreshed editor after direct DOM update");
+          } catch (err) {
+            console.error("[DocumentPage] Error refreshing editor:", err);
+          }
         }
       }
       
@@ -711,6 +741,7 @@ export default function DocumentPage() {
           position: relative !important;
           font-weight: 500 !important; /* Slightly bolder */
           display: inline-block !important;
+          white-space: pre-wrap !important; /* Respect line breaks */
         }
         
         .ai-deletion {
@@ -723,6 +754,20 @@ export default function DocumentPage() {
           margin: 0 1px !important;
           position: relative !important;
           display: inline-block !important;
+          white-space: pre-wrap !important; /* Respect line breaks */
+        }
+        
+        /* Ensure <p> tags inside additions/deletions display properly */
+        .ai-addition p, .ai-deletion p {
+          margin: 0.5em 0 !important;
+          display: block !important;
+        }
+
+        /* Ensure <br> tags inside additions/deletions display properly */
+        .ai-addition br, .ai-deletion br {
+          display: block !important;
+          content: "" !important;
+          margin-top: 0.5em !important;
         }
         
         /* Add animation effects to highlight the changes */

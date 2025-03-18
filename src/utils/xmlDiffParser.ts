@@ -11,10 +11,27 @@ export function parseXmlDiff(diffText: string): string {
       return diffText;
     }
 
+    // Check if the content already contains HTML span tags from previous parsing
+    if (diffText.includes('class="ai-addition"') || diffText.includes('class="ai-deletion"')) {
+      console.log("[xmlDiffParser] Content already contains highlighted spans, returning as is");
+      return diffText;
+    }
+
+    // First try to use recursive regex-based approach which handles nested tags better
+    try {
+      return processXmlWithRecursiveRegex(diffText);
+    } catch (recursiveError) {
+      console.error("[xmlDiffParser] Error in recursive regex approach:", recursiveError);
+      // Fall back to DOM parser approach
+    }
+
+    // Preserve newlines by converting them to a placeholder before XML parsing
+    const preservedText = diffText.replace(/\n/g, '___NEWLINE___');
+
     // Create a DOM parser
     const parser = new DOMParser();
     // Wrap the content in a root element to make it valid XML
-    const xmlDoc = parser.parseFromString(`<root>${diffText}</root>`, "text/xml");
+    const xmlDoc = parser.parseFromString(`<root>${preservedText}</root>`, "text/xml");
     
     // Check for parsing errors
     const parserErrors = xmlDoc.getElementsByTagName('parsererror');
@@ -29,7 +46,7 @@ export function parseXmlDiff(diffText: string): string {
     const deletions = xmlDoc.getElementsByTagName('deletion');
     
     // Convert to HTML with appropriate styling
-    let htmlContent = diffText;
+    let htmlContent = preservedText;
     
     // Process deletions first to avoid changing positions
     for (let i = deletions.length - 1; i >= 0; i--) {
@@ -75,6 +92,9 @@ export function parseXmlDiff(diffText: string): string {
       htmlContent = htmlContent.replace(tagPattern, additionHtml);
     }
     
+    // Convert placeholders back to actual HTML line breaks
+    htmlContent = htmlContent.replace(/___NEWLINE___/g, '<br />');
+    
     return htmlContent;
   } catch (error) {
     console.error('Error parsing XML diff:', error);
@@ -82,12 +102,77 @@ export function parseXmlDiff(diffText: string): string {
   }
 }
 
+/**
+ * Process XML content with a recursive regex approach that can handle nested tags
+ */
+function processXmlWithRecursiveRegex(input: string): string {
+  // First replace all newlines with <br> tags for proper rendering
+  let processedContent = input.replace(/\n/g, '<br />');
+  
+  // Function to recursively replace the innermost tags first
+  const processNestedTags = (content: string): string => {
+    // Match the innermost addition or deletion tags (those without nested tags)
+    const innerTagRegex = /<(addition|deletion)>([^<>]*)<\/(addition|deletion)>/g;
+    
+    let result = content;
+    let match;
+    let hasMatches = false;
+    
+    // Replace all innermost tags with styled spans
+    while ((match = innerTagRegex.exec(content)) !== null) {
+      hasMatches = true;
+      const [fullMatch, tagName, innerContent = '', closingTag] = match;
+      
+      if (tagName !== closingTag) {
+        console.warn(`Mismatched tags: ${tagName} and ${closingTag}`);
+        continue;
+      }
+      
+      // Escape any HTML in the content
+      const escapedContent = innerContent
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+      
+      // Create the styled span
+      const replacement = tagName === 'addition' 
+        ? `<span class="ai-addition ai-badge highlight">${escapedContent}</span>`
+        : `<span class="ai-deletion ai-badge highlight">${escapedContent}</span>`;
+      
+      // Replace in the result
+      result = result.replace(fullMatch, replacement);
+    }
+    
+    // If we found and replaced tags, process again to handle nesting
+    if (hasMatches) {
+      return processNestedTags(result);
+    }
+    
+    return result;
+  };
+  
+  return processNestedTags(processedContent);
+}
+
 // Fallback method for parsing XML when the DOM parser fails
 function fallbackXmlParse(diffText: string): string {
   try {
+    // Preserve newlines before processing
+    let processed = diffText.replace(/\n/g, '<br />');
+    
+    // Try recursive approach first
+    try {
+      return processXmlWithRecursiveRegex(diffText);
+    } catch (recursiveError) {
+      console.error("[xmlDiffParser] Error in recursive approach in fallback:", recursiveError);
+      // Continue with simple regex approach
+    }
+    
     // Simple regex-based approach as fallback
     // Replace addition tags
-    let processed = diffText.replace(
+    processed = processed.replace(
       /<addition>([\s\S]*?)<\/addition>/g, 
       '<span class="ai-addition ai-badge highlight">$1</span>'
     );
