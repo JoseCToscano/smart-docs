@@ -5,16 +5,16 @@ import { Editor, EditorTools } from "@/components/kendo/premium";
 import { Button, Input } from "@/components/kendo/free";
 import { 
   arrowsLeftRightIcon, 
-  menuIcon 
+  menuIcon,
+  Avatar,
+  Splitter,
+  Popup
 } from "@/components/kendo";
-import { Splitter, Avatar } from "@progress/kendo-react-layout";
-import { Popup } from "@progress/kendo-react-popup";
 import "@progress/kendo-theme-default/dist/all.css";
 import "./styles.css";
 import Link from "next/link";
 import AISidebar, { DocumentChanges, AISidebarHandle } from "@/components/AISidebar";
 import { Document as DocType } from "@/types";
-import DocumentToolbar from "@/components/DocumentToolbar";
 import { Window } from "@progress/kendo-react-dialogs";
 import { useRouter, useSearchParams } from "next/navigation";
 import { parseXmlDiff, xmlDiffToChanges } from "@/utils/xmlDiffParser";
