@@ -52,9 +52,13 @@ Your response should always be divided into two parts:
 If the user is asking you to make changes to the document, use XML tags to mark your edits:
 - <addition>added text</addition> - For new text being added
 - <deletion>removed text</deletion> - For text being removed
-
+- <move>moved text</move> - For text being moved to a different location
+- <format>formatted text</format> - For text being formatted differently
+- <comment>comment text</comment> - For comments about the text without changing it
 
 Return the COMPLETE document with XML tags marking ONLY the changes. Include ALL original text, marking only the changes with XML tags.
+
+IMPORTANT: NEVER use placeholders like "[... rest of the document remains the same ...]" or similar. Always include the ENTIRE document content, only marking the specific changes with XML tags.
 
 ### Part 2: Response to User
 After the document changes, include a line with exactly "<<<USER_MESSAGE>>>" followed by your conversational response to the user explaining what you did or answering their question.
@@ -65,6 +69,7 @@ If the user's request doesn't involve document changes (just a conversation or q
 1. Always follow the two-part format described above.
 2. For the document changes part: do NOT include any explanations, prefixes, or phrases like "Here is the edited document..." before the content.
 3. When there are no document changes needed, just include the "<<<USER_MESSAGE>>>" part.
+4. NEVER use placeholders or ellipses to represent unchanged document content. Always return the complete document with only changes marked in XML tags.
 
 ## Editing Guidelines:
 1. Only use the XML tags for actual changes. Don't wrap unchanged text in tags.
@@ -121,6 +126,8 @@ IMPORTANT: Please follow the two-part format in your response:
 1. Document changes with XML tags (if any)
 2. "<<<USER_MESSAGE>>>" followed by your conversational response
 
+CRITICAL REQUIREMENT: NEVER use placeholders like "[... rest of the document remains the same ...]" or similar. Always include the COMPLETE document with ONLY the specific changes marked with XML tags.
+
 If my request is just a question with no document changes, only include the second part with "<<<USER_MESSAGE>>>" followed by your response.`,
         },
       ],
@@ -176,17 +183,52 @@ If my request is just a question with no document changes, only include the seco
         break;
       }
     }
+    
+    // Handle placeholders in the XML content
+    const placeholderPatterns = [
+      /\[\s*\.\.\.\s*rest of the document remains the same\s*\.\.\.\s*\]/gi,
+      /\[\s*\.\.\.\s*unchanged content\s*\.\.\.\s*\]/gi,
+      /\[\s*\.\.\.\s*remaining content unchanged\s*\.\.\.\s*\]/gi,
+      /\[\s*\.\.\.\s*original text continues\s*\.\.\.\s*\]/gi,
+      /\[\s*\.\.\.\s*document continues as before\s*\.\.\.\s*\]/gi
+    ];
+    
+    // If we find placeholders, we need to notify the user
+    let containsPlaceholders = false;
+    for (const pattern of placeholderPatterns) {
+      if (pattern.test(xmlContent)) {
+        containsPlaceholders = true;
+        break;
+      }
+    }
+    
+    // If placeholders are detected, update the user message
+    if (containsPlaceholders) {
+      userMessage = "I've made some changes to your document, but I used placeholders for unchanged content. To see the full changes accurately, it's best to review them in the document. " + userMessage;
+      
+      // For each placeholder pattern, try to process it
+      // This is a simplistic approach - may need to be refined based on actual usage
+      for (const pattern of placeholderPatterns) {
+        // Simply remove the placeholders, as the content already contains the full document
+        xmlContent = xmlContent.replace(pattern, '');
+      }
+    }
 
+    // Normalize line breaks (convert \r\n to \n)
+    xmlContent = xmlContent.replace(/\r\n/g, '\n');
+    
     console.log("Final processed response:", {
       xmlContentLength: xmlContent.length,
       userMessageLength: userMessage.length,
+      containsPlaceholders,
       xmlContentPreview: xmlContent.substring(0, 100) + "...",
       userMessagePreview: userMessage.substring(0, 100) + "..."
     });
 
     return NextResponse.json({
       xmlContent,
-      userMessage
+      userMessage,
+      containsPlaceholders
     });
   } catch (error) {
     console.error("Error with Anthropic API:", error);

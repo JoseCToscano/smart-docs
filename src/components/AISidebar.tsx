@@ -28,7 +28,7 @@ export type DocumentChanges = {
 };
 
 export interface AISidebarHandle {
-  addAIResponse: (content: string, suggestions?: DocumentChanges | null) => void;
+  addAIResponse: (content: string, suggestions?: DocumentChanges | null, containsPlaceholders?: boolean) => void;
 }
 
 // Convert to forwardRef to allow the parent component to access methods
@@ -56,10 +56,12 @@ const AISidebar = forwardRef<AISidebarHandle, AISidebarProps>(({
 
   // Expose methods to parent component via ref
   useImperativeHandle(ref, () => ({
-    addAIResponse: (content: string, suggestions?: DocumentChanges | null) => {
+    addAIResponse: (content: string, suggestions?: DocumentChanges | null, containsPlaceholders?: boolean) => {
       const assistantMessage: Message = {
         role: "assistant", 
-        content,
+        content: containsPlaceholders 
+          ? `⚠️ Note: Some content may be incomplete due to placeholders in the response.\n\n${content}`
+          : content,
         timestamp: new Date(),
         suggestions,
       };

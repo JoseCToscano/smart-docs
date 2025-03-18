@@ -416,10 +416,13 @@ export default function DocumentPage() {
     // Get current content from the editor
     const currentContent = getEditorContent();
     
-    // Enhance the prompt to explicitly address newline handling
+    // Enhance the prompt to explicitly address newline handling and placeholders
     const enhancedPrompt = `${prompt}
     
-IMPORTANT: When including line breaks in your response, please use actual newlines (\n), not the literal text "___NEWLINE___".`;
+IMPORTANT GUIDELINES:
+1. When including line breaks in your response, please use actual newlines (\\n), not the literal text "___NEWLINE___".
+2. NEVER use placeholders like "[... rest of the document remains the same ...]". Always include the complete document with only the changes marked using XML tags.
+3. Be precise with your XML tags - only mark the specific text that changes.`;
     
     try {
       // Call the Anthropic API through our backend
@@ -441,11 +444,12 @@ IMPORTANT: When including line breaks in your response, please use actual newlin
       const data = await response.json();
       
       // Extract both parts of the response
-      const { xmlContent, userMessage } = data;
+      const { xmlContent, userMessage, containsPlaceholders } = data;
       
       console.log("[DocumentPage] Received response:", {
         hasXmlContent: Boolean(xmlContent) && xmlContent.length > 0,
-        userMessage: userMessage?.substring(0, 100) + "..."
+        userMessage: userMessage?.substring(0, 100) + "...",
+        containsPlaceholders
       });
       
       // Only apply XML changes if there are any
@@ -457,6 +461,20 @@ IMPORTANT: When including line breaks in your response, please use actual newlin
         // Pre-process the content: replace literal ___NEWLINE___ with actual newlines
         let processedXmlContent = xmlContent.replace(/___NEWLINE___/g, '\n');
         
+        // Check for possible placeholder patterns that might remain
+        const placeholderPatterns = [
+          /\[\s*\.\.\.\s*rest of the document remains the same\s*\.\.\.\s*\]/gi,
+          /\[\s*\.\.\.\s*unchanged content\s*\.\.\.\s*\]/gi,
+          /\[\s*\.\.\.\s*remaining content unchanged\s*\.\.\.\s*\]/gi,
+          /\[\s*\.\.\.\s*original text continues\s*\.\.\.\s*\]/gi,
+          /\[\s*\.\.\.\s*document continues as before\s*\.\.\.\s*\]/gi
+        ];
+        
+        // Remove any remaining placeholders
+        for (const pattern of placeholderPatterns) {
+          processedXmlContent = processedXmlContent.replace(pattern, '');
+        }
+        
         // Apply the XML changes to the editor to show highlighting
         applyXmlChangesToEditor(processedXmlContent);
         
@@ -465,7 +483,12 @@ IMPORTANT: When including line breaks in your response, please use actual newlin
       }
       
       // Use the actual user message from the response
-      const responseText = userMessage || "I've processed your request.";
+      let responseText = userMessage || "I've processed your request.";
+      
+      // Add a notification if placeholders were detected
+      if (containsPlaceholders) {
+        responseText = "Note: I had to process some placeholders in the response. The changes may not be complete or fully accurate. " + responseText;
+      }
       
       setAIResponse({
         text: responseText,
@@ -474,7 +497,7 @@ IMPORTANT: When including line breaks in your response, please use actual newlin
       
       // Add the AI response to the sidebar
       if (aiSidebarRef.current && typeof aiSidebarRef.current.addAIResponse === 'function') {
-        aiSidebarRef.current.addAIResponse(responseText, changes);
+        aiSidebarRef.current.addAIResponse(responseText, changes, containsPlaceholders);
       }
       
     } catch (error) {
