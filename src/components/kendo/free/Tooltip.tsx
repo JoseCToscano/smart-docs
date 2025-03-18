@@ -1,3 +1,5 @@
+"use client";
+
 import React from 'react';
 import { Tooltip as KendoTooltip, TooltipProps as KendoTooltipProps } from '@progress/kendo-react-tooltip';
 

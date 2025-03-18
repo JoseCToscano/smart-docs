@@ -1,3 +1,5 @@
+"use client";
+
 import React from 'react';
 import { Avatar as KendoAvatar } from '@progress/kendo-react-layout';
 import { Tooltip } from '@progress/kendo-react-tooltip';

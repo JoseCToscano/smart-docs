@@ -1,3 +1,5 @@
+"use client";
+
 import React from 'react';
 import { Button } from '@/components/kendo/free';
 import { useNotifications } from '@/utils/notificationService';
