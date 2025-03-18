@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { TextArea } from "@progress/kendo-react-inputs";
-import { Button } from "@progress/kendo-react-buttons";
+import { TextArea, Button } from "@/components/kendo/free";
 
 interface AISidebarProps {
   onPromptSubmit: (prompt: string) => void;
@@ -35,15 +34,6 @@ export default function AISidebar({ onPromptSubmit, isLoading = false }: AISideb
     }
   }, [chatHistory]);
 
-  // Handle textarea height adjustment
-  useEffect(() => {
-    const textarea = textareaRef.current;
-    if (textarea) {
-      textarea.style.height = 'auto';
-      textarea.style.height = `${Math.min(textarea.scrollHeight, 150)}px`;
-    }
-  }, [prompt]);
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -63,11 +53,6 @@ export default function AISidebar({ onPromptSubmit, isLoading = false }: AISideb
     
     // Clear the input
     setPrompt("");
-    
-    // Reset textarea height
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-    }
     
     // Simulate AI response (this will be replaced with actual AI integration)
     setTimeout(() => {

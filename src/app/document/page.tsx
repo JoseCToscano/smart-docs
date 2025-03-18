@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Editor, EditorTools } from "@progress/kendo-react-editor";
-import { Button } from "@progress/kendo-react-buttons";
-import { arrowsLeftRightIcon, menuIcon } from "@progress/kendo-svg-icons";
+import { Editor, EditorTools } from "@/components/kendo/premium";
+import { Button } from "@/components/kendo/free";
+import { arrowsLeftRightIcon, menuIcon } from "@/components/kendo";
 import "@progress/kendo-theme-default/dist/all.css";
 import DocumentToolbar from "@/components/DocumentToolbar";
 import AISidebar from "@/components/AISidebar";

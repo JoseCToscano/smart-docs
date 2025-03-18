@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Input } from "@progress/kendo-react-inputs";
-import { Button } from "@progress/kendo-react-buttons";
+import { Input, Button } from "@/components/kendo/free";
 
 interface DocumentToolbarProps {
   documentTitle: string;
