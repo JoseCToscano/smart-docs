@@ -12,6 +12,17 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
   const [cursorPosition, setCursorPosition] = useState<{ node: Node | null; offset: number } | null>(null);
   const [selectionRange, setSelectionRange] = useState<Range | null>(null);
   const suggestionElementRef = useRef<HTMLSpanElement | null>(null);
+  
+  // Track whether component is mounted to avoid state updates after unmount
+  const isMountedRef = useRef(true);
+  
+  // Use a ref to track the current suggestion to avoid dependency issues in effects
+  const currentSuggestionRef = useRef<string | null>(null);
+  
+  // Update the ref when suggestion changes
+  useEffect(() => {
+    currentSuggestionRef.current = suggestion;
+  }, [suggestion]);
 
   const detectLanguage = (text: string): string => {
     // Simple language detection based on file extension patterns or syntax
@@ -23,8 +34,7 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
 
   const getSuggestion = useCallback(
     debounce(async (text: string) => {
-      if (!text.trim() || !enabled) {
-        setSuggestion(null);
+      if (!text.trim() || !enabled || !isMountedRef.current) {
         return;
       }
 
@@ -40,22 +50,30 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
         });
 
         const data = await response.json();
-        if (response.ok && data.completion) {
-          setSuggestion(data.completion);
-        } else {
-          setSuggestion(null);
+        
+        // Only update state if component is still mounted
+        if (isMountedRef.current) {
+          if (response.ok && data.completion) {
+            setSuggestion(data.completion);
+          } else {
+            setSuggestion(null);
+          }
         }
       } catch (error) {
         console.error('Error fetching autocompletion:', error);
-        setSuggestion(null);
+        if (isMountedRef.current) {
+          setSuggestion(null);
+        }
       } finally {
-        setLoading(false);
+        if (isMountedRef.current) {
+          setLoading(false);
+        }
       }
     }, 500),
-    [enabled]
+    [enabled] // Only depend on enabled, not other state values
   );
 
-  // Get the iframe from the editor
+  // Get the iframe from the editor - memoize this to avoid recreating on each render
   const getEditorIframe = useCallback(() => {
     if (!editorRef.current) return null;
     
@@ -86,7 +104,7 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
 
   // Define a function to show the inline suggestion
   const showInlineSuggestion = useCallback(() => {
-    if (!suggestion || !selectionRange || !cursorPosition) return;
+    if (!currentSuggestionRef.current || !selectionRange || !cursorPosition) return;
     
     try {
       // Get the editor document
@@ -103,7 +121,7 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
       const suggestionElement = doc.createElement('span');
       suggestionElement.id = 'inline-suggestion-ghost';
       suggestionElement.className = 'inline-suggestion-ghost';
-      suggestionElement.textContent = suggestion;
+      suggestionElement.textContent = currentSuggestionRef.current;
       suggestionElement.style.color = '#9CA3AF'; // Light gray color
       suggestionElement.style.opacity = '0.8';
       suggestionElement.style.pointerEvents = 'none'; // So it doesn't intercept clicks
@@ -121,7 +139,7 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
     } catch (error) {
       console.error('Error showing inline suggestion:', error);
     }
-  }, [suggestion, selectionRange, cursorPosition, getEditorDocument]);
+  }, [selectionRange, cursorPosition, getEditorDocument]); // Remove suggestion from dependencies
 
   // Define a function to remove the inline suggestion
   const removeInlineSuggestion = useCallback(() => {
@@ -140,7 +158,8 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
 
   // Define applySuggestion function before it's used in event listeners
   const applySuggestion = useCallback(() => {
-    if (!suggestion || !editorRef.current) return;
+    const currentSuggestion = currentSuggestionRef.current;
+    if (!currentSuggestion || !editorRef.current) return;
     
     // First, remove the inline suggestion element
     removeInlineSuggestion();
@@ -150,10 +169,14 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
     try {
       // Insert the suggestion at the current cursor position
       // According to Telerik docs, we should use the exec command
-      editor.exec('insertText', { text: suggestion });
-      setSuggestion(null);
-      setCursorPosition(null);
-      setSelectionRange(null);
+      editor.exec('insertText', { text: currentSuggestion });
+      
+      // Clear states in a single batch to avoid multiple renders
+      if (isMountedRef.current) {
+        setSuggestion(null);
+        setCursorPosition(null);
+        setSelectionRange(null);
+      }
     } catch (error) {
       console.error('Error applying suggestion:', error);
       
@@ -164,7 +187,7 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
           const selection = doc.getSelection();
           if (selection && selection.rangeCount > 0) {
             const range = selection.getRangeAt(0);
-            const textNode = doc.createTextNode(suggestion);
+            const textNode = doc.createTextNode(currentSuggestion);
             range.insertNode(textNode);
             
             // Move cursor to end of inserted text
@@ -173,20 +196,26 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
             selection.removeAllRanges();
             selection.addRange(range);
             
-            setSuggestion(null);
-            setCursorPosition(null);
-            setSelectionRange(null);
+            // Clear states
+            if (isMountedRef.current) {
+              setSuggestion(null);
+              setCursorPosition(null);
+              setSelectionRange(null);
+            }
           }
         }
       } catch (fallbackError) {
         console.error('Fallback insertion failed:', fallbackError);
       }
     }
-  }, [suggestion, editorRef, getEditorDocument, cursorPosition, removeInlineSuggestion]);
+  }, [editorRef, getEditorDocument, cursorPosition, removeInlineSuggestion]); // Don't depend on suggestion
 
-  const handleEditorChange = useCallback(() => {
-    console.log("handleEditorChange called");
-    if (!editorRef.current || !enabled) return;
+  // Use a ref to store the handler to avoid re-creating it on every render
+  const handleEditorChangeRef = useRef<() => void>();
+  
+  // Define the handler function
+  handleEditorChangeRef.current = () => {
+    if (!editorRef.current || !enabled || !isMountedRef.current) return;
     
     // First, remove any existing inline suggestion
     removeInlineSuggestion();
@@ -211,15 +240,18 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
       const range = selection.getRangeAt(0);
       
       // Store the current range for later use when showing the suggestion
-      setSelectionRange(range.cloneRange());
+      if (isMountedRef.current) {
+        setSelectionRange(range.cloneRange());
       
-      const node = range.startContainer;
-      setCursorPosition({
-        node,
-        offset: range.startOffset
-      });
+        const node = range.startContainer;
+        setCursorPosition({
+          node,
+          offset: range.startOffset
+        });
+      }
       
       // Get parent paragraph or element for better context
+      const node = range.startContainer;
       let contextNode = node;
       while (contextNode && contextNode.nodeName !== 'P' && 
              contextNode.nodeName !== 'DIV' && 
@@ -261,18 +293,21 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
         currentText = node.textContent.substring(0, range.startOffset);
       }
       
-      console.log("Current text extracted:", currentText);
-      
       // If we have enough context (at least 3 chars), get a suggestion
       if (currentText.length > 3) {
         getSuggestion(currentText);
-      } else {
+      } else if (isMountedRef.current) {
         setSuggestion(null);
       }
     } catch (error) {
       console.error('Error getting editor content:', error);
     }
-  }, [editorRef, getSuggestion, enabled, getEditorDocument, removeInlineSuggestion]);
+  };
+  
+  // Memoized wrapper function that calls the ref function
+  const handleEditorChange = useCallback(() => {
+    handleEditorChangeRef.current?.();
+  }, []); // No dependencies to avoid recreation
 
   // Effect to show the inline suggestion when a suggestion is available
   useEffect(() => {
@@ -283,15 +318,13 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
       // Remove any existing inline suggestion
       removeInlineSuggestion();
     }
-    
-    return () => {
-      // Clean up on unmount or when suggestion changes
-      removeInlineSuggestion();
-    };
   }, [suggestion, loading, showInlineSuggestion, removeInlineSuggestion]);
 
+  // Effect for attaching event listeners - only run once on mount/enabled change
   useEffect(() => {
-    // Setup event listeners for cursor movement and typing
+    // Set mounted flag
+    isMountedRef.current = true;
+    
     console.log("Setting up editor event listeners", { enabled, hasEditor: Boolean(editorRef.current) });
     if (!editorRef.current || !enabled) return;
     
@@ -303,6 +336,13 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
     }
     
     console.log("Found editor document, adding keyup listener");
+    
+    // Throttled selectionchange handler to prevent too many calls
+    const throttledSelectionChange = debounce(() => {
+      if (currentSuggestionRef.current && isMountedRef.current) {
+        handleEditorChange();
+      }
+    }, 100);
     
     // Add event listeners to the editor document
     const keyupListener = (e: KeyboardEvent) => {
@@ -319,15 +359,17 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
     
     // Add specific listener for tab key to accept the suggestion
     const keydownListener = (e: KeyboardEvent) => {
-      if (e.key === 'Tab' && suggestion) {
+      if (e.key === 'Tab' && currentSuggestionRef.current) {
         // Apply the suggestion on Tab key
         e.preventDefault();
         applySuggestion();
-      } else if (e.key === 'Escape' && suggestion) {
+      } else if (e.key === 'Escape' && currentSuggestionRef.current) {
         // Dismiss suggestion on Escape key
         e.preventDefault();
         removeInlineSuggestion();
-        setSuggestion(null);
+        if (isMountedRef.current) {
+          setSuggestion(null);
+        }
       }
     };
     
@@ -338,21 +380,28 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
     // Also listen for mouseup to handle selection changes
     doc.addEventListener('mouseup', handleEditorChange);
     
-    // Also listen for cursor change events
-    doc.addEventListener('selectionchange', () => {
-      if (suggestion) {
-        // When selection changes, re-evaluate if we need to move or remove the suggestion
-        handleEditorChange();
-      }
-    });
+    // Also listen for cursor change events - using throttled version
+    doc.addEventListener('selectionchange', throttledSelectionChange);
     
+    // Clean up function
     return () => {
+      // Set flag that component is unmounted
+      isMountedRef.current = false;
+      
+      // Remove event listeners
       doc.removeEventListener('keyup', keyupListener);
       doc.removeEventListener('keydown', keydownListener);
       doc.removeEventListener('mouseup', handleEditorChange);
-      doc.removeEventListener('selectionchange', handleEditorChange);
+      doc.removeEventListener('selectionchange', throttledSelectionChange);
+      
+      // Remove any suggestion elements
+      removeInlineSuggestion();
+      
+      // Cancel any pending debounced calls
+      getSuggestion.cancel();
+      throttledSelectionChange.cancel();
     };
-  }, [editorRef, handleEditorChange, enabled, getEditorDocument, suggestion, applySuggestion, removeInlineSuggestion]);
+  }, [editorRef, enabled, getEditorDocument, applySuggestion, removeInlineSuggestion, handleEditorChange, getSuggestion]); // Remove suggestion from deps
 
   // Add another effect for custom event listener as a fallback approach
   useEffect(() => {
@@ -394,6 +443,15 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
       doc.head.appendChild(styleElement);
     }
   }, [getEditorDocument]);
+
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+      removeInlineSuggestion();
+      getSuggestion.cancel();
+    };
+  }, [removeInlineSuggestion, getSuggestion]);
 
   // We don't need the old popup UI anymore, but let's return an empty div
   // to maintain the component structure
