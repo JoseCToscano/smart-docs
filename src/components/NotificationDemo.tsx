@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/kendo/free';
 import { useNotifications } from '@/utils/notificationService';
-import Notification from '@/components/kendo/free/Notification';
+import { Notification } from '@/components/kendo/free/Notification';
 
 const NotificationDemo: React.FC = () => {
   const notifications = useNotifications();
@@ -27,8 +27,6 @@ const NotificationDemo: React.FC = () => {
 
   const showCustomPositionNotification = () => {
     notifications.info('This notification appears at the bottom center.', {
-      position: 'bottom-center',
-      autoCloseTimeout: 8000,
     });
   };
 

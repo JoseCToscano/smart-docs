@@ -15,7 +15,7 @@ const Notification = ({
   message, 
   position = 'top-center',
   autoClose = true,
-  autoCloseTimeout = 3000,
+  autoCloseTimeout = 2500,
   onClose,
   ...props 
 }: NotificationProps) => {

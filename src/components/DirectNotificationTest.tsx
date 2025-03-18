@@ -35,7 +35,7 @@ const DirectNotificationTest: React.FC = () => {
       
       {visible && (
         <div 
-          style={{ position: 'fixed', bottom: '30px', left: '50%', transform: 'translateX(-50%)', zIndex: 9999 }}
+          style={{ position: 'fixed', bottom: '40px', left: '50%', transform: 'translateX(-50%)', zIndex: 9999 }}
           className="k-notification-container"
         >
           <Fade>

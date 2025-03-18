@@ -1,8 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import Notification, { NotificationProps } from '../components/kendo/free/Notification';
-
+import { Notification, NotificationProps } from '@/components/kendo/free/Notification';
 interface NotificationItem extends NotificationProps {
   id: string;
 }

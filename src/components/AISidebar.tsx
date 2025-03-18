@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from "react";
-import { TextArea, Button } from "@/components/kendo/free";
+import { TextArea, Button, ProgressBar } from "@/components/kendo/free";
 
 interface AISidebarProps {
   onPromptSubmit: (prompt: string) => void;
@@ -224,11 +224,13 @@ const AISidebar = forwardRef<AISidebarHandle, AISidebarProps>(({
         ))}
         {isLoading && (
           <div className="bg-white border border-gray-200 p-3 rounded-lg max-w-[90%] mr-auto shadow-sm">
-            <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse"></div>
-              <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse" style={{animationDelay: '0.2s'}}></div>
-              <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse" style={{animationDelay: '0.4s'}}></div>
-            </div>
+            <div className="mb-2 text-xs text-gray-600">AI is thinking...</div>
+            <ProgressBar 
+              size="small"
+              themeColor="primary"
+              animation={true}
+              value={undefined}
+            />
           </div>
         )}
       </div>

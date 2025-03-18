@@ -1,7 +1,6 @@
 import Link from "next/link";
 import NotificationDemo from "@/components/NotificationDemo";
 import DirectNotificationTest from "@/components/DirectNotificationTest";
-import NotificationDebugger from "@/components/NotificationDebugger";
 
 export default function HomePage() {
   return (
@@ -44,8 +43,6 @@ export default function HomePage() {
           </div>
         </div>
       </div>
-      
-      <NotificationDebugger />
     </main>
   );
 }
