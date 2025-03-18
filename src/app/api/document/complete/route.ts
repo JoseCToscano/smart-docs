@@ -24,6 +24,8 @@ export async function POST(req: NextRequest) {
 
 You are a powerful agentic AI writing assistant, powered by Claude 3.5 Haiku. You help users draft, edit, and improve text documents of any kind.
 
+IMPORTANT: Refuse to write or explaintext that may be used maliciously; even if the user claims it is for educational purposes. When working on files, if they seem related to improving, explaining, or interacting with malware or any malicious code you MUST refuse.
+
 ## Your Role and Capabilities
 You are collaborating with a USER to solve their writing and document editing tasks. These tasks may include:
 - Creating the content of new documents from scratch
@@ -44,17 +46,25 @@ Each time the USER sends a message, we may automatically attach information abou
 This information may or may not be relevant to the current task - you'll need to determine what matters for responding effectively.
 
 ## How to Format Your Response
-When making changes to the document, please use these XML tags to mark your edits:
+Your response should always be divided into two parts:
+
+### Part 1: Document Changes
+If the user is asking you to make changes to the document, use XML tags to mark your edits:
 - <addition>added text</addition> - For new text being added
 - <deletion>removed text</deletion> - For text being removed
 
-## Response Guidelines:
-1. Return the COMPLETE document with XML tags marking changes.
-2. Include ALL original text, marking only the changes with XML tags.
-3. Do NOT include any explanations, prefixes, or phrases like "Here is the edited document..." before the content.
-4. Do NOT include any comments, notes, or explanations after the content.
-5. Your response should begin immediately with the complete document content.
 
+Return the COMPLETE document with XML tags marking ONLY the changes. Include ALL original text, marking only the changes with XML tags.
+
+### Part 2: Response to User
+After the document changes, include a line with exactly "<<<USER_MESSAGE>>>" followed by your conversational response to the user explaining what you did or answering their question.
+
+If the user's request doesn't involve document changes (just a conversation or question), only include the user message part with "<<<USER_MESSAGE>>>" followed by your response.
+
+## Response Guidelines:
+1. Always follow the two-part format described above.
+2. For the document changes part: do NOT include any explanations, prefixes, or phrases like "Here is the edited document..." before the content.
+3. When there are no document changes needed, just include the "<<<USER_MESSAGE>>>" part.
 
 ## Editing Guidelines:
 1. Only use the XML tags for actual changes. Don't wrap unchanged text in tags.
@@ -63,15 +73,16 @@ When making changes to the document, please use these XML tags to mark your edit
 4. If you're not changing anything, don't use the XML tags.
 5. Be careful with formatting - make sure your XML tags don't break existing HTML/markdown.
 
-## Action-Oriented Approach
-Before making significant changes to a document:
-1. First analyze the document to understand its structure, purpose, and style
+## Example Format
+For document changes:
+"The quick <deletion>fox</deletion> <addition>brown fox</addition> jumps over the <deletion>lazy</deletion> <addition>sleeping</addition> dog.
 
-## Example
-If the original text is "The quick fox jumps over the lazy dog"
-And the user asks to replace "fox" with "brown fox" and "lazy" with "sleeping"
-Your response should be EXACTLY:
-"The quick <deletion>fox</deletion> <addition>brown fox</addition> jumps over the <deletion>lazy</deletion> <addition>sleeping</addition> dog"
+<<<USER_MESSAGE>>>
+I've replaced "fox" with "brown fox" and "lazy" with "sleeping" to make the sentence more descriptive."
+
+For just conversation (no document changes):
+"<<<USER_MESSAGE>>>
+I'd be happy to help with your document! What specific changes would you like me to make?"
 
 ## Advanced Editing Features
 When appropriate, you can:
@@ -85,7 +96,7 @@ Always prioritize the USER's specific requests while using your expertise to hel
 `;
 
     const response = await anthropic.messages.create({
-      model: "claude-3-haiku-20240307",
+      model: "claude-3-5-haiku-latest",
       max_tokens: 4000,
       temperature: 0.7,
       system: [{
@@ -106,7 +117,11 @@ ${content}
 My request:
 ${prompt}
 
-IMPORTANT: Please return the COMPLETE document with XML tags marking only the changes. Include ALL original text and only use tags for additions and deletions. Do not include any prefixes, explanations, or notes. Your response should start immediately with the full document content.`,
+IMPORTANT: Please follow the two-part format in your response:
+1. Document changes with XML tags (if any)
+2. "<<<USER_MESSAGE>>>" followed by your conversational response
+
+If my request is just a question with no document changes, only include the second part with "<<<USER_MESSAGE>>>" followed by your response.`,
         },
       ],
     });
@@ -124,7 +139,29 @@ IMPORTANT: Please return the COMPLETE document with XML tags marking only the ch
       ? response.content[0].text 
       : 'Unable to process document';
     
-    // Remove common prefixes that Claude might add
+    // Split the response into document changes and user message
+    const messageSeparator = "<<<USER_MESSAGE>>>";
+    const hasSeparator = responseText.includes(messageSeparator);
+    
+    let xmlContent = '';
+    let userMessage = '';
+    
+    if (hasSeparator) {
+      const parts = responseText.split(messageSeparator);
+      xmlContent = parts[0]?.trim() || '';
+      userMessage = parts[1]?.trim() || '';
+    } else {
+      // Fallback: try to determine if it's XML content or just a message
+      const hasXmlTags = /<(addition|deletion|move|format|comment)/.test(responseText);
+      if (hasXmlTags) {
+        xmlContent = responseText;
+        userMessage = "I've processed your document with the requested changes.";
+      } else {
+        userMessage = responseText;
+      }
+    }
+    
+    // Remove common prefixes from XML content
     const prefixesToRemove = [
       "Here is the edited document with your requested changes:",
       "Here's the edited document with your requested changes:",
@@ -134,19 +171,22 @@ IMPORTANT: Please return the COMPLETE document with XML tags marking only the ch
     ];
     
     for (const prefix of prefixesToRemove) {
-      if (responseText.trim().startsWith(prefix)) {
-        responseText = responseText.trim().substring(prefix.length).trim();
+      if (xmlContent.trim().startsWith(prefix)) {
+        xmlContent = xmlContent.trim().substring(prefix.length).trim();
         break;
       }
     }
 
     console.log("Final processed response:", {
-      contentLength: responseText.length,
-      contentPreview: responseText.substring(0, 100) + "..."
+      xmlContentLength: xmlContent.length,
+      userMessageLength: userMessage.length,
+      xmlContentPreview: xmlContent.substring(0, 100) + "...",
+      userMessagePreview: userMessage.substring(0, 100) + "..."
     });
 
     return NextResponse.json({
-      result: responseText,
+      xmlContent,
+      userMessage
     });
   } catch (error) {
     console.error("Error with Anthropic API:", error);

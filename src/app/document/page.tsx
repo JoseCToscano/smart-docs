@@ -406,6 +406,11 @@ export default function DocumentPage() {
     // Get current content from the editor
     const currentContent = getEditorContent();
     
+    // Enhance the prompt to explicitly address newline handling
+    const enhancedPrompt = `${prompt}
+    
+IMPORTANT: When including line breaks in your response, please use actual newlines (\n), not the literal text "___NEWLINE___".`;
+    
     try {
       // Call the Anthropic API through our backend
       const response = await fetch('/api/document/complete', {
@@ -414,7 +419,7 @@ export default function DocumentPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          prompt,
+          prompt: enhancedPrompt,
           content: currentContent,
         }),
       });
@@ -425,26 +430,39 @@ export default function DocumentPage() {
       
       const data = await response.json();
       
-      // Parse the result with XML tags
-      const xmlResult = data.result;
-      console.log("[DocumentPage] Received XML result from API:", xmlResult.substring(0, 100) + "...");
+      // Extract both parts of the response
+      const { xmlContent, userMessage } = data;
       
-      // Immediately apply the XML changes to the editor to show highlighting
-      // The result contains the complete document with XML tags marking changes
-      applyXmlChangesToEditor(xmlResult);
+      console.log("[DocumentPage] Received response:", {
+        hasXmlContent: Boolean(xmlContent) && xmlContent.length > 0,
+        userMessage: userMessage?.substring(0, 100) + "..."
+      });
       
-      // Convert XML diff to a structured format for the sidebar
-      const changes = xmlDiffToChanges(xmlResult);
+      // Only apply XML changes if there are any
+      let changes = null;
       
-      // Create response for the AI sidebar
-      const responseText = "I've applied the suggested changes to your document. You can see additions highlighted in green and deletions in red.";
+      if (xmlContent && xmlContent.length > 0) {
+        console.log("[DocumentPage] Applying XML changes to editor");
+        
+        // Pre-process the content: replace literal ___NEWLINE___ with actual newlines
+        let processedXmlContent = xmlContent.replace(/___NEWLINE___/g, '\n');
+        
+        // Apply the XML changes to the editor to show highlighting
+        applyXmlChangesToEditor(processedXmlContent);
+        
+        // Convert XML diff to a structured format for the sidebar
+        changes = xmlDiffToChanges(processedXmlContent);
+      }
+      
+      // Use the actual user message from the response
+      const responseText = userMessage || "I've processed your request.";
       
       setAIResponse({
         text: responseText,
         suggestions: changes
       });
       
-      // Add the AI response to the sidebar without the raw XML since it's already applied
+      // Add the AI response to the sidebar
       if (aiSidebarRef.current && typeof aiSidebarRef.current.addAIResponse === 'function') {
         aiSidebarRef.current.addAIResponse(responseText, changes);
       }
@@ -465,7 +483,7 @@ export default function DocumentPage() {
     } finally {
       setIsAIProcessing(false);
     }
-  }, []);
+  }, [getEditorContent]);
 
   // Enhanced applyXmlChangesToEditor to handle the XML format
   const applyXmlChangesToEditor = (xmlContent: string) => {
@@ -479,9 +497,10 @@ export default function DocumentPage() {
       // First ensure styles are injected
       const ensureStyles = () => {
         // Check if styles are already injected
-        if (!editorDoc.querySelector('style')) {
+        if (!editorDoc.querySelector('style#ai-diff-styles')) {
           // Create a style element using window.document and then append to editor document
           const styleEl = window.document.createElement('style');
+          styleEl.id = 'ai-diff-styles';
           styleEl.textContent = `
             /* AI Diff Highlighting Styles */
             .ai-addition {
@@ -494,7 +513,7 @@ export default function DocumentPage() {
               margin: 0 1px !important;
               position: relative !important;
               font-weight: 500 !important; /* Slightly bolder */
-              display: inline-block !important;
+              display: inline !important;
               white-space: pre-wrap !important; /* Respect line breaks */
             }
             
@@ -507,85 +526,163 @@ export default function DocumentPage() {
               padding: 0 2px !important;
               margin: 0 1px !important;
               position: relative !important;
-              display: inline-block !important;
+              display: inline !important;
               white-space: pre-wrap !important; /* Respect line breaks */
             }
             
-            /* Ensure <p> tags inside additions/deletions display properly */
-            .ai-addition p, .ai-deletion p {
-              margin: 0.5em 0 !important;
-              display: block !important;
+            /* Make sure all spans are properly displayed */
+            span.ai-addition, span.ai-deletion {
+              display: inline !important;
             }
-
+            
             /* Ensure <br> tags inside additions/deletions display properly */
             .ai-addition br, .ai-deletion br {
               display: block !important;
               content: "" !important;
               margin-top: 0.5em !important;
             }
+            
+            /* Make <p> tags inside additions/deletions display properly as blocks */
+            .ai-addition p, .ai-deletion p {
+              display: block !important;
+              margin: 0.5em 0 !important;
+            }
           `;
           
           // Append style to the head of the iframe document
           editorDoc.head.appendChild(styleEl);
+          console.log("[DocumentPage] Injected AI diff styles into editor document");
         }
       };
       
       // Ensure styles are present
       ensureStyles();
       
-      // Preserve any newlines in the XML content by replacing with placeholder before parsing
-      const normalizedXmlContent = xmlContent.replace(/\\n/g, '\n'); // First convert escaped newlines
+      console.log("[DocumentPage] Processing XML content, length:", xmlContent.length);
+      console.log("[DocumentPage] XML content contains addition tags:", xmlContent.includes("<addition>"));
+      console.log("[DocumentPage] XML content contains deletion tags:", xmlContent.includes("<deletion>"));
       
-      // Parse XML to HTML with styled spans
-      const htmlWithChanges = parseXmlDiff(normalizedXmlContent);
-      
-      // Update the editor content - using a more compatible approach with Kendo
-      // First store the original content
-      const originalContent = editorDoc.body.innerHTML;
-      
-      // Create a temporary div using window.document
-      const tempDiv = window.document.createElement('div');
-      tempDiv.innerHTML = htmlWithChanges;
-      
-      // Update the editor content using a method that preserves event handlers and editor state
-      if (editorRef.current && typeof editorRef.current.value === 'function') {
-        // Try to use the Kendo API if available
-        try {
-          editorRef.current.value(htmlWithChanges);
-          console.log("[DocumentPage] Updated editor content using Kendo API");
-        } catch (err) {
-          console.error("[DocumentPage] Error updating editor with Kendo API:", err);
-          // Fallback to direct DOM manipulation
-          editorDoc.body.innerHTML = htmlWithChanges;
-        }
-      } else {
-        // Fallback to direct DOM manipulation
-        editorDoc.body.innerHTML = htmlWithChanges;
-        
-        // Force a refresh of the editor's content
-        if (editorRef.current && typeof editorRef.current.refresh === 'function') {
-          try {
-            editorRef.current.refresh();
-            console.log("[DocumentPage] Refreshed editor after direct DOM update");
-          } catch (err) {
-            console.error("[DocumentPage] Error refreshing editor:", err);
-          }
-        }
+      // Check if there are actual changes to apply
+      if (!xmlContent.includes("<addition>") && !xmlContent.includes("<deletion>")) {
+        console.log("[DocumentPage] No XML tags found in content, nothing to apply");
+        return;
       }
       
-      // Update the document state
-      setDocument(prev => ({
-        ...prev,
-        content: htmlWithChanges,
-        updatedAt: new Date()
-      }));
+      // Parse XML to HTML with styled spans
+      const htmlWithChanges = parseXmlDiff(xmlContent);
       
-      console.log("[DocumentPage] Successfully applied XML changes to editor");
+      console.log("[DocumentPage] Parsed HTML contains addition spans:", htmlWithChanges.includes("ai-addition"));
+      console.log("[DocumentPage] Parsed HTML contains deletion spans:", htmlWithChanges.includes("ai-deletion"));
+      
+      // Make sure the editor is ready
+      if (!editorRef.current) {
+        console.error("[DocumentPage] Editor reference is not available");
+        return;
+      }
+      
+      // Try using the most reliable method to update the editor content
+      try {
+        // Method 1: Use editorRef.current.value if available (most reliable)
+        if (typeof editorRef.current.value === 'function') {
+          editorRef.current.value(htmlWithChanges);
+          console.log("[DocumentPage] Updated editor content using value() method");
+        }
+        // Method 2: Use setHTML if available
+        else if (typeof editorRef.current.setHTML === 'function') {
+          editorRef.current.setHTML(htmlWithChanges);
+          console.log("[DocumentPage] Updated editor content using setHTML() method");
+        }
+        // Method 3: Direct DOM manipulation as last resort
+        else {
+          editorDoc.body.innerHTML = htmlWithChanges;
+          console.log("[DocumentPage] Updated editor content using direct DOM manipulation");
+        }
+        
+        // Force a refresh if available
+        if (typeof editorRef.current.refresh === 'function') {
+          setTimeout(() => {
+            editorRef.current.refresh();
+            console.log("[DocumentPage] Refreshed editor after content update");
+          }, 50);
+        }
+        
+        // Update the document state
+        setDocument(prev => ({
+          ...prev,
+          content: htmlWithChanges,
+          updatedAt: new Date()
+        }));
+        
+        // Post-process the editor to fix any styling issues
+        setTimeout(() => {
+          fixSpanStyling(editorDoc);
+        }, 100);
+        
+      } catch (err) {
+        console.error("[DocumentPage] Error updating editor content:", err);
+        // Fallback to direct DOM manipulation
+        try {
+          editorDoc.body.innerHTML = htmlWithChanges;
+          console.log("[DocumentPage] Used direct DOM manipulation as fallback");
+          
+          // Update the document state
+          setDocument(prev => ({
+            ...prev,
+            content: htmlWithChanges,
+            updatedAt: new Date()
+          }));
+        } catch (domErr) {
+          console.error("[DocumentPage] Failed to update editor content:", domErr);
+        }
+      }
     } catch (error) {
-      console.error("Error applying XML changes to editor:", error);
+      console.error("[DocumentPage] Error applying XML changes to editor:", error);
     }
   };
   
+  // Helper function to fix any styling issues with the spans
+  const fixSpanStyling = (editorDoc: Document) => {
+    try {
+      // Find all addition and deletion spans
+      const additionSpans = editorDoc.querySelectorAll('.ai-addition');
+      const deletionSpans = editorDoc.querySelectorAll('.ai-deletion');
+      
+      console.log("[DocumentPage] Found spans to fix:", {
+        additions: additionSpans.length,
+        deletions: deletionSpans.length
+      });
+      
+      // Make sure all spans have the correct display style
+      [...additionSpans, ...deletionSpans].forEach(span => {
+        // Ensure inline display
+        (span as HTMLElement).style.display = 'inline';
+        // Add the highlight class if missing
+        if (!span.classList.contains('highlight')) {
+          span.classList.add('highlight');
+        }
+        // Add the badge class if missing
+        if (!span.classList.contains('ai-badge')) {
+          span.classList.add('ai-badge');
+        }
+      });
+      
+      // Check for and fix any XML tags that weren't properly converted
+      const editorContent = editorDoc.body.innerHTML;
+      if (editorContent.includes('<addition>') || editorContent.includes('<deletion>')) {
+        console.log("[DocumentPage] Found unconverted XML tags, fixing...");
+        
+        // Apply a direct fix
+        let fixedContent = editorContent
+          .replace(/<addition>([\s\S]*?)<\/addition>/g, '<span class="ai-addition ai-badge highlight">$1</span>')
+          .replace(/<deletion>([\s\S]*?)<\/deletion>/g, '<span class="ai-deletion ai-badge highlight">$1</span>');
+          
+        editorDoc.body.innerHTML = fixedContent;
+      }
+    } catch (error) {
+      console.error("[DocumentPage] Error fixing span styling:", error);
+    }
+  };
+
   // Update the handleApplyChanges function to handle both formats
   const handleApplyChanges = useCallback((changes: DocumentChanges) => {
     // This handles the original format with structured changes
