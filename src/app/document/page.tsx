@@ -552,6 +552,7 @@ IMPORTANT GUIDELINES:
               -webkit-user-select: auto !important;
               -moz-user-select: auto !important;
               pointer-events: auto !important;
+              cursor: text !important;
             }
             
             .ai-deletion {
@@ -569,6 +570,7 @@ IMPORTANT GUIDELINES:
               -webkit-user-select: auto !important;
               -moz-user-select: auto !important;
               pointer-events: auto !important;
+              cursor: text !important;
             }
             
             /* Make sure all spans are properly displayed */
@@ -621,124 +623,163 @@ IMPORTANT GUIDELINES:
         return;
       }
       
-      // Try using the most reliable method to update the editor content
-      try {
-        // Store the original selection and cursor position if possible
-        let savedSelection = null;
-        try {
-          const editorWindow = editorDoc.defaultView || window;
-          savedSelection = editorWindow.getSelection ? editorWindow.getSelection() : null;
-        } catch (err) {
-          console.log("[DocumentPage] Could not save selection:", err);
-        }
-        
-        // Method 1: Use editorRef.current.value if available (most reliable)
-        if (typeof editorRef.current.value === 'function') {
-          editorRef.current.value(htmlWithChanges);
-          console.log("[DocumentPage] Updated editor content using value() method");
-        }
-        // Method 2: Use setHTML if available
-        else if (typeof editorRef.current.setHTML === 'function') {
-          editorRef.current.setHTML(htmlWithChanges);
-          console.log("[DocumentPage] Updated editor content using setHTML() method");
-        }
-        // Method 3: Direct DOM manipulation as last resort
-        else {
-          editorDoc.body.innerHTML = htmlWithChanges;
-          console.log("[DocumentPage] Updated editor content using direct DOM manipulation");
-        }
-        
-        // Re-initialize the editor to ensure toolbar commands work with the new content
-        // This is a crucial step to make sure the editor's internal state is updated
-        if (typeof editorRef.current.recreate === 'function') {
-          editorRef.current.recreate();
-          console.log("[DocumentPage] Recreated editor after content update");
-        } else {
-          // Force a refresh if available
-          if (typeof editorRef.current.refresh === 'function') {
-            editorRef.current.refresh();
-            console.log("[DocumentPage] Refreshed editor after content update");
-          }
-        }
-        
-        // Restore selection if possible
-        if (savedSelection && savedSelection.rangeCount > 0) {
-          try {
-            const range = savedSelection.getRangeAt(0);
-            const newSelection = editorDoc.getSelection();
-            if (newSelection) {
-              newSelection.removeAllRanges();
-              newSelection.addRange(range);
-            }
-          } catch (err) {
-            console.log("[DocumentPage] Could not restore selection:", err);
-          }
-        }
-        
-        // Make sure the editor body is editable
-        if (editorDoc && editorDoc.body) {
-          editorDoc.body.contentEditable = 'true';
-          editorDoc.designMode = 'on';
-        }
-        
-        // Update the document state
-        setDocument(prev => ({
-          ...prev,
-          content: htmlWithChanges,
-          updatedAt: new Date()
-        }));
-        
-        // Post-process the editor to fix any styling issues
-        setTimeout(() => {
-          fixSpanStyling(editorDoc);
-          
-          // Update the hasActiveChanges state based on whether we have any AI changes
-          const hasChanges = hasAIChanges();
-          setHasActiveChanges(hasChanges);
-          console.log("[DocumentPage] Updated hasActiveChanges:", hasChanges);
-          
-          // Give the editor focus again
-          if (typeof editorRef.current.focus === 'function') {
-            editorRef.current.focus();
-          }
-        }, 100);
-        
-      } catch (err) {
-        console.error("[DocumentPage] Error updating editor content:", err);
-        // Fallback to direct DOM manipulation
-        try {
-          editorDoc.body.innerHTML = htmlWithChanges;
-          console.log("[DocumentPage] Used direct DOM manipulation as fallback");
-          
-          // Make sure the editor body is editable
-          if (editorDoc && editorDoc.body) {
-            editorDoc.body.contentEditable = 'true';
-            editorDoc.designMode = 'on';
-          }
-          
-          // Update the document state
-          setDocument(prev => ({
-            ...prev,
-            content: htmlWithChanges,
-            updatedAt: new Date()
-          }));
-          
-          // Update hasActiveChanges
-          setTimeout(() => {
-            const hasChanges = hasAIChanges();
-            setHasActiveChanges(hasChanges);
-          }, 100);
-        } catch (domErr) {
-          console.error("[DocumentPage] Failed to update editor content:", domErr);
-        }
-      }
+      // Properly update the editor with new content
+      updateEditorContent(htmlWithChanges);
+      
+      // Update the hasActiveChanges state
+      setTimeout(() => {
+        const hasChanges = hasAIChanges();
+        setHasActiveChanges(hasChanges);
+        console.log("[DocumentPage] Updated hasActiveChanges:", hasChanges);
+      }, 100);
+      
     } catch (error) {
       console.error("[DocumentPage] Error applying XML changes to editor:", error);
     }
   };
   
+  // New helper function to properly update editor content while preserving its functionality
+  const updateEditorContent = (newContent: string) => {
+    try {
+      // Create a temporary div to sanitize the content
+      const tempDiv = window.document.createElement('div');
+      tempDiv.innerHTML = newContent;
+      
+      // Clean up any problematic elements or attributes that might interfere with the editor
+      const allElements = tempDiv.querySelectorAll('*');
+      allElements.forEach((el: Element) => {
+        // Remove any contenteditable attributes as they can interfere with the editor
+        if (el.hasAttribute('contenteditable')) {
+          el.removeAttribute('contenteditable');
+        }
+        
+        // Remove any inline event handlers
+        const attributes = el.attributes;
+        for (let i = attributes.length - 1; i >= 0; i--) {
+          const attrName = attributes[i].name;
+          if (attrName.startsWith('on')) {
+            el.removeAttribute(attrName);
+          }
+        }
+      });
+      
+      // Get the cleaned content
+      const cleanedContent = tempDiv.innerHTML;
+      
+      console.log("[DocumentPage] Updating editor with cleaned content");
+      
+      // First try using Kendo's API
+      if (typeof editorRef.current?.value === 'function') {
+        // Check if we can access the props
+        if (editorRef.current && 'props' in editorRef.current) {
+          // Store the original onChange handler
+          const originalOnChange = editorRef.current.props?.onChange;
+          
+          // Temporarily disable the onChange handler
+          if (editorRef.current.props) {
+            editorRef.current.props.onChange = null;
+          }
+          
+          // Update the content
+          editorRef.current.value(cleanedContent);
+          
+          // Restore the original onChange handler
+          setTimeout(() => {
+            if (editorRef.current && editorRef.current.props) {
+              editorRef.current.props.onChange = originalOnChange;
+            }
+          }, 50);
+        } else {
+          // If we can't access props, just update the content
+          editorRef.current.value(cleanedContent);
+        }
+        
+        console.log("[DocumentPage] Updated editor content via value() method");
+      } else {
+        // Fallback to direct DOM manipulation
+        const editorDoc = getEditorDocument();
+        if (editorDoc && editorDoc.body) {
+          editorDoc.body.innerHTML = cleanedContent;
+          console.log("[DocumentPage] Updated editor content via direct DOM manipulation");
+        }
+      }
+      
+      // Ensure the editor is properly re-initialized
+      reinitializeEditor();
+      
+      // Update the document state
+      setDocument(prev => ({
+        ...prev,
+        content: cleanedContent,
+        updatedAt: new Date()
+      }));
+    } catch (err) {
+      console.error("[DocumentPage] Error updating editor content:", err);
+    }
+  };
+  
+  // Helper function to reinitialize the editor and ensure toolbar works
+  const reinitializeEditor = () => {
+    if (!editorRef.current) return;
+    
+    try {
+      // Attempt to use editor's built-in methods if available
+      if (typeof editorRef.current.recreate === 'function') {
+        editorRef.current.recreate();
+        console.log("[DocumentPage] Editor recreated");
+      } else if (typeof editorRef.current.refresh === 'function') {
+        editorRef.current.refresh();
+        console.log("[DocumentPage] Editor refreshed");
+      }
+      
+      // Make sure the document is editable
+      const editorDoc = getEditorDocument();
+      if (editorDoc) {
+        // Ensure the document is properly in design mode
+        editorDoc.designMode = 'on';
+        
+        // Ensure the body is contenteditable
+        if (editorDoc.body) {
+          editorDoc.body.contentEditable = 'true';
+        }
+        
+        // Force a focus to activate the editor
+        if (typeof editorRef.current.focus === 'function') {
+          setTimeout(() => {
+            editorRef.current.focus();
+          }, 100);
+        }
+        
+        // Manually dispatch a click event on the editor to ensure it's activated
+        try {
+          const editorEl = editorRef.current.element;
+          if (editorEl) {
+            const event = new MouseEvent('click', {
+              view: window,
+              bubbles: true,
+              cancelable: true
+            });
+            editorEl.dispatchEvent(event);
+          }
+        } catch (err) {
+          console.log("[DocumentPage] Error dispatching click event:", err);
+        }
+      }
+      
+      // Post-process editor spans to ensure they don't interfere with editing
+      setTimeout(() => {
+        fixSpanStyling(getEditorDocument());
+      }, 100);
+      
+    } catch (err) {
+      console.error("[DocumentPage] Error reinitializing editor:", err);
+    }
+  };
+  
   // Helper function to fix any styling issues with the spans
-  const fixSpanStyling = (editorDoc: Document) => {
+  const fixSpanStyling = (editorDoc: Document | null) => {
+    if (!editorDoc) return;
+    
     try {
       // Find all addition and deletion spans
       const additionSpans = editorDoc.querySelectorAll('.ai-addition');
@@ -753,10 +794,22 @@ IMPORTANT GUIDELINES:
       [...additionSpans, ...deletionSpans].forEach(span => {
         // Ensure inline display
         (span as HTMLElement).style.display = 'inline';
+        
+        // Ensure it's part of the text flow and can be edited
+        (span as HTMLElement).style.userSelect = 'auto';
+        (span as HTMLElement).style.pointerEvents = 'auto';
+        (span as HTMLElement).style.cursor = 'text';
+        
+        // Remove any contenteditable=false that might interfere
+        if (span.hasAttribute('contenteditable')) {
+          span.removeAttribute('contenteditable');
+        }
+        
         // Add the highlight class if missing
         if (!span.classList.contains('highlight')) {
           span.classList.add('highlight');
         }
+        
         // Add the badge class if missing
         if (!span.classList.contains('ai-badge')) {
           span.classList.add('ai-badge');
@@ -774,6 +827,9 @@ IMPORTANT GUIDELINES:
           .replace(/<deletion>([\s\S]*?)<\/deletion>/g, '<span class="ai-deletion ai-badge highlight">$1</span>');
           
         editorDoc.body.innerHTML = fixedContent;
+        
+        // After fixing, refresh the editor again
+        reinitializeEditor();
       }
     } catch (error) {
       console.error("[DocumentPage] Error fixing span styling:", error);
@@ -851,40 +907,8 @@ IMPORTANT GUIDELINES:
       // Get the updated content with proper line breaks
       const updatedContent = ensureLineBreaks(editorDoc.body.innerHTML);
       
-      // Make sure the editor body is editable
-      if (editorDoc && editorDoc.body) {
-        editorDoc.body.contentEditable = 'true';
-        editorDoc.designMode = 'on';
-      }
-      
-      // Re-initialize the editor to ensure toolbar commands work with the new content
-      if (editorRef.current) {
-        if (typeof editorRef.current.value === 'function') {
-          // Update the editor with clean content
-          editorRef.current.value(updatedContent);
-          
-          // Recreate editor to ensure proper toolbar functionality
-          if (typeof editorRef.current.recreate === 'function') {
-            editorRef.current.recreate();
-          } else if (typeof editorRef.current.refresh === 'function') {
-            editorRef.current.refresh();
-          }
-          
-          // Give focus back to the editor
-          if (typeof editorRef.current.focus === 'function') {
-            setTimeout(() => {
-              editorRef.current.focus();
-            }, 100);
-          }
-        }
-      }
-      
-      // Update the document state with the finalized content
-      setDocument(prev => ({
-        ...prev,
-        content: updatedContent,
-        updatedAt: new Date()
-      }));
+      // Update the editor content using our helper function
+      updateEditorContent(updatedContent);
       
       // Update the hasActiveChanges state
       setHasActiveChanges(false);
@@ -960,40 +984,8 @@ IMPORTANT GUIDELINES:
       // Get the updated content with proper line breaks
       const updatedContent = ensureLineBreaks(editorDoc.body.innerHTML);
       
-      // Make sure the editor body is editable
-      if (editorDoc && editorDoc.body) {
-        editorDoc.body.contentEditable = 'true';
-        editorDoc.designMode = 'on';
-      }
-      
-      // Re-initialize the editor to ensure toolbar commands work with the new content
-      if (editorRef.current) {
-        if (typeof editorRef.current.value === 'function') {
-          // Update the editor with clean content
-          editorRef.current.value(updatedContent);
-          
-          // Recreate editor to ensure proper toolbar functionality
-          if (typeof editorRef.current.recreate === 'function') {
-            editorRef.current.recreate();
-          } else if (typeof editorRef.current.refresh === 'function') {
-            editorRef.current.refresh();
-          }
-          
-          // Give focus back to the editor
-          if (typeof editorRef.current.focus === 'function') {
-            setTimeout(() => {
-              editorRef.current.focus();
-            }, 100);
-          }
-        }
-      }
-      
-      // Update the document state with the reverted content
-      setDocument(prev => ({
-        ...prev,
-        content: updatedContent,
-        updatedAt: new Date()
-      }));
+      // Update the editor content using our helper function
+      updateEditorContent(updatedContent);
       
       // Update the hasActiveChanges state
       setHasActiveChanges(false);
