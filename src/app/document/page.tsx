@@ -702,6 +702,9 @@ export default function DocumentPage() {
   // Update toggleSidebar to work with Splitter
   const toggleSidebar = useCallback(() => {
     setShowSidebar(prev => !prev);
+    
+    // If needed, we could update Splitter props here
+    // but it should automatically update based on the showSidebar state
   }, []);
 
   // Add a useEffect to manually trigger a focus and autocompletion on initial load
@@ -898,8 +901,8 @@ export default function DocumentPage() {
           style={{ height: 'calc(100vh - 49px)' }} // Adjust for header height
           orientation="horizontal"
           panes={[
-            { collapsible: false, size: showSidebar ? '70%' : '100%' },
-            { collapsible: true, collapsed: !showSidebar, size: '30%', min: '250px' }
+            { collapsible: false }, // Main editor pane - flexible size (no fixed size)
+            { collapsible: true, collapsed: !showSidebar, size: '30%', min: '250px' } // Sidebar with fixed size
           ]}
         >
           {/* Main Editor Area */}
