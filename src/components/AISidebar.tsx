@@ -110,17 +110,6 @@ const AISidebar = forwardRef<AISidebarHandle, AISidebarProps>(({
     setPrompt(e.value);
   };
 
-  const handleApplySuggestion = (suggestions: DocumentChanges) => {
-    if (onApplyChanges) {
-      onApplyChanges(suggestions);
-    }
-  };
-
-  const handleApplyXmlChanges = (xmlContent: string) => {
-    if (onApplyXmlChanges) {
-      onApplyXmlChanges(xmlContent);
-    }
-  };
 
   return (
     <div className="h-full flex flex-col bg-gray-50 border-l border-gray-200 w-full">
@@ -224,15 +213,6 @@ const AISidebar = forwardRef<AISidebarHandle, AISidebarProps>(({
                     ))}
                   </div>
                 )}
-                
-                <Button
-                  onClick={() => handleApplySuggestion(message.suggestions!)}
-                  themeColor="primary"
-                  size="small"
-                  className="mt-1 w-full"
-                >
-                  Apply Changes
-                </Button>
               </div>
             )}
             {message.timestamp && (

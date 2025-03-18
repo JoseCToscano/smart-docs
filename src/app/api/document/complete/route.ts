@@ -52,9 +52,6 @@ Your response should always be divided into two parts:
 If the user is asking you to make changes to the document, use XML tags to mark your edits:
 - <addition>added text</addition> - For new text being added
 - <deletion>removed text</deletion> - For text being removed
-- <move>moved text</move> - For text being moved to a different location
-- <format>formatted text</format> - For text being formatted differently
-- <comment>comment text</comment> - For comments about the text without changing it
 
 Return the COMPLETE document with XML tags marking ONLY the changes. Include ALL original text, marking only the changes with XML tags.
 
