@@ -52,68 +52,139 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
     [enabled]
   );
 
+  // Get the iframe from the editor
+  const getEditorIframe = useCallback(() => {
+    if (!editorRef.current) return null;
+    
+    // According to KendoReact documentation, the editor uses an iframe by default
+    // Try to access it through various possible methods
+    if (editorRef.current.iframe) {
+      return editorRef.current.iframe;
+    }
+
+    // If not directly available, try to find it in the DOM
+    const editorElement = editorRef.current.element;
+    if (editorElement) {
+      const iframe = editorElement.querySelector('iframe');
+      if (iframe) return iframe;
+    }
+
+    // As a fallback, try to find it in the document
+    return document.querySelector('.k-editor iframe');
+  }, [editorRef]);
+
+  // Get the editor's document
+  const getEditorDocument = useCallback(() => {
+    const iframe = getEditorIframe();
+    if (!iframe) return null;
+    
+    return iframe.contentDocument || iframe.contentWindow?.document;
+  }, [getEditorIframe]);
+
+  // Define applySuggestion function before it's used in event listeners
+  const applySuggestion = useCallback(() => {
+    if (!suggestion || !editorRef.current) return;
+    
+    const editor = editorRef.current;
+    
+    try {
+      // Insert the suggestion at the current cursor position
+      // According to Telerik docs, we should use the exec command
+      editor.exec('insertText', { text: suggestion });
+      setSuggestion(null);
+    } catch (error) {
+      console.error('Error applying suggestion:', error);
+      
+      // Fallback: try to insert directly into the document
+      try {
+        const doc = getEditorDocument();
+        if (doc) {
+          const selection = doc.getSelection();
+          if (selection && selection.rangeCount > 0) {
+            const range = selection.getRangeAt(0);
+            const textNode = doc.createTextNode(suggestion);
+            range.insertNode(textNode);
+            
+            // Move cursor to end of inserted text
+            range.setStartAfter(textNode);
+            range.setEndAfter(textNode);
+            selection.removeAllRanges();
+            selection.addRange(range);
+            
+            setSuggestion(null);
+          }
+        }
+      } catch (fallbackError) {
+        console.error('Fallback insertion failed:', fallbackError);
+      }
+    }
+  }, [suggestion, editorRef, getEditorDocument]);
+
   const handleEditorChange = useCallback(() => {
     console.log("handleEditorChange called");
     if (!editorRef.current || !enabled) return;
     
     try {
-      // Get the current cursor position and text
-      const editor = editorRef.current;
+      // Get the editor document
+      const doc = getEditorDocument();
+      if (!doc) {
+        console.log("Could not get editor document");
+        return;
+      }
       
-      // Try multiple approaches to access editor content
+      // Get selection from document
+      const selection = doc.getSelection();
+      if (!selection) {
+        console.log("No selection found");
+        return;
+      }
+      
+      // Get text from the current selection point
       let currentText = '';
-      let selection = null;
+      const range = selection.getRangeAt(0);
+      const node = range.startContainer;
       
-      // Method 1: Using editor's getSelection method
-      try {
-        selection = editor.getSelection();
-        if (selection) {
-          const range = selection.getRangeAt(0);
-          const node = range.startContainer;
-          if (node && node.textContent) {
-            currentText = node.textContent.substring(0, range.startOffset);
-          }
-        }
-      } catch (e) {
-        console.log("Method 1 failed:", e);
+      // Get parent paragraph or element for better context
+      let contextNode = node;
+      while (contextNode && contextNode.nodeName !== 'P' && 
+             contextNode.nodeName !== 'DIV' && 
+             contextNode.nodeName !== 'LI' &&
+             contextNode !== doc.body) {
+        contextNode = contextNode.parentNode;
       }
       
-      // Method 2: Access iframe directly if available
-      if (!currentText && editor.iframe) {
-        try {
-          const iframeDocument = editor.iframe.contentDocument || editor.iframe.contentWindow?.document;
-          selection = iframeDocument?.getSelection();
-          if (selection) {
-            const range = selection.getRangeAt(0);
-            const node = range.startContainer;
-            if (node && node.textContent) {
-              currentText = node.textContent.substring(0, range.startOffset);
-            }
+      if (contextNode && contextNode.textContent) {
+        // Get all text up to cursor position
+        // This is more complex as we need to calculate position within the parent
+        const nodeIterator = doc.createNodeIterator(
+          contextNode,
+          NodeFilter.SHOW_TEXT,
+          null
+        );
+        
+        let currentNode;
+        let offset = 0;
+        let reachedTargetNode = false;
+        
+        while ((currentNode = nodeIterator.nextNode())) {
+          if (currentNode === node) {
+            // We've reached our target node, add text up to the cursor
+            currentText += currentNode.textContent?.substring(0, range.startOffset) || '';
+            reachedTargetNode = true;
+            break;
+          } else {
+            // Add the entire content of previous nodes
+            currentText += currentNode.textContent || '';
           }
-        } catch (e) {
-          console.log("Method 2 failed:", e);
         }
-      }
-      
-      // Method 3: Try to find the iframe in the DOM
-      if (!currentText) {
-        try {
-          const iframe = document.querySelector('.k-editor iframe');
-          if (iframe) {
-            const iframeDocument = (iframe as HTMLIFrameElement).contentDocument || 
-                                 (iframe as HTMLIFrameElement).contentWindow?.document;
-            selection = iframeDocument?.getSelection();
-            if (selection) {
-              const range = selection.getRangeAt(0);
-              const node = range.startContainer;
-              if (node && node.textContent) {
-                currentText = node.textContent.substring(0, range.startOffset);
-              }
-            }
-          }
-        } catch (e) {
-          console.log("Method 3 failed:", e);
+        
+        // If we didn't find the target node, use fallback
+        if (!reachedTargetNode && node.textContent) {
+          currentText = node.textContent.substring(0, range.startOffset);
         }
+      } else if (node && node.textContent) {
+        // Fallback to just the node text
+        currentText = node.textContent.substring(0, range.startOffset);
       }
       
       console.log("Current text extracted:", currentText);
@@ -127,55 +198,54 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
     } catch (error) {
       console.error('Error getting editor content:', error);
     }
-  }, [editorRef, getSuggestion, enabled]);
+  }, [editorRef, getSuggestion, enabled, getEditorDocument]);
 
   useEffect(() => {
     // Setup event listeners for cursor movement and typing
     console.log("Setting up editor event listeners", { enabled, hasEditor: Boolean(editorRef.current) });
     if (!editorRef.current || !enabled) return;
     
-    const editor = editorRef.current;
-    console.log("Editor ref:", editor);
-    
-    // Try multiple approaches to find the editable area
-    
-    // 1. Try editor.element (direct approach)
-    if (editor.element) {
-      console.log("Adding keyup listener to editor.element");
-      editor.element.addEventListener('keyup', handleEditorChange);
-      return () => editor.element.removeEventListener('keyup', handleEditorChange);
+    // Get the editor document
+    const doc = getEditorDocument();
+    if (!doc) {
+      console.log("Could not find editor document to attach events");
+      return;
     }
     
-    // 2. Try to find iframe (Kendo Editor typically uses an iframe)
-    const iframe = editor.iframe || document.querySelector('.k-editor iframe');
-    if (iframe) {
-      console.log("Found iframe, adding listener to content document");
-      const iframeDocument = iframe.contentDocument || iframe.contentWindow?.document;
-      if (iframeDocument) {
-        iframeDocument.addEventListener('keyup', handleEditorChange);
-        return () => iframeDocument.removeEventListener('keyup', handleEditorChange);
-      }
-    }
+    console.log("Found editor document, adding keyup listener");
     
-    // 3. Try editor's content editable element
-    const contentElement = editor.contentElement || document.querySelector('.k-editor-content [contenteditable=true]');
-    if (contentElement) {
-      console.log("Found content element, adding listener");
-      contentElement.addEventListener('keyup', handleEditorChange);
-      return () => contentElement.removeEventListener('keyup', handleEditorChange);
-    }
-    
-    // 4. Try to use editor's onChange as a fallback
-    if (typeof editor.subscribe === 'function') {
-      console.log("Using editor subscribe method");
-      const subscription = editor.subscribe(() => {
+    // Add event listeners to the editor document
+    const eventListener = (e: KeyboardEvent) => {
+      // Respond to keyup events that would potentially change text
+      if (e.key === 'Tab' && suggestion) {
+        // Apply the suggestion on Tab key
+        e.preventDefault();
+        applySuggestion();
+      } else if (e.key === 'Escape' && suggestion) {
+        // Dismiss suggestion on Escape key
+        e.preventDefault();
+        setSuggestion(null);
+      } else if (e.key !== 'Shift' && e.key !== 'Control' && 
+                e.key !== 'Alt' && e.key !== 'Meta' &&
+                e.key !== 'ArrowUp' && e.key !== 'ArrowDown' &&
+                e.key !== 'ArrowLeft' && e.key !== 'ArrowRight' &&
+                !e.ctrlKey && !e.altKey && !e.metaKey) {
+        // Trigger suggestion on most typing keys, but not on navigation or modifier keys
         handleEditorChange();
-      });
-      return () => subscription.unsubscribe();
-    }
+      }
+    };
     
-    console.error("Could not find any suitable element to attach event listener");
-  }, [editorRef, handleEditorChange, enabled]);
+    // Attach to keyup event
+    doc.addEventListener('keyup', eventListener);
+    
+    // Also listen for mouseup to handle selection changes
+    doc.addEventListener('mouseup', handleEditorChange);
+    
+    return () => {
+      doc.removeEventListener('keyup', eventListener);
+      doc.removeEventListener('mouseup', handleEditorChange);
+    };
+  }, [editorRef, handleEditorChange, enabled, getEditorDocument, suggestion, applySuggestion]);
 
   // Add another effect for custom event listener as a fallback approach
   useEffect(() => {
@@ -196,19 +266,26 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
     };
   }, [handleEditorChange, enabled]);
 
-  const applySuggestion = useCallback(() => {
-    if (!suggestion || !editorRef.current) return;
+  // Add keyboard shortcut handlers for Tab and Escape
+  useEffect(() => {
+    if (!suggestion || !enabled) return;
     
-    const editor = editorRef.current;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Tab' && suggestion) {
+        e.preventDefault();
+        applySuggestion();
+      } else if (e.key === 'Escape' && suggestion) {
+        e.preventDefault();
+        setSuggestion(null);
+      }
+    };
     
-    try {
-      // Insert the suggestion at the current cursor position
-      editor.exec('insertText', { text: suggestion });
-      setSuggestion(null);
-    } catch (error) {
-      console.error('Error applying suggestion:', error);
-    }
-  }, [suggestion, editorRef]);
+    window.addEventListener('keydown', handleKeyDown, true);
+    
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown, true);
+    };
+  }, [suggestion, enabled, applySuggestion]);
 
   return (
     <div className="autocomplete-container">
