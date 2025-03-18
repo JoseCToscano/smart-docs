@@ -19,10 +19,28 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
   // Use a ref to track the current suggestion to avoid dependency issues in effects
   const currentSuggestionRef = useRef<string | null>(null);
   
+  // Track when the last suggestion was applied to prevent rapid-fire suggestions
+  const lastSuggestionTimeRef = useRef<number>(0);
+  
+  // Track the last text we used for a suggestion to avoid duplicates
+  const lastTextRef = useRef<string>('');
+  
   // Update the ref when suggestion changes
   useEffect(() => {
     currentSuggestionRef.current = suggestion;
   }, [suggestion]);
+  
+  // Check if the text has significantly changed from the last query
+  const hasTextChangedSignificantly = (text: string): boolean => {
+    if (!lastTextRef.current) return true;
+    
+    // If the new text doesn't contain the last text we queried, it's changed significantly
+    if (!text.includes(lastTextRef.current)) return true;
+    
+    // If it's just a few characters more than last time, not significant enough
+    const newContent = text.replace(lastTextRef.current, '');
+    return newContent.length > 10; // At least 10 new characters
+  };
 
   // Get contextual information about the text to improve completions
   const getContextType = (text: string): string => {
@@ -41,6 +59,7 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
     debounce(async (text: string) => {
       console.log("[AutoCompletion] getSuggestion called with text:", text.substring(0, 50) + (text.length > 50 ? "..." : ""));
       
+      // Check if we should skip this suggestion request
       if (!text.trim() || !enabled || !isMountedRef.current) {
         console.log("[AutoCompletion] getSuggestion early return:", {
           textEmpty: !text.trim(),
@@ -49,7 +68,23 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
         });
         return;
       }
-
+      
+      // Only proceed if enough time has passed since last suggestion
+      const now = Date.now();
+      if (now - lastSuggestionTimeRef.current < 3000) { // 3 seconds cooldown
+        console.log("[AutoCompletion] Skipping suggestion - too soon after last suggestion");
+        return;
+      }
+      
+      // Check if text has changed enough to warrant a new suggestion
+      if (!hasTextChangedSignificantly(text)) {
+        console.log("[AutoCompletion] Skipping suggestion - text hasn't changed significantly");
+        return;
+      }
+      
+      // Store the current text for future comparison
+      lastTextRef.current = text;
+      
       setLoading(true);
       try {
         const contextType = getContextType(text);
@@ -72,13 +107,12 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
           error: data.error
         });
         
-        // Only update state if component is still mounted
-        if (isMountedRef.current) {
-          if (response.ok && data.completion) {
-            setSuggestion(data.completion);
-          } else {
-            setSuggestion(null);
-          }
+        // Only update state if component is still mounted and we got a valid completion
+        if (isMountedRef.current && data.completion && data.completion.trim()) {
+          setSuggestion(data.completion);
+          lastSuggestionTimeRef.current = now;
+        } else if (isMountedRef.current) {
+          setSuggestion(null);
         }
       } catch (error) {
         console.error('[AutoCompletion] Error fetching autocompletion:', error);
@@ -90,7 +124,7 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
           setLoading(false);
         }
       }
-    }, 500),
+    }, 800), // Increased debounce time to avoid too many API calls
     [enabled] // Only depend on enabled, not other state values
   );
 
@@ -208,6 +242,9 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
         setSuggestion(null);
         setCursorPosition(null);
         setSelectionRange(null);
+        
+        // Reset the last text reference since we've applied the suggestion
+        lastTextRef.current = '';
       }
     } catch (error) {
       console.error('Error applying suggestion:', error);
@@ -281,6 +318,13 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
         rangeCount: selection.rangeCount
       });
       
+      // Skip if user has actual text selected (not just cursor position)
+      if (selection.type === 'Range') {
+        console.log("[AutoCompletion] User has text selected, skipping suggestion");
+        setSuggestion(null);
+        return;
+      }
+      
       // Get text from the current selection point
       let currentText = '';
       
@@ -319,6 +363,19 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
              contextNode.nodeName !== 'LI' &&
              contextNode !== doc.body) {
         contextNode = contextNode.parentNode;
+      }
+      
+      // Check if cursor is at the end of the text node - only suggest when typing at the end
+      let isCursorAtEnd = false;
+      if (node.nodeType === Node.TEXT_NODE) {
+        isCursorAtEnd = range.startOffset === node.textContent?.length;
+      }
+      
+      // If cursor is not at the end of text, don't show suggestions
+      if (!isCursorAtEnd) {
+        console.log("[AutoCompletion] Cursor is not at end of text, skipping suggestion");
+        setSuggestion(null);
+        return;
       }
       
       // If we've found a paragraph or list item
@@ -378,8 +435,9 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
         currentText = node.textContent.substring(0, range.startOffset);
       }
       
-      // For document text, we can suggest even with less context
-      if (currentText.length > 2) {
+      // For document text, we can suggest even with less context, but need more than just a few chars
+      // Increased minimum text length to reduce overly aggressive suggestions
+      if (currentText.length > 20) {  // Changed from 2 to 20 characters minimum
         console.log("[AutoCompletion] Getting suggestion with text length:", currentText.length);
         getSuggestion(currentText);
       } else if (isMountedRef.current) {
@@ -441,13 +499,16 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
     
     console.log("[AutoCompletion] Found editor document, adding event listeners");
     
-    // Test with a direct manual call after a delay to ensure things are working
+    // Test with a direct manual call after a much longer delay to ensure the editor is fully initialized
     setTimeout(() => {
       console.log("[AutoCompletion] Testing with direct manual test input");
-      // Sample text for testing - simple paragraph
-      const testInput = "The implementation of artificial intelligence in modern business processes has led to";
-      getSuggestion(testInput);
-    }, 2000);
+      // Only run this test on initial load, not when re-enabling the feature
+      if (lastTextRef.current === '') {
+        // Use a shorter test input to avoid triggering the repetition detection
+        const testInput = "Digital transformation has become essential for businesses that want to remain competitive in today's market.";
+        getSuggestion(testInput);
+      }
+    }, 5000); // Increased to 5 seconds
     
     // Throttled selectionchange handler to prevent too many calls
     const throttledSelectionChange = debounce(() => {
@@ -525,13 +586,16 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
     const handleCustomEvent = () => {
       console.log("[AutoCompletion] Custom autocompleteTrigger event received");
       
-      // For debugging - ensure we can get suggestions when manual event is triggered
-      const testString = "According to recent studies on climate change, global temperatures have increased significantly over the past century. Scientists have observed that";
-      console.log("[AutoCompletion] Testing with event trigger sample data");
-      getSuggestion(testString);
-      
-      // Normal editor change handling
-      handleEditorChange();
+      // Only trigger test suggestion if we haven't suggested anything yet
+      if (lastTextRef.current === '' && !currentSuggestionRef.current) {
+        // Use a different test example that's shorter to avoid repetition detection
+        const testString = "Research indicates that effective leadership is characterized by clear communication and emotional intelligence.";
+        console.log("[AutoCompletion] Testing with event trigger sample data");
+        getSuggestion(testString);
+      } else {
+        // Normal editor change handling
+        handleEditorChange();
+      }
     };
     
     window.addEventListener('autocompleteTrigger', handleCustomEvent);

@@ -7,9 +7,27 @@ const anthropic = new Anthropic({
   apiKey: env.ANTHROPIC_API_KEY,
 });
 
+// Function to check for repeating patterns in text
+function hasRepeatingPattern(text: string, minPatternLength = 10): boolean {
+  // Check if the text is long enough to contain repeating patterns
+  if (text.length < minPatternLength * 2) return false;
+  
+  // Take the last N characters and see if they appear earlier in the text
+  for (let patternLength = minPatternLength; patternLength < Math.min(100, text.length / 2); patternLength++) {
+    const pattern = text.slice(-patternLength);
+    const restOfText = text.slice(0, -patternLength);
+    
+    if (restOfText.includes(pattern)) {
+      return true;
+    }
+  }
+  
+  return false;
+}
+
 export async function POST(req: NextRequest) {
   try {
-    const { text, language } = await req.json();
+    const { text, contextType } = await req.json();
     console.log("[API:Autocomplete] Received request with text:", text);
     
     if (!text) {
@@ -18,6 +36,12 @@ export async function POST(req: NextRequest) {
         { error: "Text content is required" },
         { status: 400 }
       );
+    }
+    
+    // Check for repeating patterns in the input text
+    if (hasRepeatingPattern(text)) {
+      console.log("[API:Autocomplete] Detected repeating patterns in input text, skipping completion");
+      return NextResponse.json({ completion: '' });
     }
 
     // Using Haiku model for fast, concise text completions
@@ -30,7 +54,7 @@ export async function POST(req: NextRequest) {
       messages: [
         {
           role: "user",
-          content: `Continue this text with a natural completion (1-3 sentences, about 15-50 words):\n\n${text}`
+          content: `Continue this text with a natural, non-repetitive completion (1-3 sentences, about 15-50 words):\n\n${text}`
         }
       ],
       system: `You are an AI writing assistant integrated directly into a document editor, designed to help users complete their thoughts and improve their writing in real-time.
@@ -50,7 +74,9 @@ Guidelines:
 - If the text is technical, maintain appropriate terminology and precision
 - If the text is creative, maintain the narrative voice and stylistic elements
 - Adapt to different document types (academic papers, business reports, creative writing, emails)
-- Never complete text in ways that could create harmful or misleading content`
+- Never complete text in ways that could create harmful or misleading content
+- IMPORTANT: DO NOT repeat phrases or sentences that already exist in the input text
+- IMPORTANT: Ensure your completion avoids circular or repetitive patterns`
     });
 
     console.log("[API:Autocomplete] Received response from Anthropic API:", {
@@ -75,7 +101,14 @@ Guidelines:
           completion = completion.slice(1, -1).trim();
         }
         
-        console.log("[API:Autocomplete] Extracted completion:", completion);
+        // Check if the completion would create a repeating pattern when appended
+        const combinedText = text + completion;
+        if (hasRepeatingPattern(combinedText)) {
+          console.log("[API:Autocomplete] Detected potential repeating pattern in completion, returning empty string");
+          completion = '';
+        } else {
+          console.log("[API:Autocomplete] Extracted completion:", completion);
+        }
       } else {
         console.log("[API:Autocomplete] No text content found in response");
       }
