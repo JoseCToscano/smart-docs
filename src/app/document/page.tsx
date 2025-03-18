@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { Editor, EditorTools } from "@/components/kendo/premium";
 import { Button, Input } from "@/components/kendo/free";
 import { 
@@ -50,6 +50,7 @@ export default function DocumentPage() {
   const [showSidebar, setShowSidebar] = useState(true);
   const [isAIProcessing, setIsAIProcessing] = useState(false);
   const [lastSaved, setLastSaved] = useState<string | null>(null);
+  const editorRef = useRef<any>(null);
 
   const handleContentChange = (event: any) => {
     setDocument(prev => ({
@@ -160,7 +161,7 @@ export default function DocumentPage() {
           </div>
         </div>
         
-        {/* Formatting Toolbar */}
+        {/* Formatting Toolbar (Visual only, actual functionality is in the Editor's toolbar) */}
         <div className="flex items-center px-4 py-1.5 border-b border-gray-200 overflow-x-auto">
           <div className="flex flex-wrap gap-2">
             <div className="flex gap-1 pr-2 border-r border-gray-300">
@@ -195,6 +196,7 @@ export default function DocumentPage() {
             <div className={`editor-page-container mx-auto shadow-md ${showSidebar ? 'sidebar-open' : ''}`}>
               {/* Editor Content Area */}
               <Editor
+                ref={editorRef}
                 tools={[
                   [Bold, Italic, Underline],
                   [AlignLeft, AlignCenter, AlignRight],
@@ -219,6 +221,7 @@ export default function DocumentPage() {
                 }}
                 defaultContent={document.content}
                 onChange={handleContentChange}
+                contentClassName="show-toolbar-on-focus"
               />
             </div>
           </div>
