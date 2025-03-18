@@ -52,6 +52,7 @@ export default function DocumentPage() {
   const [lastSaved, setLastSaved] = useState<string | null>(null);
   const [helpDialogVisible, setHelpDialogVisible] = useState(false);
   const [aiResponse, setAIResponse] = useState<{ text: string, suggestions: DocumentChanges | null }>({ text: "", suggestions: null });
+  const [hasActiveChanges, setHasActiveChanges] = useState(false);
   const editorRef = useRef<any>(null);
   const aiSidebarRef = useRef<AISidebarHandle>(null);
   const router = useRouter();
@@ -625,6 +626,11 @@ IMPORTANT: When including line breaks in your response, please use actual newlin
         // Post-process the editor to fix any styling issues
         setTimeout(() => {
           fixSpanStyling(editorDoc);
+          
+          // Update the hasActiveChanges state based on whether we have any AI changes
+          const hasChanges = hasAIChanges();
+          setHasActiveChanges(hasChanges);
+          console.log("[DocumentPage] Updated hasActiveChanges:", hasChanges);
         }, 100);
         
       } catch (err) {
@@ -640,6 +646,12 @@ IMPORTANT: When including line breaks in your response, please use actual newlin
             content: htmlWithChanges,
             updatedAt: new Date()
           }));
+          
+          // Update hasActiveChanges
+          setTimeout(() => {
+            const hasChanges = hasAIChanges();
+            setHasActiveChanges(hasChanges);
+          }, 100);
         } catch (domErr) {
           console.error("[DocumentPage] Failed to update editor content:", domErr);
         }
@@ -770,6 +782,9 @@ IMPORTANT: When including line breaks in your response, please use actual newlin
         updatedAt: new Date()
       }));
       
+      // Update the hasActiveChanges state
+      setHasActiveChanges(false);
+      
       // Add a confirmation message to the AI sidebar
       if (aiSidebarRef.current && typeof aiSidebarRef.current.addAIResponse === 'function') {
         aiSidebarRef.current.addAIResponse(
@@ -848,6 +863,9 @@ IMPORTANT: When including line breaks in your response, please use actual newlin
         updatedAt: new Date()
       }));
       
+      // Update the hasActiveChanges state
+      setHasActiveChanges(false);
+      
       // Add a confirmation message to the AI sidebar
       if (aiSidebarRef.current && typeof aiSidebarRef.current.addAIResponse === 'function') {
         aiSidebarRef.current.addAIResponse(
@@ -858,6 +876,21 @@ IMPORTANT: When including line breaks in your response, please use actual newlin
       console.error("Error reverting changes:", error);
     }
   }, []);
+
+  // Helper function to check if there are AI changes in the editor
+  const hasAIChanges = useCallback((): boolean => {
+    const editorDoc = getEditorDocument();
+    if (!editorDoc) {
+      return false;
+    }
+    
+    // Find all addition and deletion elements
+    const additions = editorDoc.querySelectorAll('.ai-addition');
+    const deletions = editorDoc.querySelectorAll('.ai-deletion');
+    
+    // Return true if there are any additions or deletions
+    return additions.length > 0 || deletions.length > 0;
+  }, [getEditorDocument]);
 
   // Helper function to ensure line breaks are properly converted to <br> tags
   const ensureLineBreaks = (htmlContent: string): string => {
@@ -1000,6 +1033,38 @@ IMPORTANT: When including line breaks in your response, please use actual newlin
     }
   }, [editorRef.current]); // Re-run when editor ref changes
 
+  // Effect to detect changes in the editor content that contain AI changes
+  useEffect(() => {
+    // Check for AI changes and update state
+    const checkForAIChanges = () => {
+      const hasChanges = hasAIChanges();
+      setHasActiveChanges(hasChanges);
+      console.log("[DocumentPage] Active AI changes detected:", hasChanges);
+    };
+    
+    // Initial check
+    checkForAIChanges();
+    
+    // Set up a mutation observer to watch for changes to the editor content
+    const editorDoc = getEditorDocument();
+    if (editorDoc) {
+      const observer = new MutationObserver(checkForAIChanges);
+      
+      // Observe the editor body for changes
+      observer.observe(editorDoc.body, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        characterData: true,
+      });
+      
+      // Clean up observer when component unmounts
+      return () => {
+        observer.disconnect();
+      };
+    }
+  }, [hasAIChanges, getEditorDocument]);
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-100">
       {/* Main App Toolbar */}
@@ -1140,6 +1205,7 @@ IMPORTANT: When including line breaks in your response, please use actual newlin
               onApplyXmlChanges={handleApplyXmlChanges}
               onFinalizeChanges={finalizeChanges}
               onRevertChanges={revertChanges}
+              hasActiveChanges={hasActiveChanges}
               ref={aiSidebarRef}
             />
           </div>

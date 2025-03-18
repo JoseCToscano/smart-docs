@@ -11,6 +11,7 @@ interface AISidebarProps {
   onApplyXmlChanges?: (xmlContent: string) => void;
   onFinalizeChanges?: () => void;
   onRevertChanges?: () => void;
+  hasActiveChanges?: boolean;
 }
 
 type Message = {
@@ -38,7 +39,8 @@ const AISidebar = forwardRef<AISidebarHandle, AISidebarProps>(({
   onApplyChanges,
   onApplyXmlChanges,
   onFinalizeChanges,
-  onRevertChanges
+  onRevertChanges,
+  hasActiveChanges = false
 }, ref) => {
   const [prompt, setPrompt] = useState("");
   const [chatHistory, setChatHistory] = useState<Message[]>([
@@ -125,7 +127,7 @@ const AISidebar = forwardRef<AISidebarHandle, AISidebarProps>(({
         <p className="text-xs text-gray-500 mt-1">Ask questions or request document changes</p>
         
         {/* Document changes action buttons */}
-        {onFinalizeChanges && onRevertChanges && (
+        {onFinalizeChanges && onRevertChanges && hasActiveChanges && (
           <div className="mt-3 grid grid-cols-2 gap-2">
             <Button
               onClick={onFinalizeChanges}
