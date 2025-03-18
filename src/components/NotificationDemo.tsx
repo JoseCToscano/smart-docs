@@ -10,27 +10,22 @@ const NotificationDemo: React.FC = () => {
   const [directNotification, setDirectNotification] = useState<{ visible: boolean, message: string } | null>(null);
 
   const showSuccessNotification = () => {
-    console.log('Clicked success notification button');
     notifications.success('Operation completed successfully!');
   };
 
   const showInfoNotification = () => {
-    console.log('Clicked info notification button');
     notifications.info('This is an informational message.');
   };
 
   const showWarningNotification = () => {
-    console.log('Clicked warning notification button');
     notifications.warning('Warning: This action may have consequences.');
   };
 
   const showErrorNotification = () => {
-    console.log('Clicked error notification button');
     notifications.error('An error occurred while processing your request.');
   };
 
   const showCustomPositionNotification = () => {
-    console.log('Clicked custom position notification button');
     notifications.info('This notification appears at the bottom center.', {
       position: 'bottom-center',
       autoCloseTimeout: 8000,
@@ -38,7 +33,6 @@ const NotificationDemo: React.FC = () => {
   };
 
   const showDirectNotification = () => {
-    console.log('Showing direct notification as a test');
     setDirectNotification({
       visible: true,
       message: 'This is a direct notification bypassing the service'
@@ -49,28 +43,43 @@ const NotificationDemo: React.FC = () => {
     <>
       <div className="p-4 space-y-4">
         <h2 className="text-xl font-bold">Notification Demo</h2>
-        <div className="space-x-2 flex flex-wrap gap-2">
-          <Button themeColor="success" onClick={showSuccessNotification}>
+        <div className="flex flex-wrap gap-2">
+          <Button 
+            className="k-button k-button-md k-rounded-md k-button-solid k-button-solid-success" 
+            onClick={showSuccessNotification}
+          >
             Success Notification
           </Button>
-          <Button themeColor="info" onClick={showInfoNotification}>
+          <Button 
+            className="k-button k-button-md k-rounded-md k-button-solid k-button-solid-info" 
+            onClick={showInfoNotification}
+          >
             Info Notification
           </Button>
-          <Button themeColor="warning" onClick={showWarningNotification}>
+          <Button 
+            className="k-button k-button-md k-rounded-md k-button-solid k-button-solid-warning" 
+            onClick={showWarningNotification}
+          >
             Warning Notification
           </Button>
-          <Button themeColor="error" onClick={showErrorNotification}>
+          <Button 
+            className="k-button k-button-md k-rounded-md k-button-solid k-button-solid-error" 
+            onClick={showErrorNotification}
+          >
             Error Notification
           </Button>
-          <Button onClick={showCustomPositionNotification}>
+          <Button 
+            className="k-button k-button-md k-rounded-md k-button-solid" 
+            onClick={showCustomPositionNotification}
+          >
             Custom Position Notification
           </Button>
-          <Button onClick={showDirectNotification} themeColor="dark">
+          <Button 
+            className="k-button k-button-md k-rounded-md k-button-solid k-button-solid-base" 
+            onClick={showDirectNotification}
+          >
             Direct Test Notification
           </Button>
-        </div>
-        <div className="mt-4 p-2 border border-gray-200 rounded">
-          <p className="text-sm">Check the browser console for debugging information</p>
         </div>
       </div>
       

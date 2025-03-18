@@ -6,12 +6,12 @@ import {
   Notification as KendoNotification,
   NotificationGroup
 } from '@progress/kendo-react-notification';
+import { Fade } from '@progress/kendo-react-animation';
 
 const DirectNotificationTest: React.FC = () => {
   const [visible, setVisible] = useState(false);
 
   const showDirectNotification = () => {
-    console.log('Showing direct KendoNotification');
     setVisible(true);
     // Auto-hide after 5 seconds
     setTimeout(() => {
@@ -26,33 +26,32 @@ const DirectNotificationTest: React.FC = () => {
         This is a direct test using KendoReact Notification component with minimal wrappers
       </p>
       
-      <Button onClick={showDirectNotification} themeColor="dark">
+      <Button 
+        className="k-button k-button-md k-rounded-md k-button-solid k-button-solid-primary"
+        onClick={showDirectNotification}
+      >
         Show Direct KendoReact Notification
       </Button>
       
       {visible && (
-        <div style={{ 
-          position: 'fixed', 
-          top: '100px', 
-          left: '50%', 
-          transform: 'translateX(-50%)',
-          zIndex: 9999, 
-          boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
-          borderRadius: '4px',
-          maxWidth: '400px'
-        }}>
-          <NotificationGroup style={{ width: '100%' }}>
-            <KendoNotification
-              type={{ style: 'info', icon: true }}
-              closable={true}
-              onClose={() => setVisible(false)}
-              style={{ padding: '10px' }}
-            >
-              <div style={{ padding: '10px' }}>
-                This is a direct KendoReact notification without any custom wrappers
-              </div>
-            </KendoNotification>
-          </NotificationGroup>
+        <div 
+          style={{ position: 'fixed', bottom: '20px', left: '50%', transform: 'translateX(-50%)', zIndex: 9999 }}
+          className="k-notification-container"
+        >
+          <Fade>
+            <NotificationGroup>
+              <KendoNotification
+                type={{ style: 'info', icon: true }}
+                closable={true}
+                onClose={() => setVisible(false)}
+                className="k-notification-info"
+              >
+                <div className="k-notification-content">
+                  This notification appears at the bottom center.
+                </div>
+              </KendoNotification>
+            </NotificationGroup>
+          </Fade>
         </div>
       )}
     </div>

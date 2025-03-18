@@ -1,0 +1,83 @@
+/* Enhanced styles for KendoReact Notifications */
+
+/* Base notification styling */
+.k-notification-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.k-notification-group {
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.k-notification {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  line-height: 1.5;
+  padding: 12px 16px;
+  border-radius: 4px;
+  border-width: 0;
+  border-left-width: 4px;
+  display: flex;
+  align-items: center;
+  background-color: white;
+  width: 320px;
+  max-width: 100%;
+}
+
+.k-notification-content {
+  padding: 0 12px;
+}
+
+/* State-specific styling */
+.k-notification-info {
+  border-left-color: #007bff;
+}
+
+.k-notification-success {
+  border-left-color: #28a745;
+}
+
+.k-notification-warning {
+  border-left-color: #ffc107;
+}
+
+.k-notification-error {
+  border-left-color: #dc3545;
+}
+
+/* Icons */
+.k-notification .k-i-info,
+.k-notification .k-i-information {
+  color: #007bff;
+}
+
+.k-notification .k-i-success {
+  color: #28a745;
+}
+
+.k-notification .k-i-warning {
+  color: #ffc107;
+}
+
+.k-notification .k-i-error {
+  color: #dc3545;
+}
+
+/* Close button */
+.k-notification .k-i-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 4px;
+  font-size: 14px;
+  opacity: 0.5;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.k-notification .k-i-close:hover {
+  opacity: 1;
+} 

@@ -1,5 +1,6 @@
 import "@/styles/globals.css";
 import "@progress/kendo-theme-default/dist/all.css";
+import "@/styles/notification.css";
 
 import { GeistSans } from "geist/font/sans";
 import { type Metadata } from "next";
