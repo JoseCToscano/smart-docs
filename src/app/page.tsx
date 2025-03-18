@@ -4,14 +4,15 @@ import DirectNotificationTest from "@/components/DirectNotificationTest";
 
 export default function HomePage() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#2e026d] to-[#15162c] text-white">
-      <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16">
-        <h1 className="text-5xl font-extrabold tracking-tight text-white sm:text-[5rem]">
-          Smart <span className="text-[hsl(280,100%,70%)]">Docs</span> App
+    <main className="min-h-screen bg-white text-black">
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-4xl font-bold mb-6 text-center">
+          Smart Docs App
         </h1>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-8">
+        
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-8 mb-8">
           <Link
-            className="flex max-w-xs flex-col gap-4 rounded-xl bg-white/10 p-4 text-white hover:bg-white/20"
+            className="flex flex-col gap-4 rounded-xl border border-gray-200 p-4 hover:bg-gray-50"
             href="/document"
           >
             <h3 className="text-2xl font-bold">Document Editor →</h3>
@@ -20,7 +21,7 @@ export default function HomePage() {
             </div>
           </Link>
           <Link
-            className="flex max-w-xs flex-col gap-4 rounded-xl bg-white/10 p-4 text-white hover:bg-white/20"
+            className="flex flex-col gap-4 rounded-xl border border-gray-200 p-4 hover:bg-gray-50"
             href="https://create.t3.gg/en/introduction"
             target="_blank"
           >
@@ -32,7 +33,8 @@ export default function HomePage() {
           </Link>
         </div>
         
-        <div className="w-full max-w-2xl rounded-xl bg-white/10 p-4">
+        <div className="w-full max-w-4xl mx-auto rounded-xl border border-gray-200 p-6 bg-white">
+          <h2 className="text-2xl font-bold mb-6 text-center">Notification Testing</h2>
           <NotificationDemo />
           <DirectNotificationTest />
         </div>

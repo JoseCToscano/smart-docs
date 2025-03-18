@@ -31,12 +31,22 @@ const DirectNotificationTest: React.FC = () => {
       </Button>
       
       {visible && (
-        <div style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 9999 }}>
-          <NotificationGroup style={{ maxWidth: '400px' }}>
+        <div style={{ 
+          position: 'fixed', 
+          top: '100px', 
+          left: '50%', 
+          transform: 'translateX(-50%)',
+          zIndex: 9999, 
+          boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+          borderRadius: '4px',
+          maxWidth: '400px'
+        }}>
+          <NotificationGroup style={{ width: '100%' }}>
             <KendoNotification
               type={{ style: 'info', icon: true }}
               closable={true}
               onClose={() => setVisible(false)}
+              style={{ padding: '10px' }}
             >
               <div style={{ padding: '10px' }}>
                 This is a direct KendoReact notification without any custom wrappers

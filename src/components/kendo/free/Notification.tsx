@@ -80,36 +80,60 @@ const Notification: React.FC<NotificationProps> = (props) => {
     if (onClose) onClose();
   };
 
-  // Fixed div for anchoring notifications
-  const positionStyles: React.CSSProperties = {
-    position: 'fixed',
-    top: 0,
-    right: 0,
-    width: '10px', 
-    height: '10px',
-    zIndex: 9999,
+  // Render directly instead of using a popup for simplicity
+  const getNotificationStyle = (): React.CSSProperties => {
+    let style: React.CSSProperties = {
+      position: 'fixed',
+      zIndex: 9999,
+      margin: '20px',
+      maxWidth: '400px',
+      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+    };
+
+    switch (position) {
+      case 'top-start':
+        style = { ...style, top: 0, left: 0 };
+        break;
+      case 'top-center':
+        style = { ...style, top: 0, left: '50%', transform: 'translateX(-50%)' };
+        break;
+      case 'top-end':
+        style = { ...style, top: 0, right: 0 };
+        break;
+      case 'bottom-start':
+        style = { ...style, bottom: 0, left: 0 };
+        break;
+      case 'bottom-center':
+        style = { ...style, bottom: 0, left: '50%', transform: 'translateX(-50%)' };
+        break;
+      case 'bottom-end':
+        style = { ...style, bottom: 0, right: 0 };
+        break;
+      default:
+        style = { ...style, top: 0, right: 0 };
+    }
+
+    return style;
   };
 
-  console.log('Anchor ref exists:', !!anchorRef.current);
+  if (!visible) {
+    return null;
+  }
 
   return (
-    <div ref={anchorRef} style={positionStyles}>
-      <Popup anchor={anchorRef.current} anchorAlign={getPosition()} popupAlign={getPosition()} appendTo={document.body}>
-        {visible && (
-          <Fade>
-            <NotificationGroup style={{ maxWidth: '400px' }}>
-              <KendoNotification
-                type={{ style: type, icon: true }}
-                closable={true}
-                onClose={handleClose}
-                style={{ margin: '10px', boxShadow: '0 3px 10px rgba(0,0,0,0.2)' }}
-              >
-                <div style={{ padding: '5px' }}>{message}</div>
-              </KendoNotification>
-            </NotificationGroup>
-          </Fade>
-        )}
-      </Popup>
+    <div style={getNotificationStyle()}>
+      <Fade>
+        <NotificationGroup style={{ width: '100%' }}>
+          <KendoNotification
+            type={{ style: type, icon: true }}
+            closable={true}
+            onClose={handleClose}
+            style={{ padding: '10px', boxShadow: '0 3px 10px rgba(0,0,0,0.2)' }}
+          >
+            <div style={{ padding: '5px' }}>{message}</div>
+          </KendoNotification>
+        </NotificationGroup>
+      </Fade>
     </div>
   );
 };
