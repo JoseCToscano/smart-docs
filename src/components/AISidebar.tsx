@@ -119,7 +119,7 @@ const AISidebar = forwardRef<AISidebarHandle, AISidebarProps>(({
   };
 
   return (
-    <div className="h-full flex flex-col bg-gray-50 border-l border-gray-200 w-80">
+    <div className="h-full flex flex-col bg-gray-50 border-l border-gray-200 w-full">
       <div className="p-4 border-b border-gray-200 bg-white">
         <h2 className="text-lg font-semibold text-gray-800">AI Assistant</h2>
         <p className="text-xs text-gray-500 mt-1">Ask questions or request document changes</p>
@@ -149,10 +149,17 @@ const AISidebar = forwardRef<AISidebarHandle, AISidebarProps>(({
         )}
       </div>
       
-      {/* Chat history */}
+      {/* Chat history - Make sure this takes available space and is scrollable */}
       <div 
         ref={chatContainerRef}
         className="flex-1 overflow-y-auto p-4 space-y-4"
+        style={{ 
+          height: 'calc(100% - 180px)', // Account for header and input area
+          overflowY: 'auto',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '1rem'
+        }}
       >
         {chatHistory.map((message, index) => (
           <div 
@@ -242,8 +249,8 @@ const AISidebar = forwardRef<AISidebarHandle, AISidebarProps>(({
         )}
       </div>
       
-      {/* Input area */}
-      <div className="p-4 border-t border-gray-200 bg-white">
+      {/* Input area - Fixed at the bottom */}
+      <div className="p-4 border-t border-gray-200 bg-white mt-auto">
         <form onSubmit={handleSubmit}>
           <div className="relative">
             <TextArea

@@ -7,6 +7,7 @@ import {
   arrowsLeftRightIcon, 
   menuIcon 
 } from "@/components/kendo";
+import { Splitter } from "@progress/kendo-react-layout";
 import "@progress/kendo-theme-default/dist/all.css";
 import "./styles.css";
 import Link from "next/link";
@@ -698,6 +699,7 @@ export default function DocumentPage() {
     }
   }, []);
 
+  // Update toggleSidebar to work with Splitter
   const toggleSidebar = useCallback(() => {
     setShowSidebar(prev => !prev);
   }, []);
@@ -875,86 +877,96 @@ export default function DocumentPage() {
             >
               Help
             </Button>
+            {/* Add the toggle sidebar button to the toolbar */}
+            <Button
+              themeColor="base"
+              onClick={toggleSidebar}
+              icon={showSidebar ? "collapse" : "expand"}
+              className="k-button-md"
+              title={showSidebar ? "Hide AI Assistant" : "Show AI Assistant"}
+            >
+              {showSidebar ? "Hide AI" : "Show AI"}
+            </Button>
           </div>
         </div>
       </div>
 
-      <div className="flex flex-1 overflow-hidden">
-        {/* Main Editor Area */}
-        <div className="flex-1 flex flex-col relative bg-gray-200">
-          <div className="relative flex-1 overflow-auto pt-6">
-            <div className={`editor-page-container mx-auto shadow-md ${showSidebar ? 'sidebar-open' : ''} relative`}>
-              {/* Editor Content Area with built-in toolbar */}
-              <Editor
-                ref={editorRef}
-                tools={[
-                  // Text formatting
-                  [Bold, Italic, Underline],
-                  [ForeColor, BackColor],
-                  // Alignment
-                  [AlignLeft, AlignCenter, AlignRight],
-                  // Lists and indentation
-                  [OrderedList, UnorderedList],
-                  [Indent, Outdent],
-                  // History
-                  [Undo, Redo],
-                  // Links
-                  [EditorLink, Unlink],
-                  // Format and styles
-                  [FormatBlock],
-                  [FontName],
-                  [FontSize],
-                  // Tables
-                  [InsertTable],
-                  [AddRowBefore, AddRowAfter, DeleteRow],
-                  [AddColumnBefore, AddColumnAfter, DeleteColumn],
-                  [DeleteTable],
-                  [MergeCells, SplitCell],
-                  // Images
-                  [InsertImage]
-                ]}
-                contentStyle={{ 
-                  minHeight: 'calc(100vh - 160px)', // Adjusted for toolbar
-                  padding: '1.5rem',
-                  paddingTop: '1.5rem',
-                  fontSize: '16px',
-                  lineHeight: '1.6',
-                  boxShadow: 'none',
-                  border: 'none',
-                  backgroundColor: '#ffffff',
-                }}
-                defaultContent={document.content}
-                onChange={handleContentChange}
-              />
+      {/* Main content area with Splitter */}
+      <div className="flex-1 overflow-hidden">
+        {/* Use Splitter component for resizable panels */}
+        <Splitter
+          style={{ height: 'calc(100vh - 49px)' }} // Adjust for header height
+          orientation="horizontal"
+          panes={[
+            { collapsible: false, size: showSidebar ? '70%' : '100%' },
+            { collapsible: true, collapsed: !showSidebar, size: '30%', min: '250px' }
+          ]}
+        >
+          {/* Main Editor Area */}
+          <div className="h-full flex flex-col relative bg-gray-200">
+            <div className="relative flex-1 overflow-auto pt-6">
+              <div className="editor-page-container mx-auto shadow-md relative">
+                {/* Editor Content Area with built-in toolbar */}
+                <Editor
+                  ref={editorRef}
+                  tools={[
+                    // Text formatting
+                    [Bold, Italic, Underline],
+                    [ForeColor, BackColor],
+                    // Alignment
+                    [AlignLeft, AlignCenter, AlignRight],
+                    // Lists and indentation
+                    [OrderedList, UnorderedList],
+                    [Indent, Outdent],
+                    // History
+                    [Undo, Redo],
+                    // Links
+                    [EditorLink, Unlink],
+                    // Format and styles
+                    [FormatBlock],
+                    [FontName],
+                    [FontSize],
+                    // Tables
+                    [InsertTable],
+                    [AddRowBefore, AddRowAfter, DeleteRow],
+                    [AddColumnBefore, AddColumnAfter, DeleteColumn],
+                    [DeleteTable],
+                    [MergeCells, SplitCell],
+                    // Images
+                    [InsertImage]
+                  ]}
+                  contentStyle={{ 
+                    minHeight: 'calc(100vh - 160px)', // Adjusted for toolbar
+                    padding: '1.5rem',
+                    paddingTop: '1.5rem',
+                    fontSize: '16px',
+                    lineHeight: '1.6',
+                    boxShadow: 'none',
+                    border: 'none',
+                    backgroundColor: '#ffffff',
+                  }}
+                  defaultContent={document.content}
+                  onChange={handleContentChange}
+                />
+              </div>
             </div>
           </div>
           
-          {/* Toggle Sidebar Button */}
-          <Button 
-            onClick={toggleSidebar}
-            themeColor="base"
-            rounded="full"
-            size="small"
-            svgIcon={showSidebar ? arrowsLeftRightIcon : menuIcon}
-            className="absolute top-2 right-2 bg-white hover:bg-gray-100 z-10 shadow-sm"
-            title={showSidebar ? "Hide AI Assistant" : "Show AI Assistant"}
-          />
-        </div>
-        
-        {/* AI Sidebar */}
-        {showSidebar && (
-          <AISidebar 
-            key="ai-sidebar"
-            onPromptSubmit={handleAIPrompt}
-            isLoading={isAIProcessing}
-            editorRef={editorRef}
-            onApplyChanges={handleApplyChanges}
-            onApplyXmlChanges={handleApplyXmlChanges}
-            onFinalizeChanges={finalizeChanges}
-            onRevertChanges={revertChanges}
-            ref={aiSidebarRef}
-          />
-        )}
+          {/* AI Sidebar */}
+          <div className="h-full">
+            <AISidebar 
+              key="ai-sidebar"
+              onPromptSubmit={handleAIPrompt}
+              isLoading={isAIProcessing}
+              editorRef={editorRef}
+              onApplyChanges={handleApplyChanges}
+              onApplyXmlChanges={handleApplyXmlChanges}
+              onFinalizeChanges={finalizeChanges}
+              onRevertChanges={revertChanges}
+              ref={aiSidebarRef}
+            />
+          </div>
+        </Splitter>
       </div>
 
       {/* Help Dialog */}
