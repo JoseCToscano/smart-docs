@@ -15,12 +15,18 @@ const getPositionStyles = (position: NotificationProps['position'] = 'top-center
   const styles: React.CSSProperties = {
     position: 'fixed',
     zIndex: 9999,
+    display: 'flex', 
+    flexDirection: 'column',
+    alignItems: 'center',
+    maxWidth: '400px',
+    width: 'auto',
   };
 
   switch (position) {
     case 'top-left':
       styles.top = '20px';
       styles.left = '20px';
+      styles.alignItems = 'flex-start';
       break;
     case 'top-center':
       styles.top = '20px';
@@ -30,10 +36,12 @@ const getPositionStyles = (position: NotificationProps['position'] = 'top-center
     case 'top-right':
       styles.top = '20px';
       styles.right = '20px';
+      styles.alignItems = 'flex-end';
       break;
     case 'bottom-left':
       styles.bottom = '20px';
       styles.left = '20px';
+      styles.alignItems = 'flex-start';
       break;
     case 'bottom-center':
       styles.bottom = '20px';
@@ -43,6 +51,7 @@ const getPositionStyles = (position: NotificationProps['position'] = 'top-center
     case 'bottom-right':
       styles.bottom = '20px';
       styles.right = '20px';
+      styles.alignItems = 'flex-end';
       break;
     default:
       styles.top = '20px';
@@ -81,27 +90,42 @@ const Notification = ({
     return null;
   }
 
+  // Get the appropriate class name based on the notification type
+  const getNotificationClassName = () => {
+    switch (type) {
+      case 'success':
+        return 'k-notification-success';
+      case 'info':
+        return 'k-notification-info';
+      case 'warning':
+        return 'k-notification-warning';
+      case 'error':
+        return 'k-notification-error';
+      default:
+        return 'k-notification-info';
+    }
+  };
+
   return (
     <div style={getPositionStyles(position)} className="k-notification-container">
-      <Fade>
-        <NotificationGroup>
-          <KendoNotification 
-            {...props} 
-            type={{ style: type, icon: true }}
-            closable={true}
-            onClose={(e) => {
-              setIsVisible(false);
-              if (onClose) {
-                onClose(e);
-              }
-            }}
-          >
-            <div className="k-notification-content">
-              {message}
-            </div>
-          </KendoNotification>
-        </NotificationGroup>
-      </Fade>
+      <NotificationGroup style={{ width: '100%' }}>
+        <KendoNotification 
+          {...props} 
+          type={{ style: type, icon: true }}
+          closable={true}
+          className={getNotificationClassName()}
+          onClose={(e) => {
+            setIsVisible(false);
+            if (onClose) {
+              onClose(e);
+            }
+          }}
+        >
+          <div className="k-notification-content" style={{ padding: '0 12px' }}>
+            {message}
+          </div>
+        </KendoNotification>
+      </NotificationGroup>
     </div>
   );
 };
