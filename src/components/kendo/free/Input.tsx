@@ -1,57 +1,63 @@
 "use client";
 
+import React from 'react';
 import { Input as KendoInput } from "@progress/kendo-react-inputs";
 
 // Define types for our component props
-export interface InputProps {
+interface InputProps {
   value?: string;
   onChange?: (e: any) => void;
   onBlur?: (e: any) => void;
   placeholder?: string;
-  disabled?: boolean;
   className?: string;
   style?: React.CSSProperties;
+  disabled?: boolean;
+  readOnly?: boolean;
+  required?: boolean;
   type?: string;
-  valid?: boolean;
-  "aria-label"?: string;
+  name?: string;
+  id?: string;
+  'aria-label'?: string;
+  [key: string]: any;
 }
 
 /**
- * Wrapper for Kendo UI Input component (Free)
- * 
- * @component
- * @example
- * // Basic usage
- * <Input value={value} onChange={handleChange} placeholder="Enter text..." />
+ * Input component that wraps KendoReact Input
  */
-export function Input({
+const Input: React.FC<InputProps> = ({
   value,
   onChange,
   onBlur,
   placeholder,
-  disabled = false,
   className,
   style,
-  type = "text",
-  valid,
-  "aria-label": ariaLabel,
-  ...rest
-}: InputProps & Omit<React.ComponentProps<typeof KendoInput>, 'size' | 'rounded'>) {
+  disabled,
+  readOnly,
+  required,
+  type = 'text',
+  name,
+  id,
+  'aria-label': ariaLabel,
+  ...props
+}) => {
   return (
     <KendoInput
       value={value}
       onChange={onChange}
       onBlur={onBlur}
       placeholder={placeholder}
-      disabled={disabled}
       className={className}
       style={style}
+      disabled={disabled}
+      readOnly={readOnly}
+      required={required}
       type={type}
-      valid={valid}
+      name={name}
+      id={id}
       aria-label={ariaLabel}
-      {...rest}
+      {...props}
     />
   );
-}
+};
 
 export default Input; 

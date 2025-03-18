@@ -1,60 +1,66 @@
 "use client";
 
+import React from 'react';
 import { TextArea as KendoTextArea } from "@progress/kendo-react-inputs";
 
 // Define types for our component props
-export interface TextAreaProps {
+interface TextAreaProps {
   value?: string;
   onChange?: (e: any) => void;
-  onKeyDown?: (e: React.KeyboardEvent) => void;
+  onBlur?: (e: any) => void;
   placeholder?: string;
-  disabled?: boolean;
   className?: string;
   style?: React.CSSProperties;
+  disabled?: boolean;
+  readOnly?: boolean;
+  required?: boolean;
+  name?: string;
+  id?: string;
   rows?: number;
-  minLength?: number;
-  maxLength?: number;
-  "aria-label"?: string;
+  cols?: number;
+  'aria-label'?: string;
+  [key: string]: any;
 }
 
 /**
- * Wrapper for Kendo UI TextArea component (Free)
- * 
- * @component
- * @example
- * // Basic usage
- * <TextArea value={value} onChange={handleChange} placeholder="Enter text..." rows={4} />
+ * TextArea component that wraps KendoReact TextArea
  */
-export function TextArea({
+const TextArea: React.FC<TextAreaProps> = ({
   value,
   onChange,
-  onKeyDown,
+  onBlur,
   placeholder,
-  disabled = false,
   className,
   style,
-  rows = 3,
-  minLength,
-  maxLength,
-  "aria-label": ariaLabel,
-  ...rest
-}: TextAreaProps & Omit<React.ComponentProps<typeof KendoTextArea>, 'size' | 'rounded'>) {
+  disabled,
+  readOnly,
+  required,
+  name,
+  id,
+  rows,
+  cols,
+  'aria-label': ariaLabel,
+  ...props
+}) => {
   return (
     <KendoTextArea
       value={value}
       onChange={onChange}
-      onKeyDown={onKeyDown}
+      onBlur={onBlur}
       placeholder={placeholder}
-      disabled={disabled}
       className={className}
       style={style}
+      disabled={disabled}
+      readOnly={readOnly}
+      required={required}
+      name={name}
+      id={id}
       rows={rows}
-      minLength={minLength}
-      maxLength={maxLength}
+      cols={cols}
       aria-label={ariaLabel}
-      {...rest}
+      {...props}
     />
   );
-}
+};
 
 export default TextArea; 

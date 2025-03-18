@@ -26,7 +26,7 @@
 }
 
 /* When sidebar is closed, adjust the maximum width */
-body:has(.editor-page-container:not(.sidebar-open)) .editor-page-container {
+.editor-page-container:not(.sidebar-open) {
   max-width: calc(100vw - 120px);
 }
 
@@ -38,6 +38,18 @@ body:has(.editor-page-container:not(.sidebar-open)) .editor-page-container {
 /* Make the toolbar buttons appear cleaner */
 .k-button.k-button-md {
   padding: 6px 12px;
+}
+
+/* Fix button icon display */
+.k-button-flat {
+  padding: 4px !important;
+  min-width: 32px !important;
+  height: 32px !important;
+}
+
+.k-button svg {
+  width: 16px;
+  height: 16px;
 }
 
 /* Styling for the formatting toolbar */

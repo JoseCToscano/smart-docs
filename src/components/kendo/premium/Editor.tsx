@@ -1,5 +1,6 @@
 "use client";
 
+import React from 'react';
 import { Editor as KendoEditor, EditorTools } from "@progress/kendo-react-editor";
 
 // Re-export the EditorTools for easy access
@@ -10,36 +11,33 @@ export interface EditorProps {
   defaultContent?: string;
   contentStyle?: React.CSSProperties;
   onChange?: (event: any) => void;
-  tools?: any[][];
-  className?: string;
+  tools?: any[];
+  children?: React.ReactNode;
+  [key: string]: any;
 }
 
 /**
- * Wrapper for Kendo UI Editor component (Premium)
- * 
- * @component
- * @example
- * // Basic usage
- * <Editor defaultContent="<p>Hello world</p>" onChange={handleChange} />
+ * Editor component that wraps KendoReact Editor
  */
-export function Editor({
-  defaultContent = "",
-  contentStyle,
-  onChange,
+const Editor: React.FC<EditorProps> = ({
   tools,
-  className,
-  ...rest
-}: EditorProps & React.ComponentProps<typeof KendoEditor>) {
+  contentStyle,
+  defaultContent,
+  onChange,
+  children,
+  ...props
+}) => {
   return (
     <KendoEditor
-      defaultContent={defaultContent}
-      contentStyle={contentStyle}
-      onChange={onChange}
       tools={tools}
-      className={className}
-      {...rest}
-    />
+      contentStyle={contentStyle}
+      defaultContent={defaultContent}
+      onChange={onChange}
+      {...props}
+    >
+      {children}
+    </KendoEditor>
   );
-}
+};
 
 export default Editor; 
