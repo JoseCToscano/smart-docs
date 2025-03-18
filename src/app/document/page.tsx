@@ -53,6 +53,7 @@ export default function DocumentPage() {
   const [helpDialogVisible, setHelpDialogVisible] = useState(false);
   const [aiResponse, setAIResponse] = useState<{ text: string, suggestions: DocumentChanges | null }>({ text: "", suggestions: null });
   const [hasActiveChanges, setHasActiveChanges] = useState(false);
+  const [editorKey, setEditorKey] = useState(0);
   const editorRef = useRef<any>(null);
   const aiSidebarRef = useRef<AISidebarHandle>(null);
   const router = useRouter();
@@ -1022,148 +1023,61 @@ IMPORTANT GUIDELINES:
         return;
       }
       
-      // Create a temporary container to work with the content
+      // Step 1: Create a temporary container to work with the content
       const tempContainer = window.document.createElement('div');
       tempContainer.innerHTML = editorDoc.body.innerHTML;
       
-      // Get all AI additions
+      // Step 2: Find and process all AI additions (keep content, remove highlighting)
       const additions = tempContainer.querySelectorAll('.ai-addition');
-      console.log(`[finalizeChanges] Found ${additions.length} additions`);
+      console.log(`[finalizeChanges] Found ${additions.length} additions to apply`);
       
-      // Keep the content but remove highlighting for additions
       additions.forEach((addition) => {
-        const newSpan = window.document.createElement('span');
-        newSpan.innerHTML = addition.innerHTML;
-        addition.parentNode?.replaceChild(newSpan, addition);
+        // Create a simple node with the inner content
+        const content = addition.innerHTML;
+        const textNode = window.document.createTextNode(content);
+        
+        // Replace the span with just its text content
+        if (addition.parentNode) {
+          addition.parentNode.replaceChild(textNode, addition);
+        }
       });
       
-      // Get all AI deletions
+      // Step 3: Find and process all AI deletions (remove them completely)
       const deletions = tempContainer.querySelectorAll('.ai-deletion');
-      console.log(`[finalizeChanges] Found ${deletions.length} deletions`);
+      console.log(`[finalizeChanges] Found ${deletions.length} deletions to remove`);
       
-      // Remove deletions completely
       deletions.forEach((deletion) => {
-        // Just remove the node completely
-        deletion.parentNode?.removeChild(deletion);
+        if (deletion.parentNode) {
+          deletion.parentNode.removeChild(deletion);
+        }
       });
       
-      // Get the clean content
-      const cleanContent = tempContainer.innerHTML;
+      // Step 4: Get the clean HTML with changes applied
+      const cleanedHtml = tempContainer.innerHTML;
       
-      // First detach the editor's event handlers to prevent toolbar issues
-      if (editorRef.current) {
-        console.log("[finalizeChanges] Detaching editor events before updating");
-        if (typeof editorRef.current.detachEvents === 'function') {
-          editorRef.current.detachEvents();
-        }
-      }
+      // Step 5: Save this content to the state so it will be used for the new editor
+      setDocument(prev => ({
+        ...prev,
+        content: cleanedHtml,
+        updatedAt: new Date()
+      }));
       
-      // Directly update the iframe document's content
-      editorDoc.body.innerHTML = cleanContent;
+      // Step 6: Force a full remount of the editor by changing a key
+      // This is handled in the render method with the editorKey state
       
-      // Create a completely new selection at the beginning to reset the editor state
-      try {
-        // First clear any existing selection
-        const selection = editorDoc.getSelection();
-        if (selection) {
-          selection.removeAllRanges();
-        }
-        
-        // Then create a new range at the beginning of the document
-        const range = editorDoc.createRange();
-        
-        // Find a text node to place the cursor
-        let firstTextNode = null;
-        const walker = editorDoc.createTreeWalker(
-          editorDoc.body,
-          NodeFilter.SHOW_TEXT,
-          {
-            acceptNode: function(node) {
-              if (node.textContent && node.textContent.trim().length > 0) {
-                return NodeFilter.FILTER_ACCEPT;
-              }
-              return NodeFilter.FILTER_SKIP;
-            }
-          }
-        );
-        
-        firstTextNode = walker.nextNode();
-        
-        if (firstTextNode) {
-          // Set the selection at the beginning of this text node
-          range.setStart(firstTextNode, 0);
-          range.setEnd(firstTextNode, 0);
-          
-          // Apply the selection
-          selection?.addRange(range);
-        } else {
-          // If no text node was found, just put the cursor at the beginning of the body
-          range.setStart(editorDoc.body, 0);
-          range.setEnd(editorDoc.body, 0);
-          selection?.addRange(range);
-        }
-      } catch (err) {
-        console.error("[finalizeChanges] Error setting selection:", err);
-      }
+      // Step 7: Update state to reflect no more active changes
+      setHasActiveChanges(false);
       
-      // Now force a refresh of the editor UI to reconnect toolbar
-      setTimeout(() => {
-        if (editorRef.current) {
-          // Re-attach events
-          if (typeof editorRef.current.attachEvents === 'function') {
-            editorRef.current.attachEvents();
-          } else if (typeof editorRef.current.refresh === 'function') {
-            editorRef.current.refresh();
-          }
-          
-          // Force a focus to update UI
-          if (typeof editorRef.current.focus === 'function') {
-            editorRef.current.focus();
-          }
-          
-          // Simulate clicking the editor to fully activate it
-          try {
-            // Get the iframe element and dispatch events
-            if (editorRef.current.iframe) {
-              // Simulate user interaction
-              const mouseEvent = new MouseEvent('mousedown', {
-                bubbles: true,
-                cancelable: true,
-                view: editorDoc.defaultView
-              });
-              editorDoc.body.dispatchEvent(mouseEvent);
-              
-              // And also a click event right after
-              const clickEvent = new MouseEvent('click', {
-                bubbles: true,
-                cancelable: true,
-                view: editorDoc.defaultView
-              });
-              editorDoc.body.dispatchEvent(clickEvent);
-            }
-          } catch (err) {
-            console.error("[finalizeChanges] Error simulating click:", err);
-          }
-        }
-        
-        // Update the state
-        setDocument(prev => ({
-          ...prev,
-          content: cleanContent,
-          updatedAt: new Date()
-        }));
-        
-        // Update the has changes flag
-        setHasActiveChanges(false);
-        
-      }, 100); // Short delay to ensure the DOM updates first
-      
-      // Add a confirmation message to the AI sidebar
+      // Step 8: Add a confirmation message to the AI sidebar
       if (aiSidebarRef.current && typeof aiSidebarRef.current.addAIResponse === 'function') {
         aiSidebarRef.current.addAIResponse(
-          "I've finalized all the suggested changes. Additions have been incorporated, and deletions have been removed."
+          "I've applied all the suggested changes. Additions have been incorporated, and deletions have been removed."
         );
       }
+      
+      // Step 9: Force a re-render of the editor component with a new key
+      setEditorKey(prevKey => prevKey + 1);
+      
     } catch (error) {
       console.error("[finalizeChanges] Error processing changes:", error);
     }
@@ -1171,7 +1085,7 @@ IMPORTANT GUIDELINES:
   
   // Function to revert all AI changes
   const revertChanges = useCallback(() => {
-    console.log("[revertChanges] Starting to process changes");
+    console.log("[revertChanges] Starting to revert changes");
     
     try {
       // Get the editor document
@@ -1181,149 +1095,63 @@ IMPORTANT GUIDELINES:
         return;
       }
       
-      // Create a temporary container to work with the content
+      // Step 1: Create a temporary container to work with the content
       const tempContainer = window.document.createElement('div');
       tempContainer.innerHTML = editorDoc.body.innerHTML;
       
-      // Get all AI additions
+      // Step 2: Find and process all AI additions (remove them completely)
       const additions = tempContainer.querySelectorAll('.ai-addition');
-      console.log(`[revertChanges] Found ${additions.length} additions`);
+      console.log(`[revertChanges] Found ${additions.length} additions to remove`);
       
-      // Remove additions completely
       additions.forEach((addition) => {
-        addition.parentNode?.removeChild(addition);
+        if (addition.parentNode) {
+          addition.parentNode.removeChild(addition);
+        }
       });
       
-      // Get all AI deletions
+      // Step 3: Find and process all AI deletions (keep content, remove highlighting)
       const deletions = tempContainer.querySelectorAll('.ai-deletion');
-      console.log(`[revertChanges] Found ${deletions.length} deletions`);
+      console.log(`[revertChanges] Found ${deletions.length} deletions to restore`);
       
-      // For deletions, keep content but remove highlighting
       deletions.forEach((deletion) => {
-        const newSpan = window.document.createElement('span');
-        newSpan.innerHTML = deletion.innerHTML;
-        deletion.parentNode?.replaceChild(newSpan, deletion);
+        // Create a simple node with the inner content
+        const content = deletion.innerHTML;
+        const textNode = window.document.createTextNode(content);
+        
+        // Replace the span with just its text content
+        if (deletion.parentNode) {
+          deletion.parentNode.replaceChild(textNode, deletion);
+        }
       });
       
-      // Get the clean content
-      const cleanContent = tempContainer.innerHTML;
+      // Step 4: Get the clean HTML with changes reverted
+      const cleanedHtml = tempContainer.innerHTML;
       
-      // First detach the editor's event handlers to prevent toolbar issues
-      if (editorRef.current) {
-        console.log("[revertChanges] Detaching editor events before updating");
-        if (typeof editorRef.current.detachEvents === 'function') {
-          editorRef.current.detachEvents();
-        }
-      }
+      // Step 5: Update the document state with the clean content
+      setDocument(prev => ({
+        ...prev,
+        content: cleanedHtml,
+        updatedAt: new Date()
+      }));
       
-      // Directly update the iframe document's content
-      editorDoc.body.innerHTML = cleanContent;
+      // Step 6: Force a full remount of the editor by changing a key
+      // This is handled in the render method with the editorKey state
       
-      // Create a completely new selection at the beginning to reset the editor state
-      try {
-        // First clear any existing selection
-        const selection = editorDoc.getSelection();
-        if (selection) {
-          selection.removeAllRanges();
-        }
-        
-        // Then create a new range at the beginning of the document
-        const range = editorDoc.createRange();
-        
-        // Find a text node to place the cursor
-        let firstTextNode = null;
-        const walker = editorDoc.createTreeWalker(
-          editorDoc.body,
-          NodeFilter.SHOW_TEXT,
-          {
-            acceptNode: function(node) {
-              if (node.textContent && node.textContent.trim().length > 0) {
-                return NodeFilter.FILTER_ACCEPT;
-              }
-              return NodeFilter.FILTER_SKIP;
-            }
-          }
-        );
-        
-        firstTextNode = walker.nextNode();
-        
-        if (firstTextNode) {
-          // Set the selection at the beginning of this text node
-          range.setStart(firstTextNode, 0);
-          range.setEnd(firstTextNode, 0);
-          
-          // Apply the selection
-          selection?.addRange(range);
-        } else {
-          // If no text node was found, just put the cursor at the beginning of the body
-          range.setStart(editorDoc.body, 0);
-          range.setEnd(editorDoc.body, 0);
-          selection?.addRange(range);
-        }
-      } catch (err) {
-        console.error("[revertChanges] Error setting selection:", err);
-      }
+      // Step 7: Update state to reflect no more active changes
+      setHasActiveChanges(false);
       
-      // Now force a refresh of the editor UI to reconnect toolbar
-      setTimeout(() => {
-        if (editorRef.current) {
-          // Re-attach events
-          if (typeof editorRef.current.attachEvents === 'function') {
-            editorRef.current.attachEvents();
-          } else if (typeof editorRef.current.refresh === 'function') {
-            editorRef.current.refresh();
-          }
-          
-          // Force a focus to update UI
-          if (typeof editorRef.current.focus === 'function') {
-            editorRef.current.focus();
-          }
-          
-          // Simulate clicking the editor to fully activate it
-          try {
-            // Get the iframe element and dispatch events
-            if (editorRef.current.iframe) {
-              // Simulate user interaction
-              const mouseEvent = new MouseEvent('mousedown', {
-                bubbles: true,
-                cancelable: true,
-                view: editorDoc.defaultView
-              });
-              editorDoc.body.dispatchEvent(mouseEvent);
-              
-              // And also a click event right after
-              const clickEvent = new MouseEvent('click', {
-                bubbles: true,
-                cancelable: true,
-                view: editorDoc.defaultView
-              });
-              editorDoc.body.dispatchEvent(clickEvent);
-            }
-          } catch (err) {
-            console.error("[revertChanges] Error simulating click:", err);
-          }
-        }
-        
-        // Update the state
-        setDocument(prev => ({
-          ...prev,
-          content: cleanContent,
-          updatedAt: new Date()
-        }));
-        
-        // Update the has changes flag
-        setHasActiveChanges(false);
-        
-      }, 100); // Short delay to ensure the DOM updates first
-      
-      // Add a confirmation message to the AI sidebar
+      // Step 8: Add a confirmation message to the AI sidebar
       if (aiSidebarRef.current && typeof aiSidebarRef.current.addAIResponse === 'function') {
         aiSidebarRef.current.addAIResponse(
           "I've reverted all the suggested changes. The document has been restored to its original state."
         );
       }
+      
+      // Step 9: Force a re-render of the editor component with a new key
+      setEditorKey(prevKey => prevKey + 1);
+      
     } catch (error) {
-      console.error("[revertChanges] Error processing changes:", error);
+      console.error("[revertChanges] Error reverting changes:", error);
     }
   }, [getEditorDocument]);
 
@@ -1600,6 +1428,7 @@ IMPORTANT GUIDELINES:
               <div className="editor-page-container mx-auto shadow-md relative">
                 {/* Editor Content Area with built-in toolbar */}
                 <Editor
+                  key={`editor-instance-${editorKey}`}
                   ref={editorRef}
                   tools={[
                     // Text formatting
