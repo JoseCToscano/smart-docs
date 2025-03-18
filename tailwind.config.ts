@@ -13,9 +13,14 @@ export default {
           '0%': { transform: 'translateX(-100%)' },
           '100%': { transform: 'translateX(400%)' },
         },
+        'progress-pulse': {
+          '0%, 100%': { opacity: '1' },
+          '50%': { opacity: '0.8' },
+        },
       },
       animation: {
         'progress-indeterminate': 'progress-indeterminate 1.5s infinite linear',
+        'progress-pulse': 'progress-pulse 2s ease-in-out infinite',
       },
     },
   },

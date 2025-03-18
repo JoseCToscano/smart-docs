@@ -10,6 +10,7 @@ export interface ProgressBarProps {
   themeColor?: 'primary' | 'secondary' | 'info' | 'success' | 'warning' | 'error';
   size?: 'small' | 'medium' | 'large';
   animation?: boolean;
+  pulseAnimation?: boolean;
   className?: string;
   style?: React.CSSProperties;
 }
@@ -23,6 +24,7 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
   themeColor = 'primary',
   size = 'medium',
   animation = true,
+  pulseAnimation = false,
   className,
   style,
 }) => {
@@ -63,7 +65,8 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
             className={clsx(
               'h-full rounded-full', 
               colorClasses[themeColor],
-              animation && 'animate-progress-indeterminate'
+              animation && 'animate-progress-indeterminate',
+              pulseAnimation && 'animate-progress-pulse'
             )}
             style={{ width: '25%' }}
           />
@@ -72,7 +75,8 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
             className={clsx(
               'h-full rounded-full', 
               colorClasses[themeColor],
-              animation && 'transition-all duration-300'
+              animation && 'transition-all duration-300',
+              pulseAnimation && 'animate-progress-pulse'
             )}
             style={{ width: `${percentage}%` }}
           />

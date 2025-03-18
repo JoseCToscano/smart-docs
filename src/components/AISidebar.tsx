@@ -51,8 +51,49 @@ const AISidebar = forwardRef<AISidebarHandle, AISidebarProps>(({
     }
   ]);
   
+  // Add artificial progress state
+  const [artificialProgress, setArtificialProgress] = useState(0);
+  
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Control artificial progress based on loading state
+  useEffect(() => {
+    if (isLoading) {
+      // Reset progress when loading starts
+      setArtificialProgress(0);
+      
+      // Create interval to update progress
+      progressIntervalRef.current = setInterval(() => {
+        setArtificialProgress(prev => {
+          // Progress formula: faster at first, then slower
+          // Max out at 95% to show the process is still working
+          if (prev < 70) {
+            return prev + Math.random() * 3 + 1; // Faster progress initially
+          } else if (prev < 95) {
+            return prev + Math.random() * 0.8; // Slower progress later
+          }
+          return prev; // Stay at 95% until complete
+        });
+      }, 300);
+    } else {
+      // Clear interval when loading finishes
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+        progressIntervalRef.current = null;
+      }
+      // Reset progress for next time
+      setArtificialProgress(0);
+    }
+    
+    // Cleanup interval on component unmount
+    return () => {
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+      }
+    };
+  }, [isLoading]);
 
   // Expose methods to parent component via ref
   useImperativeHandle(ref, () => ({
@@ -224,12 +265,18 @@ const AISidebar = forwardRef<AISidebarHandle, AISidebarProps>(({
         ))}
         {isLoading && (
           <div className="bg-white border border-gray-200 p-3 rounded-lg max-w-[90%] mr-auto shadow-sm">
-            <div className="mb-2 text-xs text-gray-600">AI is thinking...</div>
+            <div className="mb-2 text-xs text-gray-600 flex justify-between">
+              <span>AI is thinking...</span>
+              <span>{Math.round(artificialProgress)}%</span>
+            </div>
             <ProgressBar 
               size="small"
-              themeColor="primary"
+              themeColor={artificialProgress < 50 ? 'primary' : artificialProgress < 80 ? 'info' : 'success'}
               animation={true}
-              value={undefined}
+              pulseAnimation={true}
+              value={artificialProgress}
+              min={0}
+              max={100}
             />
           </div>
         )}
