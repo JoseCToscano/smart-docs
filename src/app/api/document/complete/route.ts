@@ -28,7 +28,13 @@ When making changes to the document, please use these XML tags to mark your edit
 - <addition>added text</addition> - For new text being added
 - <deletion>removed text</deletion> - For text being removed
 
-## Guidelines for Editing:
+## Response Guidelines:
+1. Return ONLY the edited document with XML tags.
+2. Do NOT include any explanations, prefixes, or phrases like "Here is the edited document..." before the content.
+3. Do NOT include any comments, notes, or explanations after the content.
+4. Your response should begin immediately with the edited document content.
+
+## Editing Guidelines:
 1. Only use the XML tags for actual changes. Don't wrap unchanged text in tags.
 2. Make your edits precise and targeted.
 3. Keep the original document structure and maintain the overall formatting.
@@ -38,11 +44,11 @@ When making changes to the document, please use these XML tags to mark your edit
 ## Example:
 If the original text is "The quick fox jumps over the lazy dog"
 And the user asks to replace "fox" with "brown fox" and "lazy" with "sleeping"
-Your response should be: "The quick <deletion>fox</deletion> <addition>brown fox</addition> jumps over the <deletion>lazy</deletion> <addition>sleeping</addition> dog"
+Your response should be EXACTLY: "The quick <deletion>fox</deletion> <addition>brown fox</addition> jumps over the <deletion>lazy</deletion> <addition>sleeping</addition> dog"
     `;
 
     const response = await anthropic.messages.create({
-      model: "claude-3-opus-20240229",
+      model: "claude-3-haiku-20240307",
       max_tokens: 4000,
       temperature: 0.7,
       system: systemPrompt,
@@ -57,15 +63,31 @@ ${content}
 My request:
 ${prompt}
 
-Please edit my document according to my request, using XML tags to show your changes.`,
+IMPORTANT: Please return ONLY the edited document with appropriate XML tags for additions and deletions. Do not include any prefixes, explanations, or notes. Your response should start immediately with the document content.`,
         },
       ],
     });
 
     // Get the content from the response safely
-    const responseText = response.content[0]?.type === 'text' 
+    let responseText = response.content[0]?.type === 'text' 
       ? response.content[0].text 
       : 'Unable to process document';
+    
+    // Remove common prefixes that Claude might add
+    const prefixesToRemove = [
+      "Here is the edited document with your requested changes:",
+      "Here's the edited document with your requested changes:",
+      "Here is the document with the changes you requested:",
+      "Here's the document with the changes you requested:",
+      "I've edited the document according to your request:"
+    ];
+    
+    for (const prefix of prefixesToRemove) {
+      if (responseText.trim().startsWith(prefix)) {
+        responseText = responseText.trim().substring(prefix.length).trim();
+        break;
+      }
+    }
 
     return NextResponse.json({
       result: responseText,
