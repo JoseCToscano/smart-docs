@@ -24,11 +24,16 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
     currentSuggestionRef.current = suggestion;
   }, [suggestion]);
 
-  const detectLanguage = (text: string): string => {
-    // Simple language detection based on file extension patterns or syntax
-    if (text.includes('function') || text.includes('=>') || text.includes('const ')) return 'javascript';
-    if (text.includes('def ') || text.includes('import ') || text.includes('class ')) return 'python';
-    if (text.includes('#include') || text.includes('int main')) return 'c++';
+  // Get contextual information about the text to improve completions
+  const getContextType = (text: string): string => {
+    // Check if the text appears to be in a specific format
+    if (/^\s*[\d]+[\.\)]\s+/.test(text)) return 'list-numbered';
+    if (/^\s*[\-\*\•]\s+/.test(text)) return 'list-bullet';
+    if (/^\s*#+\s+/.test(text)) return 'heading';
+    if (/^(Dear|Hello|Hi)\s+/.test(text)) return 'email';
+    if (/^(abstract|introduction|conclusion|references):/i.test(text)) return 'academic';
+    
+    // Default context is general text
     return 'text';
   };
 
@@ -47,8 +52,8 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
 
       setLoading(true);
       try {
-        const language = detectLanguage(text);
-        console.log("[AutoCompletion] Detected language:", language);
+        const contextType = getContextType(text);
+        console.log("[AutoCompletion] Detected context type:", contextType);
         
         console.log("[AutoCompletion] Calling /api/autocomplete endpoint");
         const response = await fetch('/api/autocomplete', {
@@ -56,7 +61,7 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ text, language }),
+          body: JSON.stringify({ text, contextType }),
         });
 
         const data = await response.json();
@@ -147,12 +152,14 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
       suggestionElement.id = 'inline-suggestion-ghost';
       suggestionElement.className = 'inline-suggestion-ghost';
       suggestionElement.textContent = currentSuggestionRef.current;
-      suggestionElement.style.color = '#9CA3AF'; // Light gray color
-      suggestionElement.style.opacity = '0.8';
+      suggestionElement.style.color = '#8B8B8B'; // Lighter gray color for text suggestions
+      suggestionElement.style.opacity = '0.7';
       suggestionElement.style.pointerEvents = 'none'; // So it doesn't intercept clicks
       suggestionElement.style.position = 'relative';
       suggestionElement.style.fontFamily = 'inherit';
       suggestionElement.style.fontSize = 'inherit';
+      suggestionElement.style.fontStyle = 'inherit';
+      suggestionElement.style.fontWeight = 'inherit';
       
       // Store reference to the element
       suggestionElementRef.current = suggestionElement;
@@ -303,15 +310,20 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
       // Get parent paragraph or element for better context
       const node = range.startContainer;
       let contextNode = node;
-      while (contextNode && contextNode.nodeName !== 'P' && 
+      
+      // For text documents, we want to prioritize paragraphs for context
+      // Look for paragraph elements first (P, DIV, LI)
+      while (contextNode && 
+             contextNode.nodeName !== 'P' && 
              contextNode.nodeName !== 'DIV' && 
              contextNode.nodeName !== 'LI' &&
              contextNode !== doc.body) {
         contextNode = contextNode.parentNode;
       }
       
+      // If we've found a paragraph or list item
       if (contextNode && contextNode.textContent) {
-        // Get all text up to cursor position
+        // Get all text up to cursor position - need to collect from all child nodes
         // This is more complex as we need to calculate position within the parent
         const nodeIterator = doc.createNodeIterator(
           contextNode,
@@ -338,13 +350,37 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
         if (!reachedTargetNode && node.textContent) {
           currentText = node.textContent.substring(0, range.startOffset);
         }
+        
+        // For document completion, try to get more context from previous paragraphs if current is short
+        if (currentText.length < 20 && contextNode.previousElementSibling) {
+          // Get up to 2 previous paragraphs for better context
+          let prevParagraph = contextNode.previousElementSibling;
+          let contextPrefix = '';
+          
+          // Get content from up to 2 previous paragraphs
+          for (let i = 0; i < 2; i++) {
+            if (prevParagraph && prevParagraph.textContent) {
+              contextPrefix = prevParagraph.textContent.trim() + ' ' + contextPrefix;
+              prevParagraph = prevParagraph.previousElementSibling;
+            } else {
+              break;
+            }
+          }
+          
+          if (contextPrefix) {
+            // Add a space between paragraphs
+            currentText = contextPrefix.trim() + ' ' + currentText;
+          }
+        }
+        
       } else if (node && node.textContent) {
         // Fallback to just the node text
         currentText = node.textContent.substring(0, range.startOffset);
       }
       
-      // If we have enough context (at least 3 chars), get a suggestion
-      if (currentText.length > 3) {
+      // For document text, we can suggest even with less context
+      if (currentText.length > 2) {
+        console.log("[AutoCompletion] Getting suggestion with text length:", currentText.length);
         getSuggestion(currentText);
       } else if (isMountedRef.current) {
         setSuggestion(null);
@@ -408,8 +444,8 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
     // Test with a direct manual call after a delay to ensure things are working
     setTimeout(() => {
       console.log("[AutoCompletion] Testing with direct manual test input");
-      // Sample text for testing - simple JavaScript code snippet
-      const testInput = "function calculateSum(a, b) {\n  return a + ";
+      // Sample text for testing - simple paragraph
+      const testInput = "The implementation of artificial intelligence in modern business processes has led to";
       getSuggestion(testInput);
     }, 2000);
     
@@ -490,7 +526,7 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
       console.log("[AutoCompletion] Custom autocompleteTrigger event received");
       
       // For debugging - ensure we can get suggestions when manual event is triggered
-      const testString = "const handleClick = (event) => {\n  event.";
+      const testString = "According to recent studies on climate change, global temperatures have increased significantly over the past century. Scientists have observed that";
       console.log("[AutoCompletion] Testing with event trigger sample data");
       getSuggestion(testString);
       
@@ -505,7 +541,7 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
     };
   }, [handleEditorChange, enabled, getSuggestion]);
 
-  // Add CSS to the iframe document
+  // Add CSS to the iframe document with updated styles for text suggestions
   useEffect(() => {
     const doc = getEditorDocument();
     if (!doc) return;
@@ -516,11 +552,13 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
       styleElement.id = 'inline-suggestion-styles';
       styleElement.textContent = `
         .inline-suggestion-ghost {
-          color: #9CA3AF;
-          opacity: 0.8;
+          color: #8B8B8B;
+          opacity: 0.7;
           pointer-events: none;
           font-family: inherit;
           font-size: inherit;
+          font-style: inherit;
+          font-weight: inherit;
         }
       `;
       doc.head.appendChild(styleElement);

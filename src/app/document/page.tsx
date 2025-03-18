@@ -38,7 +38,7 @@ const {
 export default function DocumentPage() {
   const [document, setDocument] = useState<Document>({
     title: "Untitled Document",
-    content: "<p>Start typing your document here...</p>",
+    content: "<p></p>",
     createdAt: new Date(),
     updatedAt: new Date(),
   });

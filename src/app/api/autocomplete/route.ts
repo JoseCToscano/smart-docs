@@ -11,7 +11,6 @@ export async function POST(req: NextRequest) {
   try {
     const { text, language } = await req.json();
     console.log("[API:Autocomplete] Received request with text:", text);
-    console.log("[API:Autocomplete] Detected language:", language);
     
     if (!text) {
       console.log("[API:Autocomplete] Error: Text content is required");
@@ -21,18 +20,37 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Using Haiku model for code completion
+    // Using Haiku model for fast, concise text completions
     console.log("[API:Autocomplete] Calling Anthropic API with model: claude-3-haiku-20240307");
+    
     const response = await anthropic.messages.create({
       model: "claude-3-haiku-20240307",
-      max_tokens: 1000,
+      max_tokens: 100, // Reduced for more concise completions (15-50 words)
+      temperature: 0.7, // Slightly more creative for natural writing
       messages: [
         {
           role: "user",
-          content: `Complete the following ${language || "code"} snippet. Only provide the completion, do not repeat any of the existing code:\n\n${text}`
+          content: `Continue this text with a natural completion (1-3 sentences, about 15-50 words):\n\n${text}`
         }
       ],
-      system: "You are a helpful coding assistant. Provide only the code completion without explanations or repeating any existing code."
+      system: `You are an AI writing assistant integrated directly into a document editor, designed to help users complete their thoughts and improve their writing in real-time.
+
+Core responsibilities:
+- Generate natural, high-quality text completions based on the document context
+- Match the user's writing tone, style, and formatting
+- Respect the document's existing structure and organization
+- Provide completions that are helpful without being intrusive
+
+Guidelines:
+- Provide only the completion text without explanations or metadata
+- Format your completion to seamlessly blend with the existing text
+- Generate 1-3 sentence completions that naturally extend the user's writing
+- Completions should be concise but valuable, typically 15-50 words
+- Analyze the existing text to match formality level, vocabulary, and sentence structure
+- If the text is technical, maintain appropriate terminology and precision
+- If the text is creative, maintain the narrative voice and stylistic elements
+- Adapt to different document types (academic papers, business reports, creative writing, emails)
+- Never complete text in ways that could create harmful or misleading content`
     });
 
     console.log("[API:Autocomplete] Received response from Anthropic API:", {
@@ -50,6 +68,13 @@ export async function POST(req: NextRequest) {
         // Safely cast to any to avoid TypeScript errors
         const textContent = response.content[0] as any;
         completion = textContent.text || '';
+        
+        // Clean up the completion - remove quotes if present, trim extra whitespace
+        completion = completion.trim();
+        if (completion.startsWith('"') && completion.endsWith('"')) {
+          completion = completion.slice(1, -1).trim();
+        }
+        
         console.log("[API:Autocomplete] Extracted completion:", completion);
       } else {
         console.log("[API:Autocomplete] No text content found in response");
