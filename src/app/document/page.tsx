@@ -282,7 +282,7 @@ export default function DocumentPage() {
       }
 
       // Create a new container to work with the HTML
-      const tempContainer = document.createElement('div');
+      const tempContainer = window.document.createElement('div');
       
       // Get the current content
       const currentHTML = editorDoc.body.innerHTML;
@@ -299,14 +299,17 @@ export default function DocumentPage() {
           const { oldText, newText } = replacement;
           
           // Create a span for the new text
-          const span = document.createElement('span');
+          const span = window.document.createElement('span');
           span.className = 'ai-addition';
           span.innerHTML = newText.replace(/\n/g, '<br />');
           
           // Find the text to replace
           const textNodes = Array.from(tempContainer.querySelectorAll('*'))
-            .filter(node => node.nodeType === Node.TEXT_NODE || node.children.length === 0)
-            .map(node => node.textContent || '')
+            .filter((node: Element) => 
+              node.nodeType === Node.TEXT_NODE || 
+              (node.children && node.children.length === 0)
+            )
+            .map((node: Element) => node.textContent || '')
             .join('');
             
           const textContent = tempContainer.textContent || '';
@@ -337,7 +340,7 @@ export default function DocumentPage() {
           const { text, range } = addition;
           
           // Create span for the addition
-          const span = document.createElement('span');
+          const span = window.document.createElement('span');
           span.className = 'ai-addition';
           span.innerHTML = text.replace(/\n/g, '<br />');
           
@@ -357,8 +360,8 @@ export default function DocumentPage() {
                 const beforeText = textNode.nodeValue?.substring(0, offset) || '';
                 const afterText = textNode.nodeValue?.substring(offset) || '';
                 
-                const beforeNode = document.createTextNode(beforeText);
-                const afterNode = document.createTextNode(afterText);
+                const beforeNode = window.document.createTextNode(beforeText);
+                const afterNode = window.document.createTextNode(afterText);
                 
                 const parent = textNode.parentNode;
                 if (parent) {
@@ -396,7 +399,7 @@ export default function DocumentPage() {
           const { text, range } = deletion;
           
           // Create span for the deletion
-          const span = document.createElement('span');
+          const span = window.document.createElement('span');
           span.className = 'ai-deletion';
           span.innerHTML = text.replace(/\n/g, '<br />');
           
@@ -420,8 +423,8 @@ export default function DocumentPage() {
                 const length = endPos - startPos;
                 const afterText = textNode.nodeValue?.substring(offset + length) || '';
                 
-                const beforeNode = document.createTextNode(beforeText);
-                const afterNode = document.createTextNode(afterText);
+                const beforeNode = window.document.createTextNode(beforeText);
+                const afterNode = window.document.createTextNode(afterText);
                 
                 const parent = textNode.parentNode;
                 if (parent) {
@@ -1009,69 +1012,151 @@ IMPORTANT GUIDELINES:
 
   // Function to finalize and accept all AI changes
   const finalizeChanges = useCallback(() => {
-    const editorDoc = getEditorDocument();
-    if (!editorDoc) {
-      console.error("Failed to get editor document for finalizing changes");
-      return;
-    }
+    console.log("[finalizeChanges] Starting to process changes");
     
     try {
-      console.log("[finalizeChanges] Starting to process changes");
+      // Get the editor document
+      const editorDoc = getEditorDocument();
+      if (!editorDoc) {
+        console.error("[finalizeChanges] Failed to get editor document");
+        return;
+      }
       
-      // Find all addition and deletion elements
-      const additions = editorDoc.querySelectorAll('.ai-addition');
-      const deletions = editorDoc.querySelectorAll('.ai-deletion');
+      // Create a temporary container to work with the content
+      const tempContainer = window.document.createElement('div');
+      tempContainer.innerHTML = editorDoc.body.innerHTML;
       
-      console.log(`[finalizeChanges] Found ${additions.length} additions and ${deletions.length} deletions`);
+      // Get all AI additions
+      const additions = tempContainer.querySelectorAll('.ai-addition');
+      console.log(`[finalizeChanges] Found ${additions.length} additions`);
       
-      // Process additions - keep content but remove highlighting
-      additions.forEach((addition: Element, index) => {
-        const parent = addition.parentNode;
-        if (!parent) return;
-        
-        console.log(`[finalizeChanges] Processing addition #${index + 1}:`);
-        console.log(`[finalizeChanges] Original innerHTML: ${addition.innerHTML.substring(0, 100)}...`);
-        console.log(`[finalizeChanges] Contains <br>: ${addition.innerHTML.includes('<br')}`)
-        
-        // Instead of using textContent which loses formatting,
-        // we'll create a document fragment to preserve HTML elements like <br />
-        const tempDiv = editorDoc.createElement('div');
-        
-        // Ensure any literal newlines are converted to <br> tags
-        const contentWithLineBreaks = ensureLineBreaks(addition.innerHTML);
-        tempDiv.innerHTML = contentWithLineBreaks;
-        
-        // Create a document fragment to hold all the child nodes
-        const fragment = editorDoc.createDocumentFragment();
-        
-        // Move all child nodes to the fragment, which will preserve <br> tags
-        while (tempDiv.firstChild) {
-          fragment.appendChild(tempDiv.firstChild);
+      // Keep the content but remove highlighting for additions
+      additions.forEach((addition) => {
+        const newSpan = window.document.createElement('span');
+        newSpan.innerHTML = addition.innerHTML;
+        addition.parentNode?.replaceChild(newSpan, addition);
+      });
+      
+      // Get all AI deletions
+      const deletions = tempContainer.querySelectorAll('.ai-deletion');
+      console.log(`[finalizeChanges] Found ${deletions.length} deletions`);
+      
+      // Remove deletions completely
+      deletions.forEach((deletion) => {
+        // Just remove the node completely
+        deletion.parentNode?.removeChild(deletion);
+      });
+      
+      // Get the clean content
+      const cleanContent = tempContainer.innerHTML;
+      
+      // First detach the editor's event handlers to prevent toolbar issues
+      if (editorRef.current) {
+        console.log("[finalizeChanges] Detaching editor events before updating");
+        if (typeof editorRef.current.detachEvents === 'function') {
+          editorRef.current.detachEvents();
+        }
+      }
+      
+      // Directly update the iframe document's content
+      editorDoc.body.innerHTML = cleanContent;
+      
+      // Create a completely new selection at the beginning to reset the editor state
+      try {
+        // First clear any existing selection
+        const selection = editorDoc.getSelection();
+        if (selection) {
+          selection.removeAllRanges();
         }
         
-        // Replace the highlighted element with our fragment that preserves line breaks
-        parent.replaceChild(fragment, addition);
-      });
-      
-      // Process deletions - remove them completely
-      deletions.forEach((deletion: Element) => {
-        const parent = deletion.parentNode;
-        if (!parent) return;
+        // Then create a new range at the beginning of the document
+        const range = editorDoc.createRange();
         
-        // Simply remove the deleted text
-        parent.removeChild(deletion);
-      });
+        // Find a text node to place the cursor
+        let firstTextNode = null;
+        const walker = editorDoc.createTreeWalker(
+          editorDoc.body,
+          NodeFilter.SHOW_TEXT,
+          {
+            acceptNode: function(node) {
+              if (node.textContent && node.textContent.trim().length > 0) {
+                return NodeFilter.FILTER_ACCEPT;
+              }
+              return NodeFilter.FILTER_SKIP;
+            }
+          }
+        );
+        
+        firstTextNode = walker.nextNode();
+        
+        if (firstTextNode) {
+          // Set the selection at the beginning of this text node
+          range.setStart(firstTextNode, 0);
+          range.setEnd(firstTextNode, 0);
+          
+          // Apply the selection
+          selection?.addRange(range);
+        } else {
+          // If no text node was found, just put the cursor at the beginning of the body
+          range.setStart(editorDoc.body, 0);
+          range.setEnd(editorDoc.body, 0);
+          selection?.addRange(range);
+        }
+      } catch (err) {
+        console.error("[finalizeChanges] Error setting selection:", err);
+      }
       
-      console.log("[finalizeChanges] Changes applied successfully");
-      
-      // Get the updated content with proper line breaks
-      const updatedContent = ensureLineBreaks(editorDoc.body.innerHTML);
-      
-      // Update the editor content using our helper function
-      updateEditorContent(updatedContent);
-      
-      // Update the hasActiveChanges state
-      setHasActiveChanges(false);
+      // Now force a refresh of the editor UI to reconnect toolbar
+      setTimeout(() => {
+        if (editorRef.current) {
+          // Re-attach events
+          if (typeof editorRef.current.attachEvents === 'function') {
+            editorRef.current.attachEvents();
+          } else if (typeof editorRef.current.refresh === 'function') {
+            editorRef.current.refresh();
+          }
+          
+          // Force a focus to update UI
+          if (typeof editorRef.current.focus === 'function') {
+            editorRef.current.focus();
+          }
+          
+          // Simulate clicking the editor to fully activate it
+          try {
+            // Get the iframe element and dispatch events
+            if (editorRef.current.iframe) {
+              // Simulate user interaction
+              const mouseEvent = new MouseEvent('mousedown', {
+                bubbles: true,
+                cancelable: true,
+                view: editorDoc.defaultView
+              });
+              editorDoc.body.dispatchEvent(mouseEvent);
+              
+              // And also a click event right after
+              const clickEvent = new MouseEvent('click', {
+                bubbles: true,
+                cancelable: true,
+                view: editorDoc.defaultView
+              });
+              editorDoc.body.dispatchEvent(clickEvent);
+            }
+          } catch (err) {
+            console.error("[finalizeChanges] Error simulating click:", err);
+          }
+        }
+        
+        // Update the state
+        setDocument(prev => ({
+          ...prev,
+          content: cleanContent,
+          updatedAt: new Date()
+        }));
+        
+        // Update the has changes flag
+        setHasActiveChanges(false);
+        
+      }, 100); // Short delay to ensure the DOM updates first
       
       // Add a confirmation message to the AI sidebar
       if (aiSidebarRef.current && typeof aiSidebarRef.current.addAIResponse === 'function') {
@@ -1080,75 +1165,156 @@ IMPORTANT GUIDELINES:
         );
       }
     } catch (error) {
-      console.error("Error finalizing changes:", error);
+      console.error("[finalizeChanges] Error processing changes:", error);
     }
-  }, []);
+  }, [getEditorDocument]);
   
   // Function to revert all AI changes
   const revertChanges = useCallback(() => {
-    const editorDoc = getEditorDocument();
-    if (!editorDoc) {
-      console.error("Failed to get editor document for reverting changes");
-      return;
-    }
+    console.log("[revertChanges] Starting to process changes");
     
     try {
-      console.log("[revertChanges] Starting to process changes");
+      // Get the editor document
+      const editorDoc = getEditorDocument();
+      if (!editorDoc) {
+        console.error("[revertChanges] Failed to get editor document");
+        return;
+      }
       
-      // Find all addition and deletion elements
-      const additions = editorDoc.querySelectorAll('.ai-addition');
-      const deletions = editorDoc.querySelectorAll('.ai-deletion');
+      // Create a temporary container to work with the content
+      const tempContainer = window.document.createElement('div');
+      tempContainer.innerHTML = editorDoc.body.innerHTML;
       
-      console.log(`[revertChanges] Found ${additions.length} additions and ${deletions.length} deletions`);
+      // Get all AI additions
+      const additions = tempContainer.querySelectorAll('.ai-addition');
+      console.log(`[revertChanges] Found ${additions.length} additions`);
       
-      // Process additions - remove them entirely
-      additions.forEach((addition: Element) => {
-        const parent = addition.parentNode;
-        if (!parent) return;
-        
-        // Remove the added text
-        parent.removeChild(addition);
+      // Remove additions completely
+      additions.forEach((addition) => {
+        addition.parentNode?.removeChild(addition);
       });
       
-      // Process deletions - keep content but remove highlighting
-      deletions.forEach((deletion: Element, index) => {
-        const parent = deletion.parentNode;
-        if (!parent) return;
-        
-        console.log(`[revertChanges] Processing deletion #${index + 1}:`);
-        console.log(`[revertChanges] Original innerHTML: ${deletion.innerHTML.substring(0, 100)}...`);
-        console.log(`[revertChanges] Contains <br>: ${deletion.innerHTML.includes('<br')}`)
-        
-        // Instead of using textContent which loses formatting,
-        // we'll create a document fragment to preserve HTML elements like <br />
-        const tempDiv = editorDoc.createElement('div');
-        
-        // Ensure any literal newlines are converted to <br> tags
-        const contentWithLineBreaks = ensureLineBreaks(deletion.innerHTML);
-        tempDiv.innerHTML = contentWithLineBreaks;
-        
-        // Create a document fragment to hold all the child nodes
-        const fragment = editorDoc.createDocumentFragment();
-        
-        // Move all child nodes to the fragment, which will preserve <br> tags
-        while (tempDiv.firstChild) {
-          fragment.appendChild(tempDiv.firstChild);
+      // Get all AI deletions
+      const deletions = tempContainer.querySelectorAll('.ai-deletion');
+      console.log(`[revertChanges] Found ${deletions.length} deletions`);
+      
+      // For deletions, keep content but remove highlighting
+      deletions.forEach((deletion) => {
+        const newSpan = window.document.createElement('span');
+        newSpan.innerHTML = deletion.innerHTML;
+        deletion.parentNode?.replaceChild(newSpan, deletion);
+      });
+      
+      // Get the clean content
+      const cleanContent = tempContainer.innerHTML;
+      
+      // First detach the editor's event handlers to prevent toolbar issues
+      if (editorRef.current) {
+        console.log("[revertChanges] Detaching editor events before updating");
+        if (typeof editorRef.current.detachEvents === 'function') {
+          editorRef.current.detachEvents();
+        }
+      }
+      
+      // Directly update the iframe document's content
+      editorDoc.body.innerHTML = cleanContent;
+      
+      // Create a completely new selection at the beginning to reset the editor state
+      try {
+        // First clear any existing selection
+        const selection = editorDoc.getSelection();
+        if (selection) {
+          selection.removeAllRanges();
         }
         
-        // Replace the highlighted element with our fragment that preserves line breaks
-        parent.replaceChild(fragment, deletion);
-      });
+        // Then create a new range at the beginning of the document
+        const range = editorDoc.createRange();
+        
+        // Find a text node to place the cursor
+        let firstTextNode = null;
+        const walker = editorDoc.createTreeWalker(
+          editorDoc.body,
+          NodeFilter.SHOW_TEXT,
+          {
+            acceptNode: function(node) {
+              if (node.textContent && node.textContent.trim().length > 0) {
+                return NodeFilter.FILTER_ACCEPT;
+              }
+              return NodeFilter.FILTER_SKIP;
+            }
+          }
+        );
+        
+        firstTextNode = walker.nextNode();
+        
+        if (firstTextNode) {
+          // Set the selection at the beginning of this text node
+          range.setStart(firstTextNode, 0);
+          range.setEnd(firstTextNode, 0);
+          
+          // Apply the selection
+          selection?.addRange(range);
+        } else {
+          // If no text node was found, just put the cursor at the beginning of the body
+          range.setStart(editorDoc.body, 0);
+          range.setEnd(editorDoc.body, 0);
+          selection?.addRange(range);
+        }
+      } catch (err) {
+        console.error("[revertChanges] Error setting selection:", err);
+      }
       
-      console.log("[revertChanges] Changes reverted successfully");
-      
-      // Get the updated content with proper line breaks
-      const updatedContent = ensureLineBreaks(editorDoc.body.innerHTML);
-      
-      // Update the editor content using our helper function
-      updateEditorContent(updatedContent);
-      
-      // Update the hasActiveChanges state
-      setHasActiveChanges(false);
+      // Now force a refresh of the editor UI to reconnect toolbar
+      setTimeout(() => {
+        if (editorRef.current) {
+          // Re-attach events
+          if (typeof editorRef.current.attachEvents === 'function') {
+            editorRef.current.attachEvents();
+          } else if (typeof editorRef.current.refresh === 'function') {
+            editorRef.current.refresh();
+          }
+          
+          // Force a focus to update UI
+          if (typeof editorRef.current.focus === 'function') {
+            editorRef.current.focus();
+          }
+          
+          // Simulate clicking the editor to fully activate it
+          try {
+            // Get the iframe element and dispatch events
+            if (editorRef.current.iframe) {
+              // Simulate user interaction
+              const mouseEvent = new MouseEvent('mousedown', {
+                bubbles: true,
+                cancelable: true,
+                view: editorDoc.defaultView
+              });
+              editorDoc.body.dispatchEvent(mouseEvent);
+              
+              // And also a click event right after
+              const clickEvent = new MouseEvent('click', {
+                bubbles: true,
+                cancelable: true,
+                view: editorDoc.defaultView
+              });
+              editorDoc.body.dispatchEvent(clickEvent);
+            }
+          } catch (err) {
+            console.error("[revertChanges] Error simulating click:", err);
+          }
+        }
+        
+        // Update the state
+        setDocument(prev => ({
+          ...prev,
+          content: cleanContent,
+          updatedAt: new Date()
+        }));
+        
+        // Update the has changes flag
+        setHasActiveChanges(false);
+        
+      }, 100); // Short delay to ensure the DOM updates first
       
       // Add a confirmation message to the AI sidebar
       if (aiSidebarRef.current && typeof aiSidebarRef.current.addAIResponse === 'function') {
@@ -1157,9 +1323,9 @@ IMPORTANT GUIDELINES:
         );
       }
     } catch (error) {
-      console.error("Error reverting changes:", error);
+      console.error("[revertChanges] Error processing changes:", error);
     }
-  }, []);
+  }, [getEditorDocument]);
 
   // Helper function to check if there are AI changes in the editor
   const hasAIChanges = useCallback((): boolean => {
