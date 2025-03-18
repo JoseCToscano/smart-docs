@@ -8,6 +8,7 @@ interface AISidebarProps {
   isLoading?: boolean;
   editorRef?: React.RefObject<any>;
   onApplyChanges?: (changes: DocumentChanges) => void;
+  onApplyXmlChanges?: (xmlContent: string) => void;
 }
 
 type Message = {
@@ -15,6 +16,7 @@ type Message = {
   content: string;
   timestamp?: Date;
   suggestions?: DocumentChanges | null;
+  rawXml?: string | null;
 };
 
 export type DocumentChanges = {
@@ -24,7 +26,7 @@ export type DocumentChanges = {
 };
 
 export interface AISidebarHandle {
-  addAIResponse: (content: string, suggestions?: DocumentChanges | null) => void;
+  addAIResponse: (content: string, suggestions?: DocumentChanges | null, rawXml?: string | null) => void;
 }
 
 // Convert to forwardRef to allow the parent component to access methods
@@ -32,7 +34,8 @@ const AISidebar = forwardRef<AISidebarHandle, AISidebarProps>(({
   onPromptSubmit, 
   isLoading = false,
   editorRef,
-  onApplyChanges 
+  onApplyChanges,
+  onApplyXmlChanges
 }, ref) => {
   const [prompt, setPrompt] = useState("");
   const [chatHistory, setChatHistory] = useState<Message[]>([
@@ -48,12 +51,13 @@ const AISidebar = forwardRef<AISidebarHandle, AISidebarProps>(({
 
   // Expose methods to parent component via ref
   useImperativeHandle(ref, () => ({
-    addAIResponse: (content: string, suggestions?: DocumentChanges | null) => {
+    addAIResponse: (content: string, suggestions?: DocumentChanges | null, rawXml?: string | null) => {
       const assistantMessage: Message = {
         role: "assistant", 
         content,
         timestamp: new Date(),
-        suggestions
+        suggestions,
+        rawXml
       };
       
       setChatHistory(prev => [...prev, assistantMessage]);
@@ -103,6 +107,12 @@ const AISidebar = forwardRef<AISidebarHandle, AISidebarProps>(({
   const handleApplySuggestion = (suggestions: DocumentChanges) => {
     if (onApplyChanges) {
       onApplyChanges(suggestions);
+    }
+  };
+
+  const handleApplyXmlChanges = (xmlContent: string) => {
+    if (onApplyXmlChanges) {
+      onApplyXmlChanges(xmlContent);
     }
   };
 
@@ -185,6 +195,19 @@ const AISidebar = forwardRef<AISidebarHandle, AISidebarProps>(({
                   className="mt-1 w-full"
                 >
                   Apply Changes
+                </Button>
+              </div>
+            )}
+            {message.rawXml && (
+              <div className="mt-2 pt-2 border-t border-gray-200">
+                <div className="text-xs font-medium mb-1">Detected XML changes in response</div>
+                <Button
+                  onClick={() => handleApplyXmlChanges(message.rawXml!)}
+                  themeColor="primary"
+                  size="small"
+                  className="mt-1 w-full"
+                >
+                  Apply XML Changes Directly
                 </Button>
               </div>
             )}

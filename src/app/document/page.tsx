@@ -15,6 +15,7 @@ import { Document as DocType } from "@/types";
 import DocumentToolbar from "@/components/DocumentToolbar";
 import { Window } from "@progress/kendo-react-dialogs";
 import { useRouter, useSearchParams } from "next/navigation";
+import { parseXmlDiff, xmlDiffToChanges } from "@/utils/xmlDiffParser";
 
 // Import all necessary editor tools
 const {
@@ -397,89 +398,104 @@ export default function DocumentPage() {
     return textNodes;
   };
 
-  const handleAIPrompt = useCallback((prompt: string) => {
+  const handleAIPrompt = useCallback(async (prompt: string) => {
     console.log("AI Prompt:", prompt);
     setIsAIProcessing(true);
     
     // Get current content from the editor
     const currentContent = getEditorContent();
     
-    // Simulate AI processing with mock suggestions
-    setTimeout(() => {
-      // Generate some mock suggestions based on the prompt
-      let mockResponse: { text: string, suggestions: DocumentChanges | null } = {
-        text: "I've analyzed your document and have some suggestions.",
-        suggestions: null
-      };
+    try {
+      // Call the Anthropic API through our backend
+      const response = await fetch('/api/document/complete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          prompt,
+          content: currentContent,
+        }),
+      });
       
-      if (prompt.toLowerCase().includes("add") || prompt.toLowerCase().includes("insert")) {
-        // Mock an addition suggestion
-        const contentToAdd = prompt.includes("paragraph") 
-          ? "<p>This is a suggested paragraph that could be added to your document based on context. It's being highlighted to show it's AI-generated content.</p>"
-          : "This is suggested text from AI";
-        
-        mockResponse = {
-          text: "I've created the content you requested. Would you like to add it to your document?",
-          suggestions: {
-            additions: [{ text: contentToAdd }]
-          }
-        };
-      } else if (prompt.toLowerCase().includes("fix") || prompt.toLowerCase().includes("correct")) {
-        // Mock a replacement suggestion
-        // Try to find something in the document to "fix"
-        let oldText = "document";
-        if (currentContent.includes("paragraph")) {
-          oldText = "paragraph";
-        } else if (currentContent.includes("text")) {
-          oldText = "text";
-        }
-        
-        mockResponse = {
-          text: `I found potential issues with the word "${oldText}" and suggest replacing it with a more precise term.`,
-          suggestions: {
-            replacements: [{ 
-              oldText: oldText, 
-              newText: oldText + " (improved by AI)" 
-            }]
-          }
-        };
-      } else if (prompt.toLowerCase().includes("remove") || prompt.toLowerCase().includes("delete")) {
-        // Mock a deletion suggestion
-        // Try to find something in the document to "delete"
-        let textToDelete = "document";
-        if (currentContent.includes("paragraph")) {
-          textToDelete = "paragraph";
-        } else if (currentContent.includes("text")) {
-          textToDelete = "text";
-        }
-        
-        mockResponse = {
-          text: `I found the text "${textToDelete}" which could be removed based on your request.`,
-          suggestions: {
-            deletions: [{ text: textToDelete }]
-          }
-        };
-      } else {
-        // Default response
-        mockResponse = {
-          text: "I've analyzed your document. Let me know if you want me to make specific changes, add content, or fix issues.",
-          suggestions: null
-        };
+      if (!response.ok) {
+        throw new Error('API call failed');
       }
       
+      const data = await response.json();
+      
+      // Parse the result with XML tags
+      const xmlResult = data.result;
+      
+      // Convert XML diff to a structured format for the sidebar
+      const changes = xmlDiffToChanges(xmlResult);
+      
+      // Create response for the AI sidebar
+      const mockResponse = {
+        text: "I've analyzed your document and have suggested some changes.",
+        suggestions: changes
+      };
+      
       setAIResponse(mockResponse);
-      setIsAIProcessing(false);
       
       // Add the AI response to the sidebar
       if (aiSidebarRef.current && typeof aiSidebarRef.current.addAIResponse === 'function') {
-        aiSidebarRef.current.addAIResponse(mockResponse.text, mockResponse.suggestions);
+        aiSidebarRef.current.addAIResponse(mockResponse.text, changes, xmlResult);
       }
-    }, 2000);
+      
+    } catch (error) {
+      console.error("Error calling AI API:", error);
+      
+      // Handle error gracefully with a user-friendly message
+      const errorResponse = {
+        text: "I'm sorry, I encountered an error while processing your request. Please try again.",
+        suggestions: null
+      };
+      
+      // Add the error response to the sidebar
+      if (aiSidebarRef.current && typeof aiSidebarRef.current.addAIResponse === 'function') {
+        aiSidebarRef.current.addAIResponse(errorResponse.text, null);
+      }
+    } finally {
+      setIsAIProcessing(false);
+    }
   }, []);
 
+  // Enhance applyChangesToEditor to handle the XML format
+  const applyXmlChangesToEditor = (xmlContent: string) => {
+    const editorDoc = getEditorDocument();
+    if (!editorDoc) {
+      console.error("Failed to get editor document for applying changes");
+      return;
+    }
+    
+    try {
+      // Parse XML to HTML with styled spans
+      const htmlWithChanges = parseXmlDiff(xmlContent);
+      
+      // Update the editor content
+      editorDoc.body.innerHTML = htmlWithChanges;
+      
+      // Update the document state
+      setDocument(prev => ({
+        ...prev,
+        content: htmlWithChanges,
+        updatedAt: new Date()
+      }));
+    } catch (error) {
+      console.error("Error applying XML changes to editor:", error);
+    }
+  };
+  
+  // Update the handleApplyChanges function to handle both formats
   const handleApplyChanges = useCallback((changes: DocumentChanges) => {
-    // Apply the suggested changes to the editor
+    // This handles the original format with structured changes
     applyChangesToEditor(changes);
+  }, []);
+  
+  // Add a new function to apply XML diff directly
+  const handleApplyXmlChanges = useCallback((xmlContent: string) => {
+    applyXmlChangesToEditor(xmlContent);
   }, []);
 
   const toggleSidebar = useCallback(() => {
@@ -632,6 +648,7 @@ export default function DocumentPage() {
             isLoading={isAIProcessing}
             editorRef={editorRef}
             onApplyChanges={handleApplyChanges}
+            onApplyXmlChanges={handleApplyXmlChanges}
             ref={aiSidebarRef}
           />
         )}
