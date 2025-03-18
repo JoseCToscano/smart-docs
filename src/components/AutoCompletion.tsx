@@ -542,17 +542,6 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
     
     console.log("[AutoCompletion] Found editor document, adding event listeners");
     
-    // Test with a direct manual call after a much longer delay to ensure the editor is fully initialized
-    setTimeout(() => {
-      console.log("[AutoCompletion] Testing with direct manual test input");
-      // Only run this test on initial load, not when re-enabling the feature
-      if (lastTextRef.current === '') {
-        // Use a shorter test input to avoid triggering the repetition detection
-        const testInput = "Digital transformation has become essential for businesses that want to remain competitive in today's market.";
-        getSuggestion(testInput);
-      }
-    }, 5000); // Increased to 5 seconds
-    
     // Throttled selectionchange handler to prevent too many calls
     const throttledSelectionChange = debounce(() => {
       if (currentSuggestionRef.current && isMountedRef.current) {
@@ -629,16 +618,8 @@ const AutoCompletion: React.FC<AutoCompletionProps> = ({ editorRef, enabled }) =
     const handleCustomEvent = () => {
       console.log("[AutoCompletion] Custom autocompleteTrigger event received");
       
-      // Only trigger test suggestion if we haven't suggested anything yet
-      if (lastTextRef.current === '' && !currentSuggestionRef.current) {
-        // Use a different test example that's shorter to avoid repetition detection
-        const testString = "Research indicates that effective leadership is characterized by clear communication and emotional intelligence.";
-        console.log("[AutoCompletion] Testing with event trigger sample data");
-        getSuggestion(testString);
-      } else {
-        // Normal editor change handling
-        handleEditorChange();
-      }
+      // Removed test string logic - simply handle editor changes
+      handleEditorChange();
     };
     
     window.addEventListener('autocompleteTrigger', handleCustomEvent);
