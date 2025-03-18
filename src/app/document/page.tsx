@@ -7,7 +7,8 @@ import {
   arrowsLeftRightIcon, 
   menuIcon 
 } from "@/components/kendo";
-import { Splitter } from "@progress/kendo-react-layout";
+import { Splitter, Avatar } from "@progress/kendo-react-layout";
+import { Popup } from "@progress/kendo-react-popup";
 import "@progress/kendo-theme-default/dist/all.css";
 import "./styles.css";
 import Link from "next/link";
@@ -58,6 +59,8 @@ export default function DocumentPage() {
   const aiSidebarRef = useRef<AISidebarHandle>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const avatarRef = useRef<HTMLDivElement | null>(null);
 
   const handleContentChange = (event: any) => {
     setDocument(prev => ({
@@ -1371,6 +1374,36 @@ IMPORTANT GUIDELINES:
     }
   }, [hasAIChanges, getEditorDocument]);
 
+  const toggleUserMenu = () => {
+    setShowUserMenu(!showUserMenu);
+  };
+
+  const userMenu = (
+    <div className="bg-white rounded shadow-lg p-2 min-w-40 border border-gray-200">
+      <div className="py-2 px-3 text-sm font-medium border-b border-gray-200 mb-2">
+        John Doe
+        <div className="text-xs text-gray-500 font-normal">john.doe@example.com</div>
+      </div>
+      <ul className="space-y-1">
+        <li>
+          <button className="w-full text-left px-3 py-1.5 text-sm hover:bg-gray-100 rounded">
+            Profile Settings
+          </button>
+        </li>
+        <li>
+          <button className="w-full text-left px-3 py-1.5 text-sm hover:bg-gray-100 rounded">
+            My Documents
+          </button>
+        </li>
+        <li className="border-t border-gray-200 mt-1 pt-1">
+          <button className="w-full text-left px-3 py-1.5 text-sm hover:bg-gray-100 rounded text-red-600">
+            Sign Out
+          </button>
+        </li>
+      </ul>
+    </div>
+  );
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-100">
       {/* Main App Toolbar */}
@@ -1435,6 +1468,37 @@ IMPORTANT GUIDELINES:
             >
               {showSidebar ? "Hide AI" : "Show AI"}
             </Button>
+            
+            {/* Avatar component with dropdown */}
+            <div className="ml-3 relative" ref={avatarRef}>
+              <div 
+                className="cursor-pointer"
+                onClick={toggleUserMenu}
+                aria-haspopup="true"
+                aria-expanded={showUserMenu}
+              >
+                <Avatar
+                  type="image"
+                  size="medium"
+                  rounded="full"
+                  style={{ backgroundColor: "#0747A6" }}
+                  themeColor="info"
+                >
+                  JD
+                </Avatar>
+              </div>
+              <Popup
+                anchor={avatarRef.current}
+                show={showUserMenu}
+                popupClass="popup-content"
+                animate={true}
+                anchorAlign={{ horizontal: 'right', vertical: 'bottom' }}
+                popupAlign={{ horizontal: 'right', vertical: 'top' }}
+                onClose={() => setShowUserMenu(false)}
+              >
+                {userMenu}
+              </Popup>
+            </div>
           </div>
         </div>
       </div>
