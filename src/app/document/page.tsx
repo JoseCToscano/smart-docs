@@ -8,7 +8,8 @@ import {
   menuIcon,
   Avatar,
   Splitter,
-  Popup
+  Popup,
+  Tooltip
 } from "@/components/kendo";
 import "@progress/kendo-theme-default/dist/all.css";
 import "./styles.css";
@@ -1415,59 +1416,72 @@ IMPORTANT GUIDELINES:
               SmartDocs
             </span>
           </Link>
-          <Input
-            value={document.title}
-            onChange={handleTitleChange}
-            onBlur={handleTitleBlur}
-            className="w-64 font-medium"
-            style={{ 
-              border: 'none', 
-              boxShadow: 'none', 
-              background: 'transparent',
-              fontSize: '14px'
-            }}
-            aria-label="Document title"
-          />
+          <Tooltip anchorElement="target" position="bottom" content={() => document.title}>
+            <Input
+              value={document.title}
+              onChange={handleTitleChange}
+              onBlur={handleTitleBlur}
+              className="w-64 font-medium"
+              style={{ 
+                border: 'none', 
+                boxShadow: 'none', 
+                background: 'transparent',
+                fontSize: '14px'
+              }}
+              aria-label="Document title"
+            />
+          </Tooltip>
           {lastSaved && (
             <span className="ml-4 text-xs text-gray-500">{lastSaved}</span>
           )}
           <div className="ml-auto flex items-center space-x-2">
-            <Button 
-              themeColor="primary"
-              disabled={isSaving}
-              onClick={handleSave}
-              icon={isSaving ? "refresh" : "save"}
-              className="k-button-md"
-            >
-              {isSaving ? "Saving..." : "Save"}
-            </Button>
-            <Button 
-              themeColor="base"
-              onClick={handleExport}
-              icon="pdf"
-              className="k-button-md"
-            >
-              Export
-            </Button>
-            <Button
-              themeColor="base"
-              onClick={() => setHelpDialogVisible(true)}
-              icon="question-circle"
-              className="k-button-md"
-              title="Show Help"
-            >
-              Help
-            </Button>
+            <Tooltip anchorElement="target" position="bottom" content={() => "Save your document to the cloud"}>
+              <Button 
+                themeColor="primary"
+                disabled={isSaving}
+                onClick={handleSave}
+                icon={isSaving ? "refresh" : "save"}
+                className="k-button-md"
+              >
+                {isSaving ? "Saving..." : "Save"}
+              </Button>
+            </Tooltip>
+            
+            <Tooltip anchorElement="target" position="bottom" content={() => "Export document as PDF"}>
+              <Button 
+                themeColor="base"
+                onClick={handleExport}
+                icon="pdf"
+                className="k-button-md"
+              >
+                Export
+              </Button>
+            </Tooltip>
+            
+            <Tooltip anchorElement="target" position="bottom" content={() => "View help documentation"}>
+              <Button
+                themeColor="base"
+                onClick={() => setHelpDialogVisible(true)}
+                icon="question-circle"
+                className="k-button-md"
+                title="Show Help"
+              >
+                Help
+              </Button>
+            </Tooltip>
+            
             {/* Add the toggle sidebar button to the toolbar */}
-            <Button
-              themeColor="base"
-              onClick={toggleSidebar}
-              icon={showSidebar ? "collapse" : "expand"}
-              className="k-button-md"
-              title={showSidebar ? "Hide AI Assistant" : "Show AI Assistant"}
-            >
-              {showSidebar ? "Hide AI" : "Show AI"}
-            </Button>
+            <Tooltip anchorElement="target" position="bottom" content={() => showSidebar ? "Hide AI Assistant sidebar" : "Show AI Assistant sidebar"}>
+              <Button
+                themeColor="base"
+                onClick={toggleSidebar}
+                icon={showSidebar ? "collapse" : "expand"}
+                className="k-button-md"
+                title={showSidebar ? "Hide AI Assistant" : "Show AI Assistant"}
+              >
+                {showSidebar ? "Hide AI" : "Show AI"}
+              </Button>
+            </Tooltip>
             
             {/* Avatar component with dropdown */}
             <div className="ml-3 relative" ref={avatarRef}>
@@ -1483,6 +1497,8 @@ IMPORTANT GUIDELINES:
                   rounded="full"
                   style={{ backgroundColor: "#0747A6" }}
                   themeColor="info"
+                  showTooltip={true}
+                  tooltip="John Doe - Account Settings"
                 >
                   JD
                 </Avatar>

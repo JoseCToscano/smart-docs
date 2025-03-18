@@ -1,5 +1,6 @@
 import React from 'react';
 import { Avatar as KendoAvatar } from '@progress/kendo-react-layout';
+import { Tooltip } from '@progress/kendo-react-tooltip';
 
 export interface AvatarProps {
   /**
@@ -36,6 +37,21 @@ export interface AvatarProps {
    * Children content for the avatar (initials or icon)
    */
   children?: React.ReactNode;
+
+  /**
+   * Tooltip content to show when hovering over the avatar
+   */
+  tooltip?: string | JSX.Element;
+
+  /**
+   * Whether to show a tooltip
+   */
+  showTooltip?: boolean;
+
+  /**
+   * Position of the tooltip
+   */
+  tooltipPosition?: 'top' | 'bottom' | 'left' | 'right';
 }
 
 /**
@@ -50,9 +66,12 @@ export const Avatar: React.FC<AvatarProps> = ({
   className,
   style,
   children,
+  tooltip,
+  showTooltip = false,
+  tooltipPosition = 'top',
   ...rest
 }) => {
-  return (
+  const avatarElement = (
     <KendoAvatar
       type={type}
       size={size}
@@ -65,6 +84,16 @@ export const Avatar: React.FC<AvatarProps> = ({
       {children}
     </KendoAvatar>
   );
+
+  if (showTooltip && tooltip) {
+    return (
+      <Tooltip anchorElement="target" position={tooltipPosition} content={() => tooltip}>
+        <span style={{ display: 'inline-block' }}>{avatarElement}</span>
+      </Tooltip>
+    );
+  }
+
+  return avatarElement;
 };
 
 export default Avatar; 
