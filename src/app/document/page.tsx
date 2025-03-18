@@ -11,8 +11,10 @@ import "@progress/kendo-theme-default/dist/all.css";
 import "./styles.css";
 import Link from "next/link";
 import AISidebar from "@/components/AISidebar";
-import AutoCompletion from "@/components/AutoCompletion";
 import { Document } from "@/types";
+import DocumentToolbar from "@/components/DocumentToolbar";
+import { Window } from "@progress/kendo-react-dialogs";
+import { useRouter, useSearchParams } from "next/navigation";
 
 // Import all necessary editor tools
 const {
@@ -46,8 +48,9 @@ export default function DocumentPage() {
   const [showSidebar, setShowSidebar] = useState(true);
   const [isAIProcessing, setIsAIProcessing] = useState(false);
   const [lastSaved, setLastSaved] = useState<string | null>(null);
-  const [autoCompleteEnabled, setAutoCompleteEnabled] = useState(true);
   const editorRef = useRef<any>(null);
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   const handleContentChange = (event: any) => {
     setDocument(prev => ({
@@ -137,20 +140,6 @@ export default function DocumentPage() {
       } catch (err) {
         console.error("[DocumentPage] Error examining editor API methods:", err);
       }
-      
-      // Trigger autocompletion on content change
-      // This is a fallback in case direct event listeners don't work
-      try {
-        // Using modern CustomEvent API
-        const autoCompleteTrigger = new CustomEvent('autocompleteTrigger', { 
-          bubbles: true, 
-          detail: { source: 'editor-content-change' } 
-        });
-        console.log("[DocumentPage] Dispatching autocompleteTrigger event");
-        window.dispatchEvent(autoCompleteTrigger);
-      } catch (error) {
-        console.error("[DocumentPage] Failed to dispatch custom event:", error);
-      }
     }
   };
 
@@ -219,16 +208,6 @@ export default function DocumentPage() {
           console.log("[DocumentPage] Focusing editor");
           editorRef.current.focus();
         }
-        
-        // Manually dispatch an autocompleteTrigger event after a short delay
-        setTimeout(() => {
-          console.log("[DocumentPage] Dispatching delayed autocompleteTrigger event");
-          const autoCompleteTrigger = new CustomEvent('autocompleteTrigger', { 
-            bubbles: true, 
-            detail: { source: 'initial-editor-load' } 
-          });
-          window.dispatchEvent(autoCompleteTrigger);
-        }, 1000);
       } catch (err) {
         console.error("[DocumentPage] Error focusing editor:", err);
       }
@@ -263,18 +242,6 @@ export default function DocumentPage() {
             <span className="ml-4 text-xs text-gray-500">{lastSaved}</span>
           )}
           <div className="ml-auto flex items-center space-x-2">
-            <div className="mr-4 flex items-center">
-              <input
-                type="checkbox"
-                id="enableAutoComplete"
-                checked={autoCompleteEnabled}
-                onChange={(e) => setAutoCompleteEnabled(e.target.checked)}
-                className="mr-2"
-              />
-              <label htmlFor="enableAutoComplete" className="text-sm text-gray-600">
-                AI Autocomplete
-              </label>
-            </div>
             <Button 
               themeColor="primary"
               disabled={isSaving}
@@ -343,14 +310,6 @@ export default function DocumentPage() {
                 defaultContent={document.content}
                 onChange={handleContentChange}
               />
-              
-              {/* Add AutoCompletion component */}
-              {autoCompleteEnabled && (
-                <AutoCompletion 
-                  editorRef={editorRef}
-                  enabled={autoCompleteEnabled}
-                />
-              )}
             </div>
           </div>
           
@@ -374,6 +333,35 @@ export default function DocumentPage() {
           />
         )}
       </div>
+
+      {/* Help Dialog */}
+      {helpDialogVisible && (
+        <Window
+          title="Editor Help"
+          onClose={() => setHelpDialogVisible(false)}
+          initialHeight={400}
+          initialWidth={500}
+        >
+          <div className="p-3">
+            <h3 className="text-lg font-semibold mb-2">Keyboard Shortcuts</h3>
+            <ul className="mb-4">
+              <li><strong>Ctrl+B</strong>: Bold text</li>
+              <li><strong>Ctrl+I</strong>: Italic text</li>
+              <li><strong>Ctrl+U</strong>: Underline text</li>
+              <li><strong>Ctrl+K</strong>: Insert link</li>
+              <li><strong>Ctrl+Shift+7</strong>: Numbered list</li>
+              <li><strong>Ctrl+Shift+8</strong>: Bullet list</li>
+            </ul>
+            
+            <h3 className="text-lg font-semibold mb-2">Tips</h3>
+            <ul className="mb-4">
+              <li>Use the toolbar to format your text and add elements</li>
+              <li>Click the AI Assistant button to get help with your document</li>
+              <li>All changes are automatically saved</li>
+            </ul>
+          </div>
+        </Window>
+      )}
     </div>
   );
 } 

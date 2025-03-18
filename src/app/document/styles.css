@@ -103,11 +103,6 @@
   padding-right: 0;
 }
 
-/* AutoCompletion Component Styles - Not needed for inline version */
-.autocomplete-container {
-  display: none; /* Hide the old popup */
-}
-
 /* Screen reader only class for accessibility */
 .sr-only {
   position: absolute;
