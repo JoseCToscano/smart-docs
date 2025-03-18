@@ -15,12 +15,15 @@ const Notification = ({
   message, 
   position = 'top-center',
   autoClose = true,
-  autoCloseTimeout = 5000,
+  autoCloseTimeout = 3000,
   onClose,
   ...props 
 }: NotificationProps) => {
   const [isVisible, setIsVisible] = useState(true);
   const [isFading, setIsFading] = useState(false);
+  
+  // Animation duration constant (in ms)
+  const ANIMATION_DURATION = 200;
   
   // Closure for the close handler to be reused
   const handleClose = useCallback(() => {
@@ -33,7 +36,7 @@ const Notification = ({
       if (onClose) {
         onClose({} as any);
       }
-    }, 300); // Match this to the CSS animation duration
+    }, ANIMATION_DURATION);
   }, [onClose]);
 
   // Auto close effect
@@ -130,9 +133,11 @@ const Notification = ({
 
   // Animation styles
   const animationStyle: React.CSSProperties = {
-    animation: isFading ? 'fadeOut 300ms ease-out forwards' : 'fadeIn 300ms ease-in forwards',
+    animation: isFading 
+      ? `fadeOut ${ANIMATION_DURATION}ms ease-out forwards` 
+      : `fadeIn ${ANIMATION_DURATION}ms ease-in forwards`,
     opacity: isFading ? 0 : 1,
-    transition: 'opacity 300ms ease-out',
+    transition: `opacity ${ANIMATION_DURATION}ms ease-out`,
   };
 
   // Custom notification style that doesn't rely on Kendo CSS
