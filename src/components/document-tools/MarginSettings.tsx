@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Button, Tooltip } from "@/components/kendo";
 import { NumericTextBox, NumericTextBoxChangeEvent } from "@progress/kendo-react-inputs";
-import { DropDownList } from "@progress/kendo-react-dropdowns";
+import { DropDownList } from "@/components/kendo/free/Dropdown";
 import { PageSize } from "./MarginsPopup";
 
 // Page size definitions in millimeters
@@ -62,7 +62,7 @@ const MarginSettings = ({
   
   // Convert a page size to pixels for the preview at the given scale
   const pageToPixels = (size: PageSize) => {
-    const pageDetails = pageSizes[size];
+    const pageDetails = pageSizes[size] || pageSizes["A4"];
     // Convert mm to px (1mm ≈ 3.78px)
     return {
       width: Math.round(pageDetails.width * 3.78 * previewScale),
@@ -154,7 +154,7 @@ const MarginSettings = ({
             
             {/* Page size label */}
             <div className="absolute right-0 bottom-0 bg-gray-100 text-[7px] text-gray-500 p-0.5">
-              {pageSizes[currentPageSize].width} × {pageSizes[currentPageSize].height}mm
+              {(pageSizes[currentPageSize] || pageSizes["A4"]).width} × {(pageSizes[currentPageSize] || pageSizes["A4"]).height}mm
             </div>
           </div>
         </div>

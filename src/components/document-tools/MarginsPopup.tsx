@@ -1,7 +1,7 @@
 import { Popup } from "@/components/kendo/free/Popup";
 import { NumericTextBox, NumericTextBoxChangeEvent } from "@/components/kendo/free/NumericTextBox";
 import Button from "@/components/kendo/free/Button";
-import { DropDownList } from "@/components/kendo/free/DropDownList";
+import { DropDownList } from "@/components/kendo/free/Dropdown";
 import { useState, useEffect } from "react";
 
 // Page size definitions in millimeters
@@ -133,7 +133,7 @@ export default function MarginsPopup({
           
           {/* Page size label */}
           <div className="absolute right-0 bottom-0 bg-gray-100 text-[7px] text-gray-500 p-0.5">
-            {pageSizes[pageSize].width} × {pageSizes[pageSize].height}mm
+            {(pageSizes[pageSize] || pageSizes["A4"]).width} × {(pageSizes[pageSize] || pageSizes["A4"]).height}mm
           </div>
         </div>
       </div>

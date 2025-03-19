@@ -2201,7 +2201,7 @@ IMPORTANT GUIDELINES:
                       <div 
                         className="absolute left-1/2 transform -translate-x-1/2 top-0 -mt-6 bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-xs font-medium pointer-events-none"
                       >
-                        {pageSize} ({pageSizes[pageSize].width} × {pageSizes[pageSize].height}mm)
+                        {pageSize} ({(pageSizes[pageSize] || pageSizes["A4"]).width} × {(pageSizes[pageSize] || pageSizes["A4"]).height}mm)
                       </div>
                     )}
                   </>
