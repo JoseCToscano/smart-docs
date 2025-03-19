@@ -26,6 +26,7 @@ import { Document as DocType } from "@/types";
 import { Window } from "@progress/kendo-react-dialogs";
 import { useRouter, useSearchParams } from "next/navigation";
 import { parseXmlDiff, xmlDiffToChanges } from "@/utils/xmlDiffParser";
+import FileUploadDialog from "@/components/FileUploadDialog";
 
 // Import all necessary editor tools
 const {
@@ -60,6 +61,7 @@ export default function DocumentPage() {
   const [isAIProcessing, setIsAIProcessing] = useState(false);
   const [lastSaved, setLastSaved] = useState<string | null>(null);
   const [helpDialogVisible, setHelpDialogVisible] = useState(false);
+  const [fileUploadDialogVisible, setFileUploadDialogVisible] = useState(false);
   const [aiResponse, setAIResponse] = useState<{ text: string, suggestions: DocumentChanges | null }>({ text: "", suggestions: null });
   const [hasActiveChanges, setHasActiveChanges] = useState(false);
   const [originalContentBeforeChanges, setOriginalContentBeforeChanges] = useState<string | null>(null);
@@ -749,6 +751,29 @@ IMPORTANT GUIDELINES:
               text-decoration: underline !important;
               display: inline !important;
             }
+            
+            /* Make <mark> tags inside additions/deletions display properly */
+            .ai-addition mark, .ai-deletion mark,
+            mark.ai-addition, mark.ai-deletion {
+              background-color: #ffff00 !important;
+              color: #000000 !important;
+              padding: 0 !important;
+              display: inline !important;
+            }
+            
+            /* Special styling for marked content within additions - combine both styles */
+            .ai-addition mark {
+              background-color: rgba(255, 255, 0, 0.7) !important;
+              border-bottom: 1px solid rgba(34, 197, 94, 0.5) !important;
+            }
+            
+            /* Ensure mark tags work correctly with spans */
+            mark {
+              background-color: #ffff00 !important;
+              color: #000000 !important;
+              padding: 0 !important;
+              display: inline !important;
+            }
           `;
           
           // Append style to the head of the iframe document
@@ -855,6 +880,10 @@ IMPORTANT GUIDELINES:
   // New helper function to properly update editor content while preserving its functionality
   const updateEditorContent = (newContent: string) => {
     try {
+      // Log if the incoming content contains mark tags
+      const hasMark = newContent.includes('<mark>');
+      console.log("[updateEditorContent] Input content contains mark tags:", hasMark);
+      
       // Create a temporary div to sanitize the content
       const tempDiv = window.document.createElement('div');
       tempDiv.innerHTML = newContent;
@@ -877,10 +906,19 @@ IMPORTANT GUIDELINES:
             }
           }
         }
+        
+        // Special handling for mark tags - ensure they're preserved
+        if (el.tagName.toLowerCase() === 'mark') {
+          console.log("[updateEditorContent] Preserving mark tag:", el.outerHTML.substring(0, 50));
+        }
       });
       
       // Get the cleaned content
       const cleanedContent = tempDiv.innerHTML;
+      
+      // Verify mark tags are still present after cleaning
+      const cleanedHasMark = cleanedContent.includes('<mark>');
+      console.log("[updateEditorContent] Cleaned content contains mark tags:", cleanedHasMark);
       
       console.log("[DocumentPage] Updating editor with cleaned content");
       
@@ -969,6 +1007,11 @@ IMPORTANT GUIDELINES:
               content: cleanedContent,
               updatedAt: new Date()
             }));
+            
+            // 9. Check if mark tags were preserved after updating
+            const finalContent = editorDoc.body.innerHTML;
+            const finalHasMark = finalContent.includes('<mark>');
+            console.log("[updateEditorContent] Final editor content has mark tags:", finalHasMark);
             
             console.log("[DocumentPage] Editor content updated successfully using Kendo's approach");
           } catch (innerErr) {
@@ -1069,6 +1112,17 @@ IMPORTANT GUIDELINES:
         deletions: deletionSpans.length
       });
       
+      // Check for mark tags inside additions
+      let hasMarkTags = false;
+      additionSpans.forEach(span => {
+        if (span.innerHTML.includes('<mark>') || span.innerHTML.includes('</mark>')) {
+          hasMarkTags = true;
+          console.log("[DocumentPage] Found mark tags inside addition span:", span.innerHTML.substring(0, 50));
+        }
+      });
+      
+      console.log("[DocumentPage] Document has mark tags inside additions:", hasMarkTags);
+      
       // Make sure all spans have the correct display style
       [...additionSpans, ...deletionSpans].forEach(span => {
         // Ensure inline display
@@ -1110,6 +1164,11 @@ IMPORTANT GUIDELINES:
         // After fixing, refresh the editor again
         reinitializeEditor();
       }
+      
+      // Check if mark tags are present after all fixes
+      const finalContent = editorDoc.body.innerHTML;
+      console.log("[DocumentPage] Final content has mark tags:", finalContent.includes('<mark>'));
+      
     } catch (error) {
       console.error("[DocumentPage] Error fixing span styling:", error);
     }
@@ -1147,8 +1206,15 @@ IMPORTANT GUIDELINES:
       console.log(`[finalizeChanges] Found ${additions.length} additions to apply`);
       
       additions.forEach((addition) => {
-        // Keep the HTML content (including <br> tags) but remove the span
+        // Keep the HTML content (including <br> tags and other HTML tags) but remove the span
         const content = addition.innerHTML;
+        console.log(`[finalizeChanges] Processing addition with content: ${content.substring(0, 50)}...`);
+        
+        // Check for mark tags in the content to ensure they're preserved
+        const hasMark = content.includes('<mark>') || content.includes('</mark>');
+        if (hasMark) {
+          console.log(`[finalizeChanges] Addition contains mark tags, ensuring preservation`);
+        }
         
         // Create a new temporary container to handle the HTML content properly
         const contentContainer = window.document.createElement('span');
@@ -1156,10 +1222,11 @@ IMPORTANT GUIDELINES:
         
         // Replace the AI addition span with its inner HTML content
         if (addition.parentNode) {
-          // Use replaceWith to preserve HTML structure including <br> tags
+          // Use replaceWith to preserve HTML structure including <br> tags and mark tags
           addition.parentNode.replaceChild(contentContainer, addition);
           
           // Now move all children out of the temporary span to the parent
+          // We need to be careful to preserve HTML structure
           while (contentContainer.firstChild && contentContainer.parentNode) {
             contentContainer.parentNode.insertBefore(contentContainer.firstChild, contentContainer);
           }
@@ -1183,6 +1250,9 @@ IMPORTANT GUIDELINES:
       
       // Step 4: Get the clean HTML with changes applied
       const cleanedHtml = tempContainer.innerHTML;
+      
+      // Log whether the final HTML contains mark tags
+      console.log(`[finalizeChanges] Final HTML contains mark tags: ${cleanedHtml.includes('<mark>')}`);
       
       // Step 5: Save this content to the state so it will be used for the new editor
       setDocument(prev => ({
@@ -1231,11 +1301,23 @@ IMPORTANT GUIDELINES:
       const tempContainer = window.document.createElement('div');
       tempContainer.innerHTML = editorDoc.body.innerHTML;
       
+      // Check for mark tags in the content
+      const hasMark = tempContainer.innerHTML.includes('<mark>');
+      console.log("[revertChanges] Content contains mark tags:", hasMark);
+      
       // Step 2: Find and process all AI additions (remove them completely)
       const additions = tempContainer.querySelectorAll('.ai-addition');
       console.log(`[revertChanges] Found ${additions.length} additions to remove`);
       
       additions.forEach((addition) => {
+        // Before removing, check if it contains mark tags that might need special handling
+        const content = addition.innerHTML;
+        const additionHasMark = content.includes('<mark>') || content.includes('</mark>');
+        
+        if (additionHasMark) {
+          console.log("[revertChanges] Addition with mark tags:", content.substring(0, 50));
+        }
+        
         if (addition.parentNode) {
           addition.parentNode.removeChild(addition);
         }
@@ -1248,6 +1330,12 @@ IMPORTANT GUIDELINES:
       deletions.forEach((deletion) => {
         // Keep the HTML content (including <br> tags) but remove the span
         const content = deletion.innerHTML;
+        
+        // Check if deletion contains mark tags that need preservation
+        const deletionHasMark = content.includes('<mark>') || content.includes('</mark>');
+        if (deletionHasMark) {
+          console.log("[revertChanges] Deletion with mark tags:", content.substring(0, 50));
+        }
         
         // Create a new temporary container to handle the HTML content properly
         const contentContainer = window.document.createElement('span');
@@ -1272,6 +1360,10 @@ IMPORTANT GUIDELINES:
       
       // Step 4: Get the clean HTML with changes reverted
       const cleanedHtml = tempContainer.innerHTML;
+      
+      // Check if mark tags were preserved in the final content
+      const finalHasMark = cleanedHtml.includes('<mark>');
+      console.log("[revertChanges] Final content contains mark tags:", finalHasMark);
       
       // Step 5: Update the document state with the clean content
       setDocument(prev => ({
@@ -1331,7 +1423,8 @@ IMPORTANT GUIDELINES:
         .replace(/<\/?i>/g, '___ITAG___')
         .replace(/<\/?b>/g, '___BTAG___')
         .replace(/<\/?strong>/g, '___STRONGTAG___')
-        .replace(/<\/?em>/g, '___EMTAG___');
+        .replace(/<\/?em>/g, '___EMTAG___')
+        .replace(/<\/?mark>/g, '___MARKTAG___'); // Add handling for mark tags
       
       // Apply standard normalization
       processed = processed
@@ -1362,6 +1455,8 @@ IMPORTANT GUIDELINES:
         .replace(/___\/STRONGTAG___/g, '</strong>')
         .replace(/___EMTAG___/g, '<em>')
         .replace(/___\/EMTAG___/g, '</em>')
+        .replace(/___MARKTAG___/g, '<mark>') // Restore mark tags
+        .replace(/___\/MARKTAG___/g, '</mark>') // Restore mark end tags
         // Trim the result
         .trim();
       
@@ -1689,6 +1784,41 @@ IMPORTANT GUIDELINES:
     </div>
   );
 
+  // Add a new method to handle opening a document from a file
+  const handleOpenFromFile = useCallback(() => {
+    setFileUploadDialogVisible(true);
+  }, []);
+
+  // Add a method to handle processing the uploaded file content
+  const handleFileProcessed = useCallback((html: string) => {
+    // First confirm with the user if there are unsaved changes
+    if (document.content !== '<p></p>' && !window.confirm('Opening a new document will replace the current content. Any unsaved changes will be lost. Continue?')) {
+      return;
+    }
+
+    // Update the document with the new content
+    setDocument(prev => ({
+      ...prev,
+      title: prev.title === 'Untitled Document' ? 'Imported Document' : prev.title,
+      content: html,
+      updatedAt: new Date()
+    }));
+
+    // Force a re-render of the editor component with a new key
+    setEditorKey(prevKey => prevKey + 1);
+
+    // Reset any active changes
+    setHasActiveChanges(false);
+    setOriginalContentBeforeChanges(null);
+
+    // Add a confirmation message to the AI sidebar if it's available
+    if (aiSidebarRef.current && typeof aiSidebarRef.current.addAIResponse === 'function') {
+      aiSidebarRef.current.addAIResponse(
+        "I've opened the Word document and converted it to an editable format. You can now edit it like any other document."
+      );
+    }
+  }, [document.content]);
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-100">
       {/* Main App Toolbar */}
@@ -1722,6 +1852,20 @@ IMPORTANT GUIDELINES:
         <AppBarSpacer />
         
         <AppBarSection>
+          {/* Add the Open from File button */}
+          <Tooltip anchorElement="target" position="bottom" content={() => "Open a Word document (.docx file)"}>
+            <Button 
+              themeColor="base"
+              onClick={handleOpenFromFile}
+              icon="file"
+              className="k-button-md"
+            >
+              Open File
+            </Button>
+          </Tooltip>
+          
+          <AppBarSeparator />
+          
           <Tooltip anchorElement="target" position="bottom" content={() => "Save your document to the cloud"}>
             <Button 
               themeColor="primary"
@@ -1880,6 +2024,14 @@ IMPORTANT GUIDELINES:
         </Splitter>
       </div>
 
+      {/* Add the File Upload Dialog */}
+      {fileUploadDialogVisible && (
+        <FileUploadDialog
+          onClose={() => setFileUploadDialogVisible(false)}
+          onFileProcessed={handleFileProcessed}
+        />
+      )}
+
       {/* Help Dialog */}
       {helpDialogVisible && (
         <Window
@@ -1896,6 +2048,7 @@ IMPORTANT GUIDELINES:
               <li>The AI assistant can help you with writing and editing</li>
               <li>Save your work regularly using the Save button</li>
               <li>Export to PDF when you're ready to share your document</li>
+              <li>Open Word documents (.docx) using the Open File button</li>
             </ul>
           </div>
         </Window>

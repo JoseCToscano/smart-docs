@@ -8,12 +8,14 @@ export function parseXmlDiff(diffText: string): string {
     console.log("[xmlDiffParser] Input text length:", diffText.length);
     console.log("[xmlDiffParser] Input text sample:", diffText.substring(0, 150).replace(/\n/g, "\\n"));
     
-    // Check for XML tags
+    // Check for XML and HTML tags in the content
     const hasAdditionTags = diffText.includes("<addition>");
     const hasDeletionTags = diffText.includes("<deletion>");
+    const hasMarkTags = diffText.includes("<mark>");
     
     console.log("[xmlDiffParser] Has addition tags:", hasAdditionTags);
     console.log("[xmlDiffParser] Has deletion tags:", hasDeletionTags);
+    console.log("[xmlDiffParser] Has mark tags:", hasMarkTags);
     
     if (!hasAdditionTags && !hasDeletionTags) {
       console.log("[xmlDiffParser] No XML tags found, returning original text");
@@ -25,6 +27,14 @@ export function parseXmlDiff(diffText: string): string {
     
     // Convert actual newlines to placeholders for processing
     diffText = diffText.replace(/\n/g, '___NEWLINE___');
+    
+    // Count mark tags to verify they're present
+    const markTagCount = (diffText.match(/<mark>/g) || []).length;
+    console.log("[xmlDiffParser] Number of mark tags:", markTagCount);
+    
+    // Special handling to preserve mark tags within additions
+    // Add a temporary marker to protect them
+    diffText = diffText.replace(/<mark>([\s\S]*?)<\/mark>/g, '___MARK_START___$1___MARK_END___');
     
     // Create a simpler parser since both the DOM parser and recursive regex approach have issues
     // We'll use a more straightforward approach with greedy regex for better reliability
@@ -41,11 +51,19 @@ export function parseXmlDiff(diffText: string): string {
       '<span class="ai-deletion ai-badge highlight">$1</span>'
     );
     
+    // Restore mark tags that were protected
+    processedText = processedText.replace(/___MARK_START___([\s\S]*?)___MARK_END___/g, '<mark>$1</mark>');
+    
     // Convert newline placeholders back to <br /> tags
     processedText = processedText.replace(/___NEWLINE___/g, '<br />');
     
+    // Count mark tags in the processed text to verify they're still present
+    const finalMarkTagCount = (processedText.match(/<mark>/g) || []).length;
+    console.log("[xmlDiffParser] Final number of mark tags:", finalMarkTagCount);
+    
     console.log("[xmlDiffParser] Processed text has addition spans:", processedText.includes('ai-addition'));
     console.log("[xmlDiffParser] Processed text has deletion spans:", processedText.includes('ai-deletion'));
+    console.log("[xmlDiffParser] Processed text has mark tags:", processedText.includes('<mark>'));
     console.log("[xmlDiffParser] Processed text has <br> tags:", processedText.includes('<br />'));
     console.log("[xmlDiffParser] Final processed text sample:", processedText.substring(0, 150));
     
@@ -54,6 +72,10 @@ export function parseXmlDiff(diffText: string): string {
     console.error('Error parsing XML diff:', error);
     // Final fallback - simplest possible approach
     let processed = diffText;
+    
+    // Check for mark tags in the original content
+    const hasMarkTags = diffText.includes("<mark>");
+    console.log("[xmlDiffParser] Fallback: content has mark tags:", hasMarkTags);
     
     // Convert newlines to <br> tags
     processed = processed.replace(/\n/g, '<br />');
@@ -69,6 +91,10 @@ export function parseXmlDiff(diffText: string): string {
       /<deletion>([\s\S]*?)<\/deletion>/g, 
       '<span class="ai-deletion ai-badge highlight">$1</span>'
     );
+    
+    // Check if mark tags survived the process
+    const finalHasMarkTags = processed.includes("<mark>");
+    console.log("[xmlDiffParser] Fallback: final content has mark tags:", finalHasMarkTags);
     
     return processed;
   }
