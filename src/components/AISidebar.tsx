@@ -148,6 +148,15 @@ const AISidebar = forwardRef<AISidebarHandle, AISidebarProps>(({
     setPrompt(e.value);
   };
 
+  // Format time consistently for both server and client
+  const formatTime = (date: Date): string => {
+    // Use a fixed locale and format options to ensure consistency
+    return date.toLocaleTimeString('en-US', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: true
+    });
+  };
 
   return (
     <div className="h-full flex flex-col bg-gray-50 border-l border-gray-200 w-full">
@@ -265,7 +274,7 @@ const AISidebar = forwardRef<AISidebarHandle, AISidebarProps>(({
             )}
             {message.timestamp && (
               <div className={`text-xs mt-1 ${message.role === "user" ? "text-blue-200" : "text-gray-400"}`}>
-                {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                {message.timestamp ? formatTime(message.timestamp) : ''}
               </div>
             )}
           </div>
