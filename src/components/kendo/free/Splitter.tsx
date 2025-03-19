@@ -1,5 +1,12 @@
 import React from 'react';
-import { Splitter as KendoSplitter, SplitterProps as KendoSplitterProps } from '@progress/kendo-react-layout';
+import { 
+   Splitter as KendoSplitter,
+   SplitterProps as KendoSplitterProps, 
+   SplitterPane, 
+   SplitterPaneProps,
+   SplitterOnChangeEvent
+  } from '@progress/kendo-react-layout';
+
 
 export interface SplitterProps extends KendoSplitterProps {
   /**
@@ -17,7 +24,7 @@ export interface SplitterProps extends KendoSplitterProps {
  * Custom Splitter component that wraps the KendoReact Splitter
  * with potential for custom enhancements
  */
-export const Splitter: React.FC<SplitterProps> = ({
+const Splitter: React.FC<SplitterProps> = ({
   className,
   style,
   children,
@@ -34,4 +41,4 @@ export const Splitter: React.FC<SplitterProps> = ({
   );
 };
 
-export default Splitter; 
+export { Splitter, SplitterPane, type SplitterPaneProps, type SplitterOnChangeEvent }; 

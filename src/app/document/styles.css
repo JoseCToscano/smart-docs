@@ -253,4 +253,23 @@ pre.ai-addition, pre.ai-deletion {
 .ai-addition:hover::after,
 .ai-deletion:hover::after {
   opacity: 1;
+}
+
+/* Make sure the Splitter takes full height */
+.k-splitter {
+  height: 100% !important;
+  border: none !important;
+}
+
+.k-splitter .k-pane {
+  overflow: auto;
+}
+
+.k-splitbar {
+  background-color: #e2e8f0 !important;
+}
+
+.k-splitbar:hover, 
+.k-splitbar:active {
+  background-color: #cbd5e1 !important;
 } 

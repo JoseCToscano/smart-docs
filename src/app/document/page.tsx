@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect, forwardRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { Editor, EditorTools } from "@/components/kendo/premium";
 import { 
   Button, 
@@ -11,10 +11,10 @@ import {
   AppBarSeparator 
 } from "@/components/kendo/free";
 import { 
-  arrowsLeftRightIcon, 
-  menuIcon,
   Avatar,
   Splitter,
+  SplitterOnChangeEvent,
+  SplitterPaneProps,
   Popup,
   Tooltip
 } from "@/components/kendo";
@@ -24,7 +24,6 @@ import Link from "next/link";
 import AISidebar, { DocumentChanges, AISidebarHandle } from "@/components/AISidebar";
 import { Document as DocType } from "@/types";
 import { Window } from "@progress/kendo-react-dialogs";
-import { useRouter, useSearchParams } from "next/navigation";
 import { parseXmlDiff, xmlDiffToChanges } from "@/utils/xmlDiffParser";
 import FileUploadDialog from "@/components/FileUploadDialog";
 
@@ -68,8 +67,10 @@ export default function DocumentPage() {
   const [editorKey, setEditorKey] = useState(0);
   const editorRef = useRef<any>(null);
   const aiSidebarRef = useRef<AISidebarHandle>(null);
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  const [panes, setPanes] = useState<SplitterPaneProps[]>([
+    { collapsible: false, scrollable: true }, // Main editor pane - flexible size (no fixed size)
+    { collapsible: true, collapsed: !showSidebar, size: '30%', min: '350px', max: '40%', scrollable: true } // Sidebar with fixed size
+  ]);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const avatarRef = useRef<HTMLDivElement | null>(null);
 
@@ -1539,11 +1540,14 @@ IMPORTANT GUIDELINES:
 
   // Update toggleSidebar to work with Splitter
   const toggleSidebar = useCallback(() => {
-    setShowSidebar(prev => !prev);
+    setShowSidebar(currentState => !currentState);
+    
+    // Debug the state change
+    console.log("Toggling sidebar, new state:", !showSidebar);
     
     // If needed, we could update Splitter props here
     // but it should automatically update based on the showSidebar state
-  }, []);
+  }, [showSidebar]);
 
   // Add a useEffect to manually trigger a focus and autocompletion on initial load
   useEffect(() => {
@@ -1819,6 +1823,10 @@ IMPORTANT GUIDELINES:
     }
   }, [document.content]);
 
+  useEffect(() => {
+    console.log("[DocumentPage] Splitter should update with showSidebar =", showSidebar);
+  }, [showSidebar]);
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-100">
       {/* Main App Toolbar */}
@@ -1950,21 +1958,21 @@ IMPORTANT GUIDELINES:
       </AppBar>
 
       {/* Main content area with Splitter */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden border-8 border-purple-500">
         {/* Use Splitter component for resizable panels */}
         <Splitter
+          key="main-splitter"
+          className="h-full w-full"
           style={{ height: 'calc(100vh - 56px)' }} // Adjusted for AppBar height
           orientation="horizontal"
-          panes={[
-            { collapsible: false }, // Main editor pane - flexible size (no fixed size)
-            { collapsible: true, collapsed: !showSidebar, size: '30%', min: '250px' } // Sidebar with fixed size
-          ]}
+          panes={panes}
+          onChange={(e:SplitterOnChangeEvent)=>setPanes(e.newState)}
         >
           {/* Main Editor Area */}
-          <div className="h-full flex flex-col relative bg-gray-200">
-            <div className="relative flex-1 overflow-auto pt-6">
-              <div className="editor-page-container mx-auto shadow-md relative">
+          <div className="h-full flex flex-col relative bg-gray-200 border-2 border-red-500">
+            <div className="relative flex-1 overflow-auto py-8 border-2 border-blue-500">
                 {/* Editor Content Area with built-in toolbar */}
+              <div className="editor-page-container mx-auto shadow-md relative border-2 border-green-500">
                 <Editor
                   key={`editor-instance-${editorKey}`}
                   ref={editorRef}
@@ -2008,7 +2016,7 @@ IMPORTANT GUIDELINES:
           </div>
           
           {/* AI Sidebar */}
-          <div className="h-full">
+          <div className="h-full border-2 border-yellow-500">
             <AISidebar 
               key="ai-sidebar"
               onPromptSubmit={handleAIPrompt}
