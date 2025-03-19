@@ -69,7 +69,7 @@ export default function DocumentPage() {
   const aiSidebarRef = useRef<AISidebarHandle>(null);
   const [panes, setPanes] = useState<SplitterPaneProps[]>([
     { collapsible: false, scrollable: true }, // Main editor pane - flexible size (no fixed size)
-    { collapsible: true, collapsed: !showSidebar, size: '30%', min: '350px', max: '40%', scrollable: true } // Sidebar with fixed size
+    { collapsible: true, collapsed: false, size: '30%', min: '350px', max: '40%', scrollable: true, keepMounted: true } // Sidebar with fixed size
   ]);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const avatarRef = useRef<HTMLDivElement | null>(null);
@@ -1540,13 +1540,23 @@ IMPORTANT GUIDELINES:
 
   // Update toggleSidebar to work with Splitter
   const toggleSidebar = useCallback(() => {
+    // If needed, we could update Splitter props here
+    if (!showSidebar) {
+      setPanes(prev => [
+        { ...prev[0]},
+        { ...prev[1], collapsed: false}
+      ]);
+    }else{
+      setPanes(prev => [
+        { ...prev[0],},
+        { ...prev[1], collapsed: true}
+      ]);
+    }
     setShowSidebar(currentState => !currentState);
     
     // Debug the state change
     console.log("Toggling sidebar, new state:", !showSidebar);
     
-    // If needed, we could update Splitter props here
-    // but it should automatically update based on the showSidebar state
   }, [showSidebar]);
 
   // Add a useEffect to manually trigger a focus and autocompletion on initial load
@@ -1958,21 +1968,29 @@ IMPORTANT GUIDELINES:
       </AppBar>
 
       {/* Main content area with Splitter */}
-      <div className="flex-1 overflow-hidden border-8 border-purple-500">
+      <div className="flex-1 overflow-hidden">
         {/* Use Splitter component for resizable panels */}
         <Splitter
           key="main-splitter"
-          className="h-full w-full"
-          style={{ height: 'calc(100vh - 56px)' }} // Adjusted for AppBar height
+          className="h-full w-full border-8 border-purple-500 fixed top-0"
           orientation="horizontal"
           panes={panes}
-          onChange={(e:SplitterOnChangeEvent)=>setPanes(e.newState)}
+          onChange={(e:SplitterOnChangeEvent)=>{
+            setPanes(e.newState)
+            if(e.newState[1]?.collapsed){
+              setShowSidebar(false);
+            }else{
+              setShowSidebar(true);
+            }
+          }}
         >
           {/* Main Editor Area */}
-          <div className="h-full flex flex-col relative bg-gray-200 border-2 border-red-500">
-            <div className="relative flex-1 overflow-auto py-8 border-2 border-blue-500">
+          <div className="h-full flex flex-col relative bg-gray-200 border-red-500"
+          style={{ height: 'calc(100vh - 56px)' }} // Adjusted for AppBar height
+          >
+            <div className="relative flex-1 overflow-auto py-8 border-blue-500">
                 {/* Editor Content Area with built-in toolbar */}
-              <div className="editor-page-container mx-auto shadow-md relative border-2 border-green-500">
+              <div className="editor-page-container mx-auto shadow-md relative border-green-500">
                 <Editor
                   key={`editor-instance-${editorKey}`}
                   ref={editorRef}
@@ -2016,7 +2034,11 @@ IMPORTANT GUIDELINES:
           </div>
           
           {/* AI Sidebar */}
-          <div className="h-full border-2 border-yellow-500">
+          <div className="">
+          <div className=""
+                    style={{
+                      height: 'calc(100vh - 56px)',
+                    }}>
             <AISidebar 
               key="ai-sidebar"
               onPromptSubmit={handleAIPrompt}
@@ -2028,6 +2050,7 @@ IMPORTANT GUIDELINES:
               hasActiveChanges={hasActiveChanges}
               ref={aiSidebarRef}
             />
+          </div>
           </div>
         </Splitter>
       </div>
