@@ -29,13 +29,13 @@ export function parseXmlDiff(diffText: string): string {
     // Create a simpler parser since both the DOM parser and recursive regex approach have issues
     // We'll use a more straightforward approach with greedy regex for better reliability
     
-    // Replace addition tags
+    // Replace addition tags - IMPORTANT: Don't escape HTML in the content
     let processedText = diffText.replace(
       /<addition>([\s\S]*?)<\/addition>/g, 
       '<span class="ai-addition ai-badge highlight">$1</span>'
     );
     
-    // Replace deletion tags
+    // Replace deletion tags - IMPORTANT: Don't escape HTML in the content
     processedText = processedText.replace(
       /<deletion>([\s\S]*?)<\/deletion>/g, 
       '<span class="ai-deletion ai-badge highlight">$1</span>'
@@ -58,13 +58,13 @@ export function parseXmlDiff(diffText: string): string {
     // Convert newlines to <br> tags
     processed = processed.replace(/\n/g, '<br />');
     
-    // Replace addition tags
+    // Replace addition tags - IMPORTANT: Don't escape HTML content
     processed = processed.replace(
       /<addition>([\s\S]*?)<\/addition>/g, 
       '<span class="ai-addition ai-badge highlight">$1</span>'
     );
     
-    // Replace deletion tags
+    // Replace deletion tags - IMPORTANT: Don't escape HTML content
     processed = processed.replace(
       /<deletion>([\s\S]*?)<\/deletion>/g, 
       '<span class="ai-deletion ai-badge highlight">$1</span>'
@@ -102,18 +102,10 @@ function processXmlWithRecursiveRegex(input: string): string {
       matchCount++;
       const [fullMatch, tagName, innerContent = ''] = match;
       
-      // Escape any HTML in the content
-      const escapedContent = innerContent
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-      
-      // Create the styled span with enhanced classes for better styling
+      // Create the styled span without escaping HTML in the content
       const replacement = tagName === 'addition' 
-        ? `<span class="ai-addition ai-badge highlight">${escapedContent}</span>`
-        : `<span class="ai-deletion ai-badge highlight">${escapedContent}</span>`;
+        ? `<span class="ai-addition ai-badge highlight">${innerContent}</span>`
+        : `<span class="ai-deletion ai-badge highlight">${innerContent}</span>`;
       
       // Replace in the result - use a more reliable replacement technique
       result = result.replace(fullMatch, function() {
@@ -157,34 +149,16 @@ function fallbackXmlParse(diffText: string): string {
     console.log("[xmlDiffParser] Fallback processing, text contains deletion tags:", 
       processed.includes('<deletion>'));
     
-    // Replace addition tags
+    // Replace addition tags without escaping HTML
     processed = processed.replace(
       /<addition>([\s\S]*?)<\/addition>/g, 
-      (match, content) => {
-        // HTML escape the content
-        const escaped = content
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;")
-          .replace(/"/g, "&quot;")
-          .replace(/'/g, "&#039;");
-        return `<span class="ai-addition ai-badge highlight">${escaped}</span>`;
-      }
+      '<span class="ai-addition ai-badge highlight">$1</span>'
     );
     
-    // Replace deletion tags
+    // Replace deletion tags without escaping HTML
     processed = processed.replace(
       /<deletion>([\s\S]*?)<\/deletion>/g, 
-      (match, content) => {
-        // HTML escape the content
-        const escaped = content
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;")
-          .replace(/"/g, "&quot;")
-          .replace(/'/g, "&#039;");
-        return `<span class="ai-deletion ai-badge highlight">${escaped}</span>`;
-      }
+      '<span class="ai-deletion ai-badge highlight">$1</span>'
     );
     
     // Convert newline placeholders back to <br /> tags

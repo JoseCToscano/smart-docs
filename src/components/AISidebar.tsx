@@ -182,7 +182,7 @@ const AISidebar = forwardRef<AISidebarHandle, AISidebarProps>(({
                 : "bg-white border border-gray-200 mr-auto max-w-[90%] shadow-sm"
             }`}
           >
-            <div>{message.content}</div>
+            <div dangerouslySetInnerHTML={{ __html: message.content }}></div>
             {message.suggestions && (
               <div className="mt-2 pt-2 border-t border-gray-200">
                 <div className="text-xs font-medium mb-1">Suggested changes:</div>
@@ -192,9 +192,11 @@ const AISidebar = forwardRef<AISidebarHandle, AISidebarProps>(({
                     <div className="text-xs text-green-600">Additions:</div>
                     {message.suggestions.additions.map((addition, i) => (
                       <div key={i} className="text-xs rounded p-1 bg-green-50 text-green-800 my-1">
-                        + {addition.text.length > 40 
-                          ? addition.text.substring(0, 40) + '...' 
-                          : addition.text}
+                        <div dangerouslySetInnerHTML={{ 
+                          __html: '+ ' + (addition.text.length > 40 
+                            ? addition.text.substring(0, 40) + '...' 
+                            : addition.text)
+                        }}></div>
                       </div>
                     ))}
                   </div>
@@ -205,9 +207,11 @@ const AISidebar = forwardRef<AISidebarHandle, AISidebarProps>(({
                     <div className="text-xs text-red-600">Deletions:</div>
                     {message.suggestions.deletions.map((deletion, i) => (
                       <div key={i} className="text-xs rounded p-1 bg-red-50 text-red-800 my-1">
-                        - {deletion.text.length > 40 
-                          ? deletion.text.substring(0, 40) + '...' 
-                          : deletion.text}
+                        <div dangerouslySetInnerHTML={{ 
+                          __html: '- ' + (deletion.text.length > 40 
+                            ? deletion.text.substring(0, 40) + '...' 
+                            : deletion.text)
+                        }}></div>
                       </div>
                     ))}
                   </div>
@@ -219,14 +223,18 @@ const AISidebar = forwardRef<AISidebarHandle, AISidebarProps>(({
                     {message.suggestions.replacements.map((replacement, i) => (
                       <div key={i} className="text-xs my-1">
                         <div className="rounded p-1 bg-red-50 text-red-800">
-                          - {replacement.oldText.length > 40 
+                          <div dangerouslySetInnerHTML={{ 
+                            __html: '- ' + (replacement.oldText.length > 40 
                               ? replacement.oldText.substring(0, 40) + '...' 
-                              : replacement.oldText}
+                              : replacement.oldText)
+                          }}></div>
                         </div>
                         <div className="rounded p-1 bg-green-50 text-green-800">
-                          + {replacement.newText.length > 40 
+                          <div dangerouslySetInnerHTML={{ 
+                            __html: '+ ' + (replacement.newText.length > 40 
                               ? replacement.newText.substring(0, 40) + '...' 
-                              : replacement.newText}
+                              : replacement.newText)
+                          }}></div>
                         </div>
                       </div>
                     ))}
