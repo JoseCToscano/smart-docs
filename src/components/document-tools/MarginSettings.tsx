@@ -111,14 +111,14 @@ const MarginSettings = ({
             data={pageSizeData}
             textField="text"
             dataItemKey="value"
-            value={currentPageSize}
-            defaultValue="A4"
+            value={pageSizeData.find(item => item.value === currentPageSize)}
+            defaultValue={pageSizeData[0]}
             onChange={(event) => {
               console.log("[MarginSettings] DropDownList onChange:", event.target.value);
               // In the official Kendo implementation, the selected value is in event.target.value
               if (event.target.value) {
-                const newSize = event.target.value as PageSize;
-                handlePageSizeChange(newSize);
+                const newSize = event.target.value as { text: string, value: string };
+                handlePageSizeChange(newSize.value as PageSize);
               }
             }}
             size="small"

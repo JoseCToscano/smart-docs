@@ -83,16 +83,19 @@ export default function MarginsPopup({
           data={pageSizeData}
           textField="text"
           dataItemKey="value"
-          value={pageSize}
-          defaultValue="A4"
+          value={pageSizeData.find(item => item.value === pageSize)}
+          defaultValue={pageSizeData[0]}
           onChange={(event) => {
             console.log("[MarginsPopup] DropDownList onChange:", event.target.value);
             // In the official Kendo implementation, the selected value is in event.target.value
             if (event.target.value) {
-              const newSize = event.target.value as PageSize;
-              if (pageSizes[newSize]) {
-                onPageSizeChange(newSize);
+              const newSize = event.target.value as { text: string, value: string };
+              console.log("[MarginsPopup] newSize:", newSize);
+              if (pageSizes[newSize.value as PageSize]) {
+                console.log("[MarginsPopup] newSize is valid:", newSize);
+                onPageSizeChange(newSize.value as PageSize);
               } else {
+                console.log("[MarginsPopup] newSize is invalid:", newSize);
                 onPageSizeChange("A4");
               }
             }
