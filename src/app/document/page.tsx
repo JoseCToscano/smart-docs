@@ -1897,16 +1897,38 @@ IMPORTANT GUIDELINES:
               aria-label="Document title"
             />
           </Tooltip>
-          {lastSaved && (
-            <span className="ml-4 text-xs text-gray-500">{lastSaved}</span>
-          )}
         </AppBarSection>
         
         <AppBarSpacer />
         
         <AppBarSection>
-          {/* Keep only avatar and user menu in the top AppBar */}
-          <div className="ml-3 relative" ref={avatarRef}>
+          {/* Help and AI controls in the top AppBar */}
+          <Tooltip anchorElement="target" position="bottom" content={() => "View help documentation"}>
+            <Button
+              themeColor="base"
+              onClick={() => setHelpDialogVisible(true)}
+              icon="question-circle"
+              className="k-button-md mr-2"
+              title="Show Help"
+            >
+              Help
+            </Button>
+          </Tooltip>
+          
+          <Tooltip anchorElement="target" position="bottom" content={() => showSidebar ? "Hide AI Assistant sidebar" : "Show AI Assistant sidebar"}>
+            <Button
+              themeColor="base"
+              onClick={toggleSidebar}
+              icon={showSidebar ? "collapse" : "expand"}
+              className="k-button-md mr-3"
+              title={showSidebar ? "Hide AI Assistant" : "Show AI Assistant"}
+            >
+              {showSidebar ? "Hide AI" : "Show AI"}
+            </Button>
+          </Tooltip>
+          
+          {/* User profile */}
+          <div className="relative" ref={avatarRef}>
             <div 
               className="cursor-pointer"
               onClick={toggleUserMenu}
@@ -2014,43 +2036,11 @@ IMPORTANT GUIDELINES:
                     themeColor="base"
                     onClick={toggleMarginSettings}
                     icon="ruler"
-                    className="k-button-sm mr-2"
+                    className="k-button-sm"
                     size="small"
                     title="Margin Settings"
                   >
                     Margins
-                  </Button>
-                </Tooltip>
-              </div>
-              
-              {/* Separator */}
-              <div className="h-6 border-l border-gray-300 mx-3"></div>
-              
-              {/* Help and AI controls */}
-              <div className="flex items-center">
-                <Tooltip anchorElement="target" position="bottom" content={() => "View help documentation"}>
-                  <Button
-                    themeColor="base"
-                    onClick={() => setHelpDialogVisible(true)}
-                    icon="question-circle"
-                    className="k-button-sm mr-2"
-                    size="small"
-                    title="Show Help"
-                  >
-                    Help
-                  </Button>
-                </Tooltip>
-                
-                <Tooltip anchorElement="target" position="bottom" content={() => showSidebar ? "Hide AI Assistant sidebar" : "Show AI Assistant sidebar"}>
-                  <Button
-                    themeColor="base"
-                    onClick={toggleSidebar}
-                    icon={showSidebar ? "collapse" : "expand"}
-                    className="k-button-sm"
-                    size="small"
-                    title={showSidebar ? "Hide AI Assistant" : "Show AI Assistant"}
-                  >
-                    {showSidebar ? "Hide AI" : "Show AI"}
                   </Button>
                 </Tooltip>
               </div>
