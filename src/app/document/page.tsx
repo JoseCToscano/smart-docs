@@ -1906,9 +1906,20 @@ IMPORTANT GUIDELINES:
     }
   }, [margins, getEditorDocument]);
 
+  // Effect to ensure pageSize is always valid
+  useEffect(() => {
+    // If pageSize is not a valid key in pageSizes, set it to "A4"
+    if (!pageSizes[pageSize]) {
+      console.warn(`[DocumentPage] Invalid page size: ${pageSize}. Falling back to A4.`);
+      setPageSize("A4");
+    }
+  }, [pageSize]);
+
   // Convert page size from mm to pixels for display
   const getPageSizeInPixels = () => {
-    const pageDetails = pageSizes[pageSize];
+    // Add a fallback to A4 if pageSize is not a valid key in pageSizes
+    const pageDetails = pageSizes[pageSize] || pageSizes["A4"];
+    
     // Convert mm to px (1mm ≈ 3.78px)
     return {
       width: `${pageDetails.width * 3.78}px`,
@@ -2106,7 +2117,7 @@ IMPORTANT GUIDELINES:
                   setShowMarginSettings={setShowMarginSettings}
                   margins={margins}
                   handleMarginChange={handleMarginChange}
-                  pageSize={pageSize}
+                  pageSize={pageSize || "A4"}
                   onPageSizeChange={handlePageSizeChange}
                 />
               </div>
