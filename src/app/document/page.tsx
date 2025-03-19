@@ -527,8 +527,45 @@ export default function DocumentPage() {
     // Get current content from the editor
     const currentContent = getEditorContent();
     
-    // Save the original content for later comparison
-    setOriginalContentBeforeChanges(currentContent);
+    // Create a temporary container to normalize the content structure
+    const tempContainer = window.document.createElement('div');
+    tempContainer.innerHTML = currentContent;
+    
+    // Clean up editor-specific attributes and containers that don't affect content
+    const allElements = tempContainer.querySelectorAll('*');
+    allElements.forEach((el: Element) => {
+      // Remove contenteditable, translate, and other non-content attributes
+      if (el.hasAttribute('contenteditable')) {
+        el.removeAttribute('contenteditable');
+      }
+      if (el.hasAttribute('translate')) {
+        el.removeAttribute('translate');
+      }
+      
+      // Remove ProseMirror-specific classes
+      if (el.classList?.contains('ProseMirror') || el.classList?.contains('ProseMirror-trailingBreak')) {
+        el.classList.remove('ProseMirror');
+        el.classList.remove('ProseMirror-trailingBreak');
+      }
+    });
+    
+    // Remove empty k-content div wrappers if present
+    const kContentDivs = tempContainer.querySelectorAll('div.k-content');
+    kContentDivs.forEach((div: Element) => {
+      // Only replace if it's just a wrapper
+      if (div.parentNode && div.classList.contains('k-content')) {
+        // Move all children out to the parent
+        while (div.firstChild) {
+          div.parentNode.insertBefore(div.firstChild, div);
+        }
+        // Remove the empty div
+        div.parentNode.removeChild(div);
+      }
+    });
+    
+    // Save the cleaned original content for later comparison
+    setOriginalContentBeforeChanges(tempContainer.innerHTML);
+    console.log("[handleAIPrompt] Saved normalized original content", tempContainer.innerHTML.substring(0, 100));
     
     // Enhance the prompt to explicitly address newline handling and placeholders
     const enhancedPrompt = `${prompt}
@@ -547,7 +584,7 @@ IMPORTANT GUIDELINES:
         },
         body: JSON.stringify({
           prompt: enhancedPrompt,
-          content: currentContent,
+          content: tempContainer.innerHTML,
         }),
       });
       
@@ -563,7 +600,8 @@ IMPORTANT GUIDELINES:
       console.log("[DocumentPage] Received response:", {
         hasXmlContent: Boolean(xmlContent) && xmlContent.length > 0,
         userMessage: userMessage?.substring(0, 100) + "...",
-        containsPlaceholders
+        containsPlaceholders,
+        xmlContent: xmlContent?.substring(0, 200) + "..."
       });
       
       // Only apply XML changes if there are any
@@ -704,6 +742,13 @@ IMPORTANT GUIDELINES:
               display: block !important;
               margin: 0.5em 0 !important;
             }
+            
+            /* Make <u> tags inside additions/deletions display properly */
+            .ai-addition u, .ai-deletion u, 
+            u.ai-addition, u.ai-deletion {
+              text-decoration: underline !important;
+              display: inline !important;
+            }
           `;
           
           // Append style to the head of the iframe document
@@ -718,6 +763,34 @@ IMPORTANT GUIDELINES:
       console.log("[DocumentPage] Processing XML content, length:", xmlContent.length);
       console.log("[DocumentPage] XML content contains addition tags:", xmlContent.includes("<addition>"));
       console.log("[DocumentPage] XML content contains deletion tags:", xmlContent.includes("<deletion>"));
+      
+      // Save the current content as original content if not already set
+      if (!originalContentBeforeChanges) {
+        const currentContent = getEditorContent();
+        // Normalize the content similar to handleAIPrompt
+        const tempContainer = window.document.createElement('div');
+        tempContainer.innerHTML = currentContent;
+        
+        // Clean up editor-specific attributes
+        const allElements = tempContainer.querySelectorAll('*');
+        allElements.forEach((el: Element) => {
+          if (el.hasAttribute('contenteditable')) {
+            el.removeAttribute('contenteditable');
+          }
+          if (el.hasAttribute('translate')) {
+            el.removeAttribute('translate');
+          }
+          
+          // Remove non-content classes
+          if (el.classList?.contains('ProseMirror') || el.classList?.contains('ProseMirror-trailingBreak')) {
+            el.classList.remove('ProseMirror');
+            el.classList.remove('ProseMirror-trailingBreak');
+          }
+        });
+        
+        setOriginalContentBeforeChanges(tempContainer.innerHTML);
+        console.log("[applyXmlChangesToEditor] Saved normalized original content");
+      }
       
       // Check if there are actual changes to apply
       if (!xmlContent.includes("<addition>") && !xmlContent.includes("<deletion>")) {
@@ -1245,12 +1318,22 @@ IMPORTANT GUIDELINES:
         .replace(/<\/?([A-Z]+)/g, (match) => match.toLowerCase())
         // Remove any id/class attributes that might be auto-generated
         .replace(/\s(id|class)="[^"]*"/g, '')
+        // Remove specific Kendo and ProseMirror classes that don't affect content
+        .replace(/\sclass="ProseMirror.*?"/g, '')
+        .replace(/\scontenteditable="(true|false)"/g, '')
+        .replace(/\stranslate="[^"]*"/g, '')
+        // Remove any div containers that might be added by the editor but don't change content
+        .replace(/<div class="k-content ProseMirror".*?>(.*?)<\/div>/g, '$1')
         // Trim the result
         .trim();
     };
     
-    const normalizedOriginal = normalizeContent(original);
-    const normalizedCurrent = normalizeContent(current);
+    let normalizedOriginal = normalizeContent(original);
+    let normalizedCurrent = normalizeContent(current);
+    
+    // Log normalized content for debugging
+    console.log("[contentHasMeaningfulChanges] Normalized original:", normalizedOriginal.substring(0, 100));
+    console.log("[contentHasMeaningfulChanges] Normalized current:", normalizedCurrent.substring(0, 100));
     
     // Compare the normalized contents
     const contentChanged = normalizedOriginal !== normalizedCurrent;
@@ -1263,6 +1346,28 @@ IMPORTANT GUIDELINES:
       if (normalizedOriginal.length !== normalizedCurrent.length) {
         console.log(
           `[contentHasMeaningfulChanges] Length difference: Original=${normalizedOriginal.length}, Current=${normalizedCurrent.length}`
+        );
+      }
+      
+      // Add additional debugging for content comparison
+      let mismatchIndex = -1;
+      const minLength = Math.min(normalizedOriginal.length, normalizedCurrent.length);
+      
+      for (let i = 0; i < minLength; i++) {
+        if (normalizedOriginal[i] !== normalizedCurrent[i]) {
+          mismatchIndex = i;
+          break;
+        }
+      }
+      
+      if (mismatchIndex >= 0) {
+        const contextStart = Math.max(0, mismatchIndex - 20);
+        const contextEnd = Math.min(minLength, mismatchIndex + 20);
+        
+        console.log(
+          `[contentHasMeaningfulChanges] First difference at index ${mismatchIndex}:\n` +
+          `Original: ...${normalizedOriginal.substring(contextStart, contextEnd)}...\n` +
+          `Current: ...${normalizedCurrent.substring(contextStart, contextEnd)}...`
         );
       }
     }
@@ -1284,17 +1389,17 @@ IMPORTANT GUIDELINES:
     // First check: Are there any visual addition/deletion markers?
     const hasVisualChanges = additions.length > 0 || deletions.length > 0;
     
-    if (hasVisualChanges) {
-      return true;
-    }
-    
-    // Second check: Compare current content with original content
+    // Second check: Compare current content with original content (always do this check)
     if (originalContentBeforeChanges) {
       const currentContent = getEditorContent();
-      return contentHasMeaningfulChanges(originalContentBeforeChanges, currentContent);
+      const contentChanged = contentHasMeaningfulChanges(originalContentBeforeChanges, currentContent);
+      
+      // If we have either visual changes or content changes, there are AI changes
+      return hasVisualChanges || contentChanged;
     }
     
-    return false;
+    // If we don't have original content to compare, just return whether there are visual changes
+    return hasVisualChanges;
   }, [getEditorDocument, originalContentBeforeChanges, getEditorContent, contentHasMeaningfulChanges]);
 
   // Update toggleSidebar to work with Splitter
@@ -1668,7 +1773,6 @@ IMPORTANT GUIDELINES:
               isLoading={isAIProcessing}
               editorRef={editorRef}
               onApplyChanges={handleApplyChanges}
-              onApplyXmlChanges={handleApplyXmlChanges}
               onFinalizeChanges={finalizeChanges}
               onRevertChanges={revertChanges}
               hasActiveChanges={hasActiveChanges}
