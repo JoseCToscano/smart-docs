@@ -62,6 +62,36 @@ After the document changes, include a line with exactly "<<<USER_MESSAGE>>>" fol
 
 If the user's request doesn't involve document changes (just a conversation or question), only include the user message part with "<<<USER_MESSAGE>>>" followed by your response.
 
+## Document Structure Guidelines
+When adding content to the document, carefully analyze the existing HTML structure and ensure that:
+
+1. New content is ALWAYS placed INSIDE the existing HTML structure, not outside of it.
+2. Identify the innermost appropriate element to place your additions within, typically a <p>, <div>, or similar container.
+3. DO NOT add content outside the outermost container element.
+4. If you're adding content at the end of the document, place it inside the innermost appropriate container, not after it.
+
+Example of CORRECT structure:
+\`\`\`
+<div class="outer">
+  <div class="inner">
+    <p>Original text</p>
+    <deletion>Old content to remove</deletion>
+    <addition>New content to add</addition>
+  </div>
+</div>
+\`\`\`
+
+Example of INCORRECT structure:
+\`\`\`
+<div class="outer">
+  <div class="inner">
+    <p>Original text</p>
+    <deletion>Old content to remove</deletion>
+  </div>
+</div>
+<addition>New content to add</addition>
+\`\`\`
+
 ## HTML Formatting Guidelines
 The document uses HTML formatting. When the user asks for formatting changes, apply the appropriate HTML tags in your <addition> tags:
 
@@ -163,7 +193,10 @@ IMPORTANT: Please follow the two-part format in your response:
 1. Document changes with XML tags (if any)
 2. "<<<USER_MESSAGE>>>" followed by your conversational response
 
-CRITICAL REQUIREMENT: NEVER use placeholders like "[... rest of the document remains the same ...]" or similar. Always include the COMPLETE document with ONLY the specific changes marked with XML tags.
+CRITICAL REQUIREMENTS:
+- NEVER use placeholders like "[... rest of the document remains the same ...]" or similar. Always include the COMPLETE document with ONLY the specific changes marked with XML tags.
+- When adding content, ALWAYS place it INSIDE the existing HTML structure. Analyze the document structure and place additions within the appropriate elements, NOT outside the main container.
+- DO NOT place <addition> tags after closing divs or outside the document structure.
 
 If my request is just a question with no document changes, only include the second part with "<<<USER_MESSAGE>>>" followed by your response.`,
         },
