@@ -27,6 +27,7 @@ import { Document as DocType } from "@/types";
 import { Window } from "@progress/kendo-react-dialogs";
 import { parseXmlDiff, xmlDiffToChanges } from "@/utils/xmlDiffParser";
 import FileUploadDialog from "@/components/FileUploadDialog";
+import MarginsPopup from "@/components/document-tools/MarginsPopup";
 
 // Import all necessary editor tools
 const {
@@ -1904,160 +1905,7 @@ IMPORTANT GUIDELINES:
         <AppBarSpacer />
         
         <AppBarSection>
-          {/* Add the Open from File button */}
-          <Tooltip anchorElement="target" position="bottom" content={() => "Open a Word document (.docx file)"}>
-            <Button 
-              themeColor="base"
-              onClick={handleOpenFromFile}
-              icon="file"
-              className="k-button-md"
-            >
-              Open File
-            </Button>
-          </Tooltip>
-          
-          <AppBarSeparator />
-          
-          <Tooltip anchorElement="target" position="bottom" content={() => "Save your document to the cloud"}>
-            <Button 
-              themeColor="primary"
-              disabled={isSaving}
-              onClick={handleSave}
-              icon={isSaving ? "refresh" : "save"}
-              className="k-button-md"
-            >
-              {isSaving ? "Saving..." : "Save"}
-            </Button>
-          </Tooltip>
-          
-          <AppBarSeparator />
-          
-          <Tooltip anchorElement="target" position="bottom" content={() => "Export document as PDF"}>
-            <Button 
-              themeColor="base"
-              onClick={handleExport}
-              icon="pdf"
-              className="k-button-md"
-            >
-              Export
-            </Button>
-          </Tooltip>
-          
-          <Tooltip anchorElement="target" position="bottom" content={() => "Adjust document margins"}>
-            <Button
-              themeColor="base"
-              onClick={toggleMarginSettings}
-              icon="ruler"
-              className="k-button-md"
-              title="Margin Settings"
-            >
-              Margins
-            </Button>
-          </Tooltip>
-          
-          <div className="relative" ref={marginSettingsRef}>
-            <Popup
-              anchor={marginSettingsRef.current}
-              show={showMarginSettings}
-              popupClass="popup-content"
-              animate={true}
-              anchorAlign={{ horizontal: 'center', vertical: 'bottom' }}
-              popupAlign={{ horizontal: 'center', vertical: 'top' }}
-              onClose={() => setShowMarginSettings(false)}
-            >
-              <div className="bg-white rounded shadow-lg p-4 min-w-72 border border-gray-200">
-                <h3 className="font-medium text-sm mb-3 border-b pb-2">Document Margins (px)</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs text-gray-600 mb-1">Top</label>
-                    <NumericTextBox
-                      min={0}
-                      max={100}
-                      value={margins.top}
-                      onChange={(e: NumericTextBoxChangeEvent) => handleMarginChange('top', e.value || 0)}
-                      spinners={true}
-                      step={4}
-                      size="small"
-                      width="100%"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-600 mb-1">Right</label>
-                    <NumericTextBox
-                      min={0}
-                      max={100}
-                      value={margins.right}
-                      onChange={(e: NumericTextBoxChangeEvent) => handleMarginChange('right', e.value || 0)}
-                      spinners={true}
-                      step={4}
-                      size="small"
-                      width="100%"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-600 mb-1">Bottom</label>
-                    <NumericTextBox
-                      min={0}
-                      max={100}
-                      value={margins.bottom}
-                      onChange={(e: NumericTextBoxChangeEvent) => handleMarginChange('bottom', e.value || 0)}
-                      spinners={true}
-                      step={4}
-                      size="small"
-                      width="100%"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-600 mb-1">Left</label>
-                    <NumericTextBox
-                      min={0}
-                      max={100}
-                      value={margins.left}
-                      onChange={(e: NumericTextBoxChangeEvent) => handleMarginChange('left', e.value || 0)}
-                      spinners={true}
-                      step={4}
-                      size="small"
-                      width="100%"
-                    />
-                  </div>
-                </div>
-                <div className="mt-4 flex justify-end">
-                  <Button
-                    themeColor="base"
-                    onClick={() => setShowMarginSettings(false)}
-                    className="text-xs"
-                  >
-                    Close
-                  </Button>
-                </div>
-              </div>
-            </Popup>
-          </div>
-          
-          <Tooltip anchorElement="target" position="bottom" content={() => "View help documentation"}>
-            <Button
-              themeColor="base"
-              onClick={() => setHelpDialogVisible(true)}
-              icon="question-circle"
-              className="k-button-md"
-              title="Show Help"
-            >
-              Help
-            </Button>
-          </Tooltip>
-          
-          <Tooltip anchorElement="target" position="bottom" content={() => showSidebar ? "Hide AI Assistant sidebar" : "Show AI Assistant sidebar"}>
-            <Button
-              themeColor="base"
-              onClick={toggleSidebar}
-              icon={showSidebar ? "collapse" : "expand"}
-              className="k-button-md"
-              title={showSidebar ? "Hide AI Assistant" : "Show AI Assistant"}
-            >
-              {showSidebar ? "Hide AI" : "Show AI"}
-            </Button>
-          </Tooltip>
-          
+          {/* Keep only avatar and user menu in the top AppBar */}
           <div className="ml-3 relative" ref={avatarRef}>
             <div 
               className="cursor-pointer"
@@ -2113,6 +1961,116 @@ IMPORTANT GUIDELINES:
           <div className="h-full flex flex-col relative bg-gray-200 border-red-500"
           style={{ height: 'calc(100vh - 56px)' }} // Adjusted for AppBar height
           >
+
+            {/* Document Settings Toolbar */}
+            <div className="w-full border-b border-gray-300 bg-white p-2 flex items-center flex-wrap">
+              {/* File operations */}
+              <div className="flex items-center mr-4">
+                <Tooltip anchorElement="target" position="bottom" content={() => "Open a Word document (.docx file)"}>
+                  <Button 
+                    themeColor="base"
+                    onClick={handleOpenFromFile}
+                    icon="file"
+                    className="k-button-sm mr-2"
+                    size="small"
+                  >
+                    Open
+                  </Button>
+                </Tooltip>
+                
+                <Tooltip anchorElement="target" position="bottom" content={() => "Save your document to the cloud"}>
+                  <Button 
+                    themeColor="primary"
+                    disabled={isSaving}
+                    onClick={handleSave}
+                    icon={isSaving ? "refresh" : "save"}
+                    className="k-button-sm mr-2"
+                    size="small"
+                  >
+                    {isSaving ? "Saving..." : "Save"}
+                  </Button>
+                </Tooltip>
+                
+                <Tooltip anchorElement="target" position="bottom" content={() => "Export document as PDF"}>
+                  <Button 
+                    themeColor="base"
+                    onClick={handleExport}
+                    icon="pdf"
+                    className="k-button-sm"
+                    size="small"
+                  >
+                    Export
+                  </Button>
+                </Tooltip>
+              </div>
+              
+              {/* Separator */}
+              <div className="h-6 border-l border-gray-300 mx-3"></div>
+              
+              {/* Document configuration */}
+              <div className="flex items-center">
+                <Tooltip anchorElement="target" position="bottom" content={() => "Adjust document margins"}>
+                  <Button
+                    themeColor="base"
+                    onClick={toggleMarginSettings}
+                    icon="ruler"
+                    className="k-button-sm mr-2"
+                    size="small"
+                    title="Margin Settings"
+                  >
+                    Margins
+                  </Button>
+                </Tooltip>
+              </div>
+              
+              {/* Separator */}
+              <div className="h-6 border-l border-gray-300 mx-3"></div>
+              
+              {/* Help and AI controls */}
+              <div className="flex items-center">
+                <Tooltip anchorElement="target" position="bottom" content={() => "View help documentation"}>
+                  <Button
+                    themeColor="base"
+                    onClick={() => setHelpDialogVisible(true)}
+                    icon="question-circle"
+                    className="k-button-sm mr-2"
+                    size="small"
+                    title="Show Help"
+                  >
+                    Help
+                  </Button>
+                </Tooltip>
+                
+                <Tooltip anchorElement="target" position="bottom" content={() => showSidebar ? "Hide AI Assistant sidebar" : "Show AI Assistant sidebar"}>
+                  <Button
+                    themeColor="base"
+                    onClick={toggleSidebar}
+                    icon={showSidebar ? "collapse" : "expand"}
+                    className="k-button-sm"
+                    size="small"
+                    title={showSidebar ? "Hide AI Assistant" : "Show AI Assistant"}
+                  >
+                    {showSidebar ? "Hide AI" : "Show AI"}
+                  </Button>
+                </Tooltip>
+              </div>
+              
+              {/* Display last saved time if available */}
+              {lastSaved && (
+                <div className="ml-auto text-xs text-gray-500 px-2">{lastSaved}</div>
+              )}
+              
+              {/* Margins popup container - positioned at the end to ensure proper layering */}
+              <div className="relative" ref={marginSettingsRef}>
+                <MarginsPopup
+                  marginSettingsRef={marginSettingsRef} 
+                  showMarginSettings={showMarginSettings} 
+                  setShowMarginSettings={setShowMarginSettings}
+                  margins={margins}
+                  handleMarginChange={handleMarginChange} 
+                />
+              </div>
+            </div>
             <div className="relative flex-1 overflow-auto py-8 border-blue-500">
                 {/* Editor Content Area with built-in toolbar */}
               <div className="editor-page-container mx-auto shadow-md relative">
@@ -2222,3 +2180,4 @@ IMPORTANT GUIDELINES:
     </div>
   );
 } 
+
