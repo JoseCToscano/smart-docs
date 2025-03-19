@@ -35,9 +35,6 @@ export interface AISidebarHandle {
 const AISidebar = forwardRef<AISidebarHandle, AISidebarProps>(({
   onPromptSubmit, 
   isLoading = false,
-  editorRef,
-  onApplyChanges,
-  onApplyXmlChanges,
   onFinalizeChanges,
   onRevertChanges,
   hasActiveChanges = false
