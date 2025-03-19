@@ -83,6 +83,8 @@ export default function DocumentPage() {
   ]);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const avatarRef = useRef<HTMLDivElement | null>(null);
+  // Add a state to track when margins are updated for animation effects
+  const [marginUpdateAnimation, setMarginUpdateAnimation] = useState(false);
 
   // Add handlers for margin changes
   const handleMarginChange = (margin: 'top' | 'right' | 'bottom' | 'left', value: number) => {
@@ -90,6 +92,14 @@ export default function DocumentPage() {
       ...prev,
       [margin]: value
     }));
+    
+    // Trigger the animation effect
+    setMarginUpdateAnimation(true);
+    
+    // Reset animation state after animation completes
+    setTimeout(() => {
+      setMarginUpdateAnimation(false);
+    }, 1000); // Match this to the CSS transition duration
   };
   
   const toggleMarginSettings = () => {
@@ -2065,15 +2075,71 @@ IMPORTANT GUIDELINES:
                 {/* Editor Content Area with built-in toolbar */}
               <div className="editor-page-container mx-auto shadow-md relative">
                 {/* Add margin guides */}
-                <div className="absolute inset-0 pointer-events-none border border-dashed border-blue-300 opacity-50"
+                <div 
+                  className={`absolute inset-0 pointer-events-none border border-dashed ${marginUpdateAnimation ? 'border-blue-500 animate-pulse-margin' : 'border-blue-300'} opacity-50`}
                   style={{
                     top: `${margins.top - 1}px`,
                     right: `${margins.right - 1}px`,
                     bottom: `${margins.bottom - 1}px`,
                     left: `${margins.left - 1}px`,
-                    borderWidth: '1px'
+                    borderWidth: '1px',
+                    transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
                   }}
                 />
+                
+                {/* Margin indicators */}
+                {(marginUpdateAnimation || showMarginSettings) && (
+                  <>
+                    {/* Top margin indicator */}
+                    <div 
+                      className="absolute left-1/2 transform -translate-x-1/2 bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-xs font-medium pointer-events-none"
+                      style={{ 
+                        top: `${margins.top / 2}px`,
+                        opacity: marginUpdateAnimation ? 1 : 0.7,
+                        transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
+                      }}
+                    >
+                      {margins.top}px
+                    </div>
+                    
+                    {/* Right margin indicator */}
+                    <div 
+                      className="absolute top-1/2 transform -translate-y-1/2 bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-xs font-medium pointer-events-none"
+                      style={{ 
+                        right: `${margins.right / 2}px`,
+                        opacity: marginUpdateAnimation ? 1 : 0.7,
+                        transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
+                      }}
+                    >
+                      {margins.right}px
+                    </div>
+                    
+                    {/* Bottom margin indicator */}
+                    <div 
+                      className="absolute left-1/2 transform -translate-x-1/2 bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-xs font-medium pointer-events-none"
+                      style={{ 
+                        bottom: `${margins.bottom / 2}px`,
+                        opacity: marginUpdateAnimation ? 1 : 0.7,
+                        transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
+                      }}
+                    >
+                      {margins.bottom}px
+                    </div>
+                    
+                    {/* Left margin indicator */}
+                    <div 
+                      className="absolute top-1/2 transform -translate-y-1/2 bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-xs font-medium pointer-events-none"
+                      style={{ 
+                        left: `${margins.left / 2}px`,
+                        opacity: marginUpdateAnimation ? 1 : 0.7,
+                        transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
+                      }}
+                    >
+                      {margins.left}px
+                    </div>
+                  </>
+                )}
+                
                 <Editor
                   key={`editor-instance-${editorKey}`}
                   ref={editorRef}

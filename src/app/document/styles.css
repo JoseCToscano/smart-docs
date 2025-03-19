@@ -11,6 +11,17 @@
   border-right: none;
 }
 
+/* Margin Guide Animation */
+@keyframes pulse-margin {
+  0% { opacity: 0.5; border-color: #3b82f6; }
+  50% { opacity: 0.9; border-color: #2563eb; border-width: 2px; }
+  100% { opacity: 0.5; border-color: #3b82f6; }
+}
+
+.animate-pulse-margin {
+  animation: pulse-margin 1s ease-in-out;
+}
+
 /* Style the Kendo Editor toolbar instead of hiding it */
 .k-editor-toolbar {
   background-color: #ffffff !important;
