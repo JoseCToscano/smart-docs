@@ -115,6 +115,14 @@ export default function DocumentPage() {
   
   // Handler for page size changes
   const handlePageSizeChange = (newSize: PageSize) => {
+    console.log("[DocumentPage] handlePageSizeChange called with:", newSize);
+    
+    // Ensure newSize is a valid page size
+    if (!pageSizes[newSize]) {
+      console.warn(`Invalid page size: ${newSize}, defaulting to A4`);
+      newSize = "A4";
+    }
+    
     setPageSize(newSize);
     
     // Trigger the animation effect for the page size change

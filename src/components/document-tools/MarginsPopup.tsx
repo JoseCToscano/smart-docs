@@ -85,12 +85,32 @@ export default function MarginsPopup({
           value={pageSize || "A4"}
           defaultValue="A4"
           onChange={(e) => {
-            // Validate that the selected value is a valid page size
-            const newSize = e.value as PageSize;
-            if (pageSizes[newSize]) {
-              onPageSizeChange(newSize);
-            } else {
-              console.warn(`Invalid page size selected: ${newSize}, defaulting to A4`);
+            // Log the entire event object to understand its structure
+            console.log("[MarginsPopup] DropDownList onChange event:", e);
+            
+            // Check if the event has a target with a value property (like a DOM event)
+            if (e.target && e.target.value) {
+              const newSize = e.target.value as PageSize;
+              console.log("[MarginsPopup] Using e.target.value:", newSize);
+              if (pageSizes[newSize]) {
+                onPageSizeChange(newSize);
+              } else {
+                onPageSizeChange("A4");
+              }
+            }
+            // Check if the event itself has a value property (Kendo UI style)
+            else if (e.value !== undefined) {
+              const newSize = e.value as PageSize;
+              console.log("[MarginsPopup] Using e.value:", newSize);
+              if (pageSizes[newSize]) {
+                onPageSizeChange(newSize);
+              } else {
+                onPageSizeChange("A4");
+              }
+            }
+            // Fallback to A4 if we can't determine the value
+            else {
+              console.warn("[MarginsPopup] Could not determine selected value, defaulting to A4");
               onPageSizeChange("A4");
             }
           }}
