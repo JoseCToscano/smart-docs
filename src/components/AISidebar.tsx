@@ -158,29 +158,7 @@ const AISidebar = forwardRef<AISidebarHandle, AISidebarProps>(({
         <h2 className="text-lg font-semibold text-gray-800">AI Assistant</h2>
         <p className="text-xs text-gray-500 mt-1">Ask questions or request document changes</p>
         
-        {/* Document changes action buttons */}
-        {onFinalizeChanges && onRevertChanges && hasActiveChanges && (
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            <Button
-              onClick={onFinalizeChanges}
-              themeColor="success"
-              size="small"
-              className="text-xs"
-              icon="check-circle"
-            >
-              Accept Changes
-            </Button>
-            <Button
-              onClick={onRevertChanges}
-              themeColor="error"
-              size="small"
-              className="text-xs"
-              icon="cancel"
-            >
-              Revert Changes
-            </Button>
-          </div>
-        )}
+        {/* Removed document changes action buttons from here */}
       </div>
       
       {/* Chat history - Make sure this takes available space and is scrollable */}
@@ -252,6 +230,30 @@ const AISidebar = forwardRef<AISidebarHandle, AISidebarProps>(({
                         </div>
                       </div>
                     ))}
+                  </div>
+                )}
+                
+                {/* Add action buttons within the message when there are suggestions */}
+                {onFinalizeChanges && onRevertChanges && hasActiveChanges && message.suggestions && (
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    <Button
+                      onClick={onFinalizeChanges}
+                      themeColor="success"
+                      size="small"
+                      className="text-xs"
+                      icon="check-circle"
+                    >
+                      Accept Changes
+                    </Button>
+                    <Button
+                      onClick={onRevertChanges}
+                      themeColor="error"
+                      size="small"
+                      className="text-xs"
+                      icon="cancel"
+                    >
+                      Revert Changes
+                    </Button>
                   </div>
                 )}
               </div>
