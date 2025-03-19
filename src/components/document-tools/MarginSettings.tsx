@@ -82,8 +82,15 @@ const MarginSettings = ({
 
   // Handle page size change
   const handlePageSizeChange = (size: PageSize) => {
-    setCurrentPageSize(size);
-    onPageSizeChange(size);
+    // Validate the page size
+    if (pageSizes[size]) {
+      setCurrentPageSize(size);
+      onPageSizeChange(size);
+    } else {
+      console.warn(`Invalid page size selected: ${size}, defaulting to A4`);
+      setCurrentPageSize("A4");
+      onPageSizeChange("A4");
+    }
   };
 
   // Alternative popup content that doesn't rely on the Popup component

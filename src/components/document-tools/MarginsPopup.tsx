@@ -40,7 +40,7 @@ export default function MarginsPopup({
   
   // Convert a page size to pixels for the preview at the given scale
   const pageToPixels = (size: PageSize) => {
-    const pageDetails = pageSizes[size];
+    const pageDetails = pageSizes[size] || pageSizes["A4"];
     // Convert mm to px (1mm ≈ 3.78px)
     return {
       width: Math.round(pageDetails.width * 3.78 * previewScale),
@@ -50,11 +50,11 @@ export default function MarginsPopup({
   };
 
   // Calculate preview dimensions
-  const [previewDimensions, setPreviewDimensions] = useState(pageToPixels(pageSize));
+  const [previewDimensions, setPreviewDimensions] = useState(pageToPixels(pageSize || "A4"));
 
   // Update preview dimensions when page size changes
   useEffect(() => {
-    setPreviewDimensions(pageToPixels(pageSize));
+    setPreviewDimensions(pageToPixels(pageSize || "A4"));
   }, [pageSize]);
 
   // Page size dropdown data
@@ -82,8 +82,18 @@ export default function MarginsPopup({
           data={pageSizeData}
           textField="text"
           dataItemKey="value"
-          value={pageSize}
-          onChange={(e) => onPageSizeChange(e.value as PageSize)}
+          value={pageSize || "A4"}
+          defaultValue="A4"
+          onChange={(e) => {
+            // Validate that the selected value is a valid page size
+            const newSize = e.value as PageSize;
+            if (pageSizes[newSize]) {
+              onPageSizeChange(newSize);
+            } else {
+              console.warn(`Invalid page size selected: ${newSize}, defaulting to A4`);
+              onPageSizeChange("A4");
+            }
+          }}
           size="small"
           style={{ width: '100%' }}
         />
