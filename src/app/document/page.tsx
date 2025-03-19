@@ -62,6 +62,7 @@ export default function DocumentPage() {
   const [helpDialogVisible, setHelpDialogVisible] = useState(false);
   const [aiResponse, setAIResponse] = useState<{ text: string, suggestions: DocumentChanges | null }>({ text: "", suggestions: null });
   const [hasActiveChanges, setHasActiveChanges] = useState(false);
+  const [originalContentBeforeChanges, setOriginalContentBeforeChanges] = useState<string | null>(null);
   const [editorKey, setEditorKey] = useState(0);
   const editorRef = useRef<any>(null);
   const aiSidebarRef = useRef<AISidebarHandle>(null);
@@ -526,6 +527,9 @@ export default function DocumentPage() {
     // Get current content from the editor
     const currentContent = getEditorContent();
     
+    // Save the original content for later comparison
+    setOriginalContentBeforeChanges(currentContent);
+    
     // Enhance the prompt to explicitly address newline handling and placeholders
     const enhancedPrompt = `${prompt}
     
@@ -739,8 +743,18 @@ IMPORTANT GUIDELINES:
       // Update the hasActiveChanges state
       setTimeout(() => {
         const hasChanges = hasAIChanges();
-        setHasActiveChanges(hasChanges);
-        console.log("[DocumentPage] Updated hasActiveChanges:", hasChanges);
+        
+        // If the hasAIChanges doesn't detect anything, do additional comparison
+        if (!hasChanges && originalContentBeforeChanges) {
+          const currentContent = getEditorContent();
+          const contentChanged = contentHasMeaningfulChanges(originalContentBeforeChanges, currentContent);
+                                
+          setHasActiveChanges(contentChanged);
+          console.log("[DocumentPage] Content comparison detected changes:", contentChanged);
+        } else {
+          setHasActiveChanges(hasChanges);
+          console.log("[DocumentPage] Updated hasActiveChanges:", hasChanges);
+        }
       }, 100);
       
     } catch (error) {
@@ -1093,6 +1107,9 @@ IMPORTANT GUIDELINES:
       // Step 7: Update state to reflect no more active changes
       setHasActiveChanges(false);
       
+      // Reset the original content since changes are now accepted
+      setOriginalContentBeforeChanges(null);
+      
       // Step 8: Add a confirmation message to the AI sidebar
       if (aiSidebarRef.current && typeof aiSidebarRef.current.addAIResponse === 'function') {
         aiSidebarRef.current.addAIResponse(
@@ -1179,6 +1196,9 @@ IMPORTANT GUIDELINES:
       // Step 7: Update state to reflect no more active changes
       setHasActiveChanges(false);
       
+      // Reset the original content since we've reverted to it
+      setOriginalContentBeforeChanges(null);
+      
       // Step 8: Add a confirmation message to the AI sidebar
       if (aiSidebarRef.current && typeof aiSidebarRef.current.addAIResponse === 'function') {
         aiSidebarRef.current.addAIResponse(
@@ -1194,21 +1214,6 @@ IMPORTANT GUIDELINES:
     }
   }, [getEditorDocument]);
 
-  // Helper function to check if there are AI changes in the editor
-  const hasAIChanges = useCallback((): boolean => {
-    const editorDoc = getEditorDocument();
-    if (!editorDoc) {
-      return false;
-    }
-    
-    // Find all addition and deletion elements
-    const additions = editorDoc.querySelectorAll('.ai-addition');
-    const deletions = editorDoc.querySelectorAll('.ai-deletion');
-    
-    // Return true if there are any additions or deletions
-    return additions.length > 0 || deletions.length > 0;
-  }, [getEditorDocument]);
-
   // Helper function to ensure line breaks are properly converted to <br> tags
   const ensureLineBreaks = (htmlContent: string): string => {
     // First handle any literal newlines (these can come from innerHTML sometimes depending on the browser)
@@ -1222,6 +1227,75 @@ IMPORTANT GUIDELINES:
     
     return content;
   };
+
+  // Helper function to compare HTML content for meaningful differences
+  const contentHasMeaningfulChanges = (original: string, current: string): boolean => {
+    if (!original || !current) return original !== current;
+    
+    // Normalize both contents
+    const normalizeContent = (html: string): string => {
+      return html
+        // Remove all whitespace between tags
+        .replace(/>\s+</g, '><')
+        // Convert all whitespace sequences to a single space
+        .replace(/\s+/g, ' ')
+        // Normalize self-closing tags
+        .replace(/<([^>]+)\/>/g, '<$1></\$1>')
+        // Make all tags lowercase
+        .replace(/<\/?([A-Z]+)/g, (match) => match.toLowerCase())
+        // Remove any id/class attributes that might be auto-generated
+        .replace(/\s(id|class)="[^"]*"/g, '')
+        // Trim the result
+        .trim();
+    };
+    
+    const normalizedOriginal = normalizeContent(original);
+    const normalizedCurrent = normalizeContent(current);
+    
+    // Compare the normalized contents
+    const contentChanged = normalizedOriginal !== normalizedCurrent;
+    
+    if (contentChanged) {
+      // Log the differences for debugging
+      console.log("[contentHasMeaningfulChanges] Content has changed");
+      
+      // You could implement a more detailed diff here to show what changed
+      if (normalizedOriginal.length !== normalizedCurrent.length) {
+        console.log(
+          `[contentHasMeaningfulChanges] Length difference: Original=${normalizedOriginal.length}, Current=${normalizedCurrent.length}`
+        );
+      }
+    }
+    
+    return contentChanged;
+  };
+
+  // Helper function to check if there are AI changes in the editor
+  const hasAIChanges = useCallback((): boolean => {
+    const editorDoc = getEditorDocument();
+    if (!editorDoc) {
+      return false;
+    }
+    
+    // Find all addition and deletion elements
+    const additions = editorDoc.querySelectorAll('.ai-addition');
+    const deletions = editorDoc.querySelectorAll('.ai-deletion');
+    
+    // First check: Are there any visual addition/deletion markers?
+    const hasVisualChanges = additions.length > 0 || deletions.length > 0;
+    
+    if (hasVisualChanges) {
+      return true;
+    }
+    
+    // Second check: Compare current content with original content
+    if (originalContentBeforeChanges) {
+      const currentContent = getEditorContent();
+      return contentHasMeaningfulChanges(originalContentBeforeChanges, currentContent);
+    }
+    
+    return false;
+  }, [getEditorDocument, originalContentBeforeChanges, getEditorContent]);
 
   // Update toggleSidebar to work with Splitter
   const toggleSidebar = useCallback(() => {
@@ -1348,7 +1422,7 @@ IMPORTANT GUIDELINES:
     if (editorRef.current) {
       setTimeout(injectEditorStyles, 500); // Delay to ensure editor is fully loaded
     }
-  }, [editorRef.current]); // Re-run when editor ref changes
+  }, [editorRef.current]);
 
   // Effect to detect changes in the editor content that contain AI changes
   useEffect(() => {
