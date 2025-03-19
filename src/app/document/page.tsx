@@ -1295,7 +1295,7 @@ IMPORTANT GUIDELINES:
     }
     
     return false;
-  }, [getEditorDocument, originalContentBeforeChanges, getEditorContent]);
+  }, [getEditorDocument, originalContentBeforeChanges, getEditorContent, contentHasMeaningfulChanges]);
 
   // Update toggleSidebar to work with Splitter
   const toggleSidebar = useCallback(() => {
