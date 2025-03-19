@@ -18,7 +18,6 @@ import {
   Popup,
   Tooltip
 } from "@/components/kendo";
-import { NumericTextBox, NumericTextBoxChangeEvent } from "@progress/kendo-react-inputs";
 import "@progress/kendo-theme-default/dist/all.css";
 import "./styles.css";
 import Link from "next/link";
@@ -29,6 +28,12 @@ import { parseXmlDiff, xmlDiffToChanges } from "@/utils/xmlDiffParser";
 import FileUploadDialog from "@/components/FileUploadDialog";
 import MarginsPopup from "@/components/document-tools/MarginsPopup";
 import { PageSize } from "@/components/document-tools/MarginsPopup";
+import { pageSizes, getPageSizeInPixels } from "@/utils/getPageSizeInPixels";
+import { UserMenu } from "@/components/UserMenu";
+import { injectEditorStyles } from "@/utils/injectEditorStyles";
+import { normalizeContent } from "@/utils/normalizeContent";
+import { findNodeAndOffset } from "@/utils/findNodeAndOffset";
+import { UserProfile } from "@/components/UserProfile";
 
 // Import all necessary editor tools
 const {
@@ -51,14 +56,6 @@ const {
   MergeCells, SplitCell
 } = EditorTools;
 
-// Page size definitions in millimeters
-const pageSizes = {
-  A4: { width: 210, height: 297, name: "A4" },
-  A3: { width: 297, height: 420, name: "A3" },
-  Letter: { width: 215.9, height: 279.4, name: "Letter" },
-  Legal: { width: 215.9, height: 355.6, name: "Legal" },
-  Tabloid: { width: 279.4, height: 431.8, name: "Tabloid" }
-};
 
 export default function DocumentPage() {
   const [document, setDocument] = useState<DocType>({
@@ -73,7 +70,6 @@ export default function DocumentPage() {
   const [lastSaved, setLastSaved] = useState<string | null>(null);
   const [helpDialogVisible, setHelpDialogVisible] = useState(false);
   const [fileUploadDialogVisible, setFileUploadDialogVisible] = useState(false);
-  const [aiResponse, setAIResponse] = useState<{ text: string, suggestions: DocumentChanges | null }>({ text: "", suggestions: null });
   const [hasActiveChanges, setHasActiveChanges] = useState(false);
   const [originalContentBeforeChanges, setOriginalContentBeforeChanges] = useState<string | null>(null);
   const [editorKey, setEditorKey] = useState(0);
@@ -92,8 +88,6 @@ export default function DocumentPage() {
     { collapsible: false, scrollable: true }, // Main editor pane - flexible size (no fixed size)
     { collapsible: true, collapsed: false, size: '30%', min: '350px', max: '40%', scrollable: true, keepMounted: true } // Sidebar with fixed size
   ]);
-  const [showUserMenu, setShowUserMenu] = useState(false);
-  const avatarRef = useRef<HTMLDivElement | null>(null);
   // Add a state to track when margins are updated for animation effects
   const [marginUpdateAnimation, setMarginUpdateAnimation] = useState(false);
 
@@ -309,43 +303,6 @@ export default function DocumentPage() {
     return document.content;
   };
 
-  // Helper function to find a node and offset within container based on absolute character offset
-  const findNodeAndOffset = (container: HTMLElement, targetOffset: number): { node: Node; offset: number } | null => {
-    // Walks through all text nodes in the container and finds the one containing the target offset
-    let currentOffset = 0;
-    
-    const walkNodes = (node: Node): { node: Node; offset: number } | null => {
-      // If this is a text node, check if the target offset is within it
-      if (node.nodeType === Node.TEXT_NODE) {
-        const length = node.textContent?.length || 0;
-        
-        // If the target offset is within this text node, return it
-        if (currentOffset <= targetOffset && targetOffset <= currentOffset + length) {
-          return {
-            node,
-            offset: targetOffset - currentOffset
-          };
-        }
-        
-        // Otherwise, advance the offset
-        currentOffset += length;
-        return null;
-      }
-      
-      // Otherwise, recurse into child nodes
-      const childNodes = node.childNodes;
-      for (let i = 0; i < childNodes.length; i++) {
-        const result = walkNodes(childNodes[i] as Node);
-        if (result) {
-          return result;
-        }
-      }
-      
-      return null;
-    };
-    
-    return walkNodes(container);
-  };
 
   // Apply changes to the editor
   const applyChangesToEditor = (changes: DocumentChanges | null) => {
@@ -589,7 +546,6 @@ export default function DocumentPage() {
   };
 
   const handleAIPrompt = useCallback(async (prompt: string) => {
-    console.log("AI Prompt:", prompt);
     setIsAIProcessing(true);
     
     // Get current content from the editor
@@ -709,11 +665,6 @@ IMPORTANT GUIDELINES:
       if (containsPlaceholders) {
         responseText = "Note: I had to process some placeholders in the response. The changes may not be complete or fully accurate. " + responseText;
       }
-      
-      setAIResponse({
-        text: responseText,
-        suggestions: changes
-      });
       
       // Add the AI response to the sidebar
       if (aiSidebarRef.current && typeof aiSidebarRef.current.addAIResponse === 'function') {
@@ -1461,73 +1412,9 @@ IMPORTANT GUIDELINES:
       console.error("[revertChanges] Error reverting changes:", error);
     }
   }, [getEditorDocument]);
-
-  // Helper function to ensure line breaks are properly converted to <br> tags
-  const ensureLineBreaks = (htmlContent: string): string => {
-    // First handle any literal newlines (these can come from innerHTML sometimes depending on the browser)
-    let content = htmlContent.replace(/\n/g, '<br />');
-    
-    // Also handle any remaining ___NEWLINE___ placeholders that might be in the content
-    content = content.replace(/___NEWLINE___/g, '<br />');
-    
-    // Log the transformation
-    console.log('[ensureLineBreaks] Processed line breaks, contains <br>:', content.includes('<br'));
-    
-    return content;
-  };
-
   // Helper function to compare HTML content for meaningful differences
   const contentHasMeaningfulChanges = (original: string, current: string): boolean => {
     if (!original || !current) return original !== current;
-    
-    // Normalize both contents
-    const normalizeContent = (html: string): string => {
-      // Pre-process: Add a special marker to preserve formatting tags
-      let processed = html
-        // Mark important formatting tags with a unique identifier
-        .replace(/<\/?u>/g, '___UTAG___')
-        .replace(/<\/?i>/g, '___ITAG___')
-        .replace(/<\/?b>/g, '___BTAG___')
-        .replace(/<\/?strong>/g, '___STRONGTAG___')
-        .replace(/<\/?em>/g, '___EMTAG___')
-        .replace(/<\/?mark>/g, '___MARKTAG___'); // Add handling for mark tags
-      
-      // Apply standard normalization
-      processed = processed
-        // Remove all whitespace between tags
-        .replace(/>\s+</g, '><')
-        // Convert all whitespace sequences to a single space
-        .replace(/\s+/g, ' ')
-        // Normalize self-closing tags
-        .replace(/<([^>]+)\/>/g, '<$1></\$1>')
-        // Make all tags lowercase
-        .replace(/<\/?([A-Z]+)/g, (match) => match.toLowerCase())
-        // Remove any id/class attributes that might be auto-generated
-        .replace(/\s(id|class)="[^"]*"/g, '')
-        // Remove specific Kendo and ProseMirror classes that don't affect content
-        .replace(/\sclass="ProseMirror.*?"/g, '')
-        .replace(/\scontenteditable="(true|false)"/g, '')
-        .replace(/\stranslate="[^"]*"/g, '')
-        // Remove any div containers that might be added by the editor but don't change content
-        .replace(/<div class="k-content ProseMirror".*?>(.*?)<\/div>/g, '$1')
-        // Restore the formatting tags
-        .replace(/___UTAG___/g, '<u>')
-        .replace(/___\/UTAG___/g, '</u>')
-        .replace(/___ITAG___/g, '<i>')
-        .replace(/___\/ITAG___/g, '</i>')
-        .replace(/___BTAG___/g, '<b>')
-        .replace(/___\/BTAG___/g, '</b>')
-        .replace(/___STRONGTAG___/g, '<strong>')
-        .replace(/___\/STRONGTAG___/g, '</strong>')
-        .replace(/___EMTAG___/g, '<em>')
-        .replace(/___\/EMTAG___/g, '</em>')
-        .replace(/___MARKTAG___/g, '<mark>') // Restore mark tags
-        .replace(/___\/MARKTAG___/g, '</mark>') // Restore mark end tags
-        // Trim the result
-        .trim();
-      
-      return processed;
-    };
     
     let normalizedOriginal = normalizeContent(original);
     let normalizedCurrent = normalizeContent(current);
@@ -1644,112 +1531,14 @@ IMPORTANT GUIDELINES:
 
   useEffect(() => {
     // Ensure CSS is injected into the iframe when the editor is ready
-    const injectEditorStyles = () => {
-      const editorDoc = getEditorDocument();
-      if (!editorDoc) return;
-      
-      // Create a style element using window.document
-      const styleEl = window.document.createElement('style');
-      styleEl.textContent = `
-        /* AI Diff Highlighting Styles */
-        .ai-addition {
-          background-color: rgba(34, 197, 94, 0.2) !important; /* Light green */
-          color: rgb(22, 101, 52) !important; /* Darker green text for better contrast */
-          border-radius: 2px !important;
-          border-bottom: 1px solid rgba(34, 197, 94, 0.5) !important;
-          text-decoration: none !important;
-          padding: 0 2px !important;
-          margin: 0 1px !important;
-          position: relative !important;
-          font-weight: 500 !important; /* Slightly bolder */
-          display: inline !important;
-          white-space: pre-wrap !important; /* Respect line breaks */
-          user-select: auto !important;
-          -webkit-user-select: auto !important;
-          -moz-user-select: auto !important;
-          pointer-events: auto !important;
-          cursor: text !important;
-        }
-        
-        .ai-deletion {
-          background-color: rgba(239, 68, 68, 0.2) !important; /* Light red */
-          color: rgb(153, 27, 27) !important; /* Darker red text for better contrast */
-          border-radius: 2px !important;
-          border-bottom: 1px solid rgba(239, 68, 68, 0.5) !important;
-          text-decoration: line-through !important;
-          padding: 0 2px !important;
-          margin: 0 1px !important;
-          position: relative !important;
-          display: inline !important;
-          white-space: pre-wrap !important; /* Respect line breaks */
-          user-select: auto !important;
-          -webkit-user-select: auto !important;
-          -moz-user-select: auto !important;
-          pointer-events: auto !important;
-          cursor: text !important;
-        }
-        
-        /* Ensure <p> tags inside additions/deletions display properly */
-        .ai-addition p, .ai-deletion p {
-          margin: 0.5em 0 !important;
-          display: block !important;
-        }
-
-        /* Ensure <br> tags inside additions/deletions display properly */
-        .ai-addition br, .ai-deletion br {
-          display: block !important;
-          content: "" !important;
-          margin-top: 0.5em !important;
-        }
-        
-        /* Add animation effects to highlight the changes */
-        @keyframes pulse-addition {
-          0% { background-color: rgba(34, 197, 94, 0.1) !important; }
-          50% { background-color: rgba(34, 197, 94, 0.3) !important; }
-          100% { background-color: rgba(34, 197, 94, 0.1) !important; }
-        }
-        
-        @keyframes pulse-deletion {
-          0% { background-color: rgba(239, 68, 68, 0.1) !important; }
-          50% { background-color: rgba(239, 68, 68, 0.3) !important; }
-          100% { background-color: rgba(239, 68, 68, 0.1) !important; }
-        }
-        
-        .ai-addition.highlight {
-          animation: pulse-addition 2s ease-in-out 3 !important;
-        }
-        
-        .ai-deletion.highlight {
-          animation: pulse-deletion 2s ease-in-out 3 !important;
-        }
-        
-        /* Add a small icon to indicate AI-generated changes */
-        .ai-badge::after {
-          content: "AI";
-          position: absolute !important;
-          top: -8px !important;
-          right: -3px !important;
-          font-size: 8px !important;
-          background-color: #4285f4 !important;
-          color: white !important;
-          border-radius: 4px !important;
-          padding: 1px 3px !important;
-          opacity: 0.8 !important; /* Make it visible by default */
-          font-weight: bold !important;
-          pointer-events: none !important; /* Prevent it from interfering with clicks */
-          z-index: 10 !important;
-        }
-      `;
-      
-      // Append style to the head of the iframe document
-      editorDoc.head.appendChild(styleEl);
-      
-      console.log("[DocumentPage] Custom styles injected into editor iframe");
-    };
     
     // Try to inject styles when editor is available
     if (editorRef.current) {
-      setTimeout(injectEditorStyles, 500); // Delay to ensure editor is fully loaded
+      setTimeout(() => {
+        const editorDoc = getEditorDocument();
+        if (!editorDoc) return;
+        injectEditorStyles(editorDoc);
+      }, 500); // Delay to ensure editor is fully loaded
     }
   }, [editorRef.current]);
 
@@ -1833,35 +1622,8 @@ IMPORTANT GUIDELINES:
     }
   }, [hasAIChanges, getEditorDocument, originalContentBeforeChanges, getEditorContent, contentHasMeaningfulChanges]);
 
-  const toggleUserMenu = () => {
-    setShowUserMenu(!showUserMenu);
-  };
 
-  const userMenu = (
-    <div className="bg-white rounded shadow-lg p-2 min-w-40 border border-gray-200">
-      <div className="py-2 px-3 text-sm font-medium border-b border-gray-200 mb-2">
-        John Doe
-        <div className="text-xs text-gray-500 font-normal">john.doe@example.com</div>
-      </div>
-      <ul className="space-y-1">
-        <li>
-          <button className="w-full text-left px-3 py-1.5 text-sm hover:bg-gray-100 rounded">
-            Profile Settings
-          </button>
-        </li>
-        <li>
-          <button className="w-full text-left px-3 py-1.5 text-sm hover:bg-gray-100 rounded">
-            My Documents
-          </button>
-        </li>
-        <li className="border-t border-gray-200 mt-1 pt-1">
-          <button className="w-full text-left px-3 py-1.5 text-sm hover:bg-gray-100 rounded text-red-600">
-            Sign Out
-          </button>
-        </li>
-      </ul>
-    </div>
-  );
+
 
   // Add a new method to handle opening a document from a file
   const handleOpenFromFile = useCallback(() => {
@@ -1924,34 +1686,8 @@ IMPORTANT GUIDELINES:
     }
   }, [pageSize]);
 
-  // Convert page size from mm to pixels for display
-  const getPageSizeInPixels = () => {
-    // Add a fallback to A4 if pageSize is not a valid key in pageSizes
-    const pageDetails = pageSizes[pageSize] || pageSizes["A4"];
-    
-    // Convert mm to px using a more precise conversion factor
-    // Standard conversion: 1mm ≈ 3.7795275591 pixels (96 DPI)
-    const mmToPx = 3.7795275591;
-    
-    // Calculate dimensions
-    const widthPx = Math.round(pageDetails.width * mmToPx);
-    const heightPx = Math.round(pageDetails.height * mmToPx);
-    
-    console.log("[DocumentPage] Page dimensions calculated:", 
-      `${pageDetails.width}mm x ${pageDetails.height}mm →`,
-      `${widthPx}px x ${heightPx}px`);
-    
-    return {
-      width: `${widthPx}px`,
-      height: `${heightPx}px`,
-      aspectRatio: pageDetails.width / pageDetails.height,
-      widthValue: widthPx,
-      heightValue: heightPx
-    };
-  };
-
   // Calculate page dimensions for container
-  const pageDimensions = getPageSizeInPixels();
+  const pageDimensions = getPageSizeInPixels(pageSize);
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-100">
@@ -2007,39 +1743,7 @@ IMPORTANT GUIDELINES:
               {showSidebar ? "Hide AI" : "Show AI"}
             </Button>
           </Tooltip>
-          
-          {/* User profile */}
-          <div className="relative" ref={avatarRef}>
-            <div 
-              className="cursor-pointer"
-              onClick={toggleUserMenu}
-              aria-haspopup="true"
-              aria-expanded={showUserMenu}
-            >
-              <Avatar
-                type="image"
-                size="medium"
-                rounded="full"
-                style={{ backgroundColor: "#0747A6" }}
-                themeColor="info"
-                showTooltip={true}
-                tooltip="John Doe - Account Settings"
-              >
-                JD
-              </Avatar>
-            </div>
-            <Popup
-              anchor={avatarRef.current}
-              show={showUserMenu}
-              popupClass="popup-content"
-              animate={true}
-              anchorAlign={{ horizontal: 'right', vertical: 'bottom' }}
-              popupAlign={{ horizontal: 'right', vertical: 'top' }}
-              onClose={() => setShowUserMenu(false)}
-            >
-              {userMenu}
-            </Popup>
-          </div>
+          <UserProfile />
         </AppBarSection>
       </AppBar>
 
