@@ -124,6 +124,7 @@ export default function DocumentPage() {
     }
     
     setPageSize(newSize);
+    console.log("[DocumentPage] Page dimensions updated to:", pageSizes[newSize].width, "x", pageSizes[newSize].height, "mm");
     
     // Trigger the animation effect for the page size change
     setMarginUpdateAnimation(true);
@@ -1928,11 +1929,24 @@ IMPORTANT GUIDELINES:
     // Add a fallback to A4 if pageSize is not a valid key in pageSizes
     const pageDetails = pageSizes[pageSize] || pageSizes["A4"];
     
-    // Convert mm to px (1mm ≈ 3.78px)
+    // Convert mm to px using a more precise conversion factor
+    // Standard conversion: 1mm ≈ 3.7795275591 pixels (96 DPI)
+    const mmToPx = 3.7795275591;
+    
+    // Calculate dimensions
+    const widthPx = Math.round(pageDetails.width * mmToPx);
+    const heightPx = Math.round(pageDetails.height * mmToPx);
+    
+    console.log("[DocumentPage] Page dimensions calculated:", 
+      `${pageDetails.width}mm x ${pageDetails.height}mm →`,
+      `${widthPx}px x ${heightPx}px`);
+    
     return {
-      width: `${pageDetails.width * 3.78}px`,
-      height: `${pageDetails.height * 3.78}px`,
-      aspectRatio: pageDetails.width / pageDetails.height
+      width: `${widthPx}px`,
+      height: `${heightPx}px`,
+      aspectRatio: pageDetails.width / pageDetails.height,
+      widthValue: widthPx,
+      heightValue: heightPx
     };
   };
 
@@ -2136,8 +2150,9 @@ IMPORTANT GUIDELINES:
                 className="editor-page-container mx-auto shadow-md relative transition-all duration-500"
                 style={{
                   width: pageDimensions.width,
-                  // Remove height constraint to maintain aspect ratio
+                  height: pageDimensions.height, // Add height property to enforce page size proportions
                   maxWidth: "calc(100vw - 220px)",
+                  minHeight: "500px" // Ensure a minimum size regardless of page dimensions
                 }}
               >
                 {/* Margin guides */}
@@ -2252,7 +2267,8 @@ IMPORTANT GUIDELINES:
                     border: 'none',
                     boxShadow: 'none',
                     padding: `${margins.top}px ${margins.right}px ${margins.bottom}px ${margins.left}px`,
-                    minHeight: 'calc(100vh - 164px)', // Adjusted for AppBar height
+                    minHeight: `calc(${pageDimensions.height} - ${margins.top}px - ${margins.bottom}px)`, // Set minHeight based on page dimensions
+                    height: 'auto', // Allow content to expand if needed
                   }}
                   defaultContent={document.content}
                   onChange={handleContentChange}
