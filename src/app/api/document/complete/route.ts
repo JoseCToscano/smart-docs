@@ -62,6 +62,27 @@ After the document changes, include a line with exactly "<<<USER_MESSAGE>>>" fol
 
 If the user's request doesn't involve document changes (just a conversation or question), only include the user message part with "<<<USER_MESSAGE>>>" followed by your response.
 
+## HTML Formatting Guidelines
+The document uses HTML formatting. When the user asks for formatting changes, apply the appropriate HTML tags in your <addition> tags:
+
+- For **bold text**: Use <strong>text</strong>
+- For *italic text*: Use <em>text</em>
+- For underlined text: Use <u>text</u>
+- For headings: Use <h1>text</h1> through <h6>text</h6>
+- For lists: Use <ul><li>item</li></ul> for bullet points or <ol><li>item</li></ol> for numbered lists
+- For links: Use <a href="url">link text</a>
+- For font size changes: Wrap the text in a <span> with inline styling, e.g., <span style="font-size: 18px;">text</span>
+- For font color changes: Use <span style="color: #FF0000;">text</span>
+- For background color: Use <span style="background-color: #FFFF00;">text</span>
+- For font family changes: Use <span style="font-family: Arial, sans-serif;">text</span>
+- For alignment: Wrap text in <div style="text-align: center;">text</div>
+- For indentation: Use <div style="margin-left: 20px;">text</div>
+
+Example: If asked to make text bold, replace "hello world" with "<strong>hello world</strong>" using:
+<deletion>hello world</deletion><addition><strong>hello world</strong></addition>
+
+For more complex formatting, you can combine HTML tags and attributes as needed.
+
 ## Response Guidelines:
 1. Always follow the two-part format described above.
 2. For the document changes part: do NOT include any explanations, prefixes, or phrases like "Here is the edited document..." before the content.
@@ -74,6 +95,7 @@ If the user's request doesn't involve document changes (just a conversation or q
 3. Keep the original document structure and maintain the overall formatting.
 4. If you're not changing anything, don't use the XML tags.
 5. Be careful with formatting - make sure your XML tags don't break existing HTML/markdown.
+6. When applying HTML formatting, use the appropriate tags as described in the HTML Formatting Guidelines section.
 
 ## CRITICAL PHRASES TO AVOID:
 Do NOT include any of these phrases (or similar variations) in your response:
@@ -93,6 +115,12 @@ For document changes:
 
 <<<USER_MESSAGE>>>
 I've replaced "fox" with "brown fox" and "lazy" with "sleeping" to make the sentence more descriptive."
+
+For formatting changes:
+"Please make this <deletion>important point</deletion> <addition><strong>important point</strong></addition> stand out more.
+
+<<<USER_MESSAGE>>>
+I've made "important point" bold by adding the <strong> HTML tag to make it stand out more in your document."
 
 For just conversation (no document changes):
 "<<<USER_MESSAGE>>>
@@ -141,6 +169,7 @@ If my request is just a question with no document changes, only include the seco
         },
       ],
     });
+    console.log("Current Content:", content);
 
     console.log("API Response from Claude:", {
       status: "success",
@@ -149,6 +178,8 @@ If my request is just a question with no document changes, only include the seco
         ? response.content[0].text.substring(0, 100) + "..." 
         : "No text content",
     });
+
+    console.log("New Content:", response.content[0]?.type === 'text' ? response.content[0].text : 'Unable to process document');
 
     // Get the content from the response safely
     let responseText = response.content[0]?.type === 'text' 
