@@ -792,17 +792,23 @@ IMPORTANT GUIDELINES:
         console.log("[applyXmlChangesToEditor] Saved normalized original content");
       }
       
-      // Check if there are actual changes to apply
-      if (!xmlContent.includes("<addition>") && !xmlContent.includes("<deletion>")) {
-        console.log("[DocumentPage] No XML tags found in content, nothing to apply");
-        return;
+      // Check if there are XML tags in the content
+      const hasXmlTags = xmlContent.includes("<addition>") || xmlContent.includes("<deletion>");
+      
+      let processedContent;
+      
+      if (hasXmlTags) {
+        // Parse XML to HTML with styled spans
+        processedContent = parseXmlDiff(xmlContent);
+        
+        console.log("[DocumentPage] Parsed HTML contains addition spans:", processedContent.includes("ai-addition"));
+        console.log("[DocumentPage] Parsed HTML contains deletion spans:", processedContent.includes("ai-deletion"));
+      } else {
+        // Even if there are no XML tags, we still process the content
+        // This handles cases where there were direct HTML changes like adding <u> tags
+        processedContent = xmlContent;
+        console.log("[DocumentPage] No XML tags found, but still updating content to show changes");
       }
-      
-      // Parse XML to HTML with styled spans
-      const htmlWithChanges = parseXmlDiff(xmlContent);
-      
-      console.log("[DocumentPage] Parsed HTML contains addition spans:", htmlWithChanges.includes("ai-addition"));
-      console.log("[DocumentPage] Parsed HTML contains deletion spans:", htmlWithChanges.includes("ai-deletion"));
       
       // Make sure the editor is ready
       if (!editorRef.current) {
@@ -811,19 +817,30 @@ IMPORTANT GUIDELINES:
       }
       
       // Properly update the editor with new content
-      updateEditorContent(htmlWithChanges);
+      updateEditorContent(processedContent);
       
       // Update the hasActiveChanges state
       setTimeout(() => {
+        // First try the standard hasAIChanges function which checks for both visual markers and content changes
         const hasChanges = hasAIChanges();
         
-        // If the hasAIChanges doesn't detect anything, do additional comparison
-        if (!hasChanges && originalContentBeforeChanges) {
+        if (hasChanges) {
+          setHasActiveChanges(true);
+          console.log("[DocumentPage] hasAIChanges detected changes");
+        } else if (originalContentBeforeChanges) {
+          // If no changes were detected but we have original content, do an explicit content comparison
           const currentContent = getEditorContent();
           const contentChanged = contentHasMeaningfulChanges(originalContentBeforeChanges, currentContent);
-                                
+          
           setHasActiveChanges(contentChanged);
-          console.log("[DocumentPage] Content comparison detected changes:", contentChanged);
+          console.log("[DocumentPage] Direct content comparison detected changes:", contentChanged);
+          
+          if (!contentChanged && !hasXmlTags) {
+            // If we couldn't find changes at all, but got a response without XML tags
+            // (could be identical content returned), clear the original content
+            setOriginalContentBeforeChanges(null);
+            console.log("[DocumentPage] No changes detected and no XML tags, clearing original content");
+          }
         } else {
           setHasActiveChanges(hasChanges);
           console.log("[DocumentPage] Updated hasActiveChanges:", hasChanges);
@@ -1307,7 +1324,17 @@ IMPORTANT GUIDELINES:
     
     // Normalize both contents
     const normalizeContent = (html: string): string => {
-      return html
+      // Pre-process: Add a special marker to preserve formatting tags
+      let processed = html
+        // Mark important formatting tags with a unique identifier
+        .replace(/<\/?u>/g, '___UTAG___')
+        .replace(/<\/?i>/g, '___ITAG___')
+        .replace(/<\/?b>/g, '___BTAG___')
+        .replace(/<\/?strong>/g, '___STRONGTAG___')
+        .replace(/<\/?em>/g, '___EMTAG___');
+      
+      // Apply standard normalization
+      processed = processed
         // Remove all whitespace between tags
         .replace(/>\s+</g, '><')
         // Convert all whitespace sequences to a single space
@@ -1324,8 +1351,21 @@ IMPORTANT GUIDELINES:
         .replace(/\stranslate="[^"]*"/g, '')
         // Remove any div containers that might be added by the editor but don't change content
         .replace(/<div class="k-content ProseMirror".*?>(.*?)<\/div>/g, '$1')
+        // Restore the formatting tags
+        .replace(/___UTAG___/g, '<u>')
+        .replace(/___\/UTAG___/g, '</u>')
+        .replace(/___ITAG___/g, '<i>')
+        .replace(/___\/ITAG___/g, '</i>')
+        .replace(/___BTAG___/g, '<b>')
+        .replace(/___\/BTAG___/g, '</b>')
+        .replace(/___STRONGTAG___/g, '<strong>')
+        .replace(/___\/STRONGTAG___/g, '</strong>')
+        .replace(/___EMTAG___/g, '<em>')
+        .replace(/___\/EMTAG___/g, '</em>')
         // Trim the result
         .trim();
+      
+      return processed;
     };
     
     let normalizedOriginal = normalizeContent(original);
@@ -1448,8 +1488,13 @@ IMPORTANT GUIDELINES:
           margin: 0 1px !important;
           position: relative !important;
           font-weight: 500 !important; /* Slightly bolder */
-          display: inline-block !important;
+          display: inline !important;
           white-space: pre-wrap !important; /* Respect line breaks */
+          user-select: auto !important;
+          -webkit-user-select: auto !important;
+          -moz-user-select: auto !important;
+          pointer-events: auto !important;
+          cursor: text !important;
         }
         
         .ai-deletion {
@@ -1461,8 +1506,13 @@ IMPORTANT GUIDELINES:
           padding: 0 2px !important;
           margin: 0 1px !important;
           position: relative !important;
-          display: inline-block !important;
+          display: inline !important;
           white-space: pre-wrap !important; /* Respect line breaks */
+          user-select: auto !important;
+          -webkit-user-select: auto !important;
+          -moz-user-select: auto !important;
+          pointer-events: auto !important;
+          cursor: text !important;
         }
         
         /* Ensure <p> tags inside additions/deletions display properly */
@@ -1534,6 +1584,21 @@ IMPORTANT GUIDELINES:
     // Check for AI changes and update state
     const checkForAIChanges = () => {
       const hasChanges = hasAIChanges();
+      
+      // If the editor content has changed but hasAIChanges returns false,
+      // let's do a direct comparison
+      if (!hasChanges && originalContentBeforeChanges) {
+        console.log("[DocumentPage] hasAIChanges returned false, doing direct comparison");
+        const currentContent = getEditorContent();
+        const contentChanged = contentHasMeaningfulChanges(originalContentBeforeChanges, currentContent);
+        
+        if (contentChanged) {
+          console.log("[DocumentPage] Direct comparison found changes");
+          setHasActiveChanges(true);
+          return;
+        }
+      }
+      
       setHasActiveChanges(hasChanges);
       console.log("[DocumentPage] Active AI changes detected:", hasChanges);
     };
@@ -1544,7 +1609,40 @@ IMPORTANT GUIDELINES:
     // Set up a mutation observer to watch for changes to the editor content
     const editorDoc = getEditorDocument();
     if (editorDoc) {
-      const observer = new MutationObserver(checkForAIChanges);
+      const observer = new MutationObserver((mutations) => {
+        // Log some debugging info about the mutations
+        console.log("[DocumentPage] Mutation observer triggered with", mutations.length, "mutations");
+        
+        // For HTML structure changes like adding <u> tags, we need a special check
+        const hasStructuralChanges = mutations.some(mutation => {
+          // Check for changes related to underline tags
+          return Array.from(mutation.addedNodes).some(node => {
+            const nodeHTML = node instanceof Element ? node.outerHTML : 
+                            (node instanceof Text ? node.textContent : '');
+            return nodeHTML && nodeHTML.includes("<u>");
+          }) || 
+          // Also check for changes to attributes that might indicate a style change
+          (mutation.type === 'attributes' && mutation.target instanceof Element && 
+           (mutation.target.tagName === 'U' || mutation.target.innerHTML.includes("<u>")));
+        });
+        
+        if (hasStructuralChanges) {
+          console.log("[DocumentPage] Detected HTML structure changes (like <u> tags)");
+          // Force content comparison
+          const currentContent = getEditorContent();
+          if (originalContentBeforeChanges) {
+            const contentChanged = contentHasMeaningfulChanges(originalContentBeforeChanges, currentContent);
+            if (contentChanged) {
+              console.log("[DocumentPage] Content changed with HTML structure modifications");
+              setHasActiveChanges(true);
+              return;
+            }
+          }
+        }
+        
+        // Standard check
+        checkForAIChanges();
+      });
       
       // Observe the editor body for changes
       observer.observe(editorDoc.body, {
@@ -1559,7 +1657,7 @@ IMPORTANT GUIDELINES:
         observer.disconnect();
       };
     }
-  }, [hasAIChanges, getEditorDocument]);
+  }, [hasAIChanges, getEditorDocument, originalContentBeforeChanges, getEditorContent, contentHasMeaningfulChanges]);
 
   const toggleUserMenu = () => {
     setShowUserMenu(!showUserMenu);
