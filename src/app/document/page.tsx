@@ -8,7 +8,7 @@ import {
   AppBar, 
   AppBarSection, 
   AppBarSpacer, 
-  AppBarSeparator 
+  AppBarSeparator
 } from "@/components/kendo/free";
 import { 
   Avatar,
@@ -18,6 +18,7 @@ import {
   Popup,
   Tooltip
 } from "@/components/kendo";
+import { NumericTextBox, NumericTextBoxChangeEvent } from "@progress/kendo-react-inputs";
 import "@progress/kendo-theme-default/dist/all.css";
 import "./styles.css";
 import Link from "next/link";
@@ -65,6 +66,14 @@ export default function DocumentPage() {
   const [hasActiveChanges, setHasActiveChanges] = useState(false);
   const [originalContentBeforeChanges, setOriginalContentBeforeChanges] = useState<string | null>(null);
   const [editorKey, setEditorKey] = useState(0);
+  const [showMarginSettings, setShowMarginSettings] = useState(false);
+  const [margins, setMargins] = useState({
+    left: 24,
+    right: 24,
+    top: 24,
+    bottom: 24
+  });
+  const marginSettingsRef = useRef<HTMLDivElement | null>(null);
   const editorRef = useRef<any>(null);
   const aiSidebarRef = useRef<AISidebarHandle>(null);
   const [panes, setPanes] = useState<SplitterPaneProps[]>([
@@ -73,6 +82,18 @@ export default function DocumentPage() {
   ]);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const avatarRef = useRef<HTMLDivElement | null>(null);
+
+  // Add handlers for margin changes
+  const handleMarginChange = (margin: 'top' | 'right' | 'bottom' | 'left', value: number) => {
+    setMargins(prev => ({
+      ...prev,
+      [margin]: value
+    }));
+  };
+  
+  const toggleMarginSettings = () => {
+    setShowMarginSettings(prev => !prev);
+  };
 
   const handleContentChange = (event: any) => {
     setDocument(prev => ({
@@ -1837,6 +1858,19 @@ IMPORTANT GUIDELINES:
     console.log("[DocumentPage] Splitter should update with showSidebar =", showSidebar);
   }, [showSidebar]);
 
+  // Add a useEffect to update the editor when margins change
+  useEffect(() => {
+    // Skip the initial render
+    if (editorRef.current && document.content !== "<p></p>") {
+      // Force update the editor styling
+      const editorDoc = getEditorDocument();
+      if (editorDoc && editorDoc.body) {
+        editorDoc.body.style.padding = `${margins.top}px ${margins.right}px ${margins.bottom}px ${margins.left}px`;
+        console.log("[DocumentPage] Updated editor margins:", margins);
+      }
+    }
+  }, [margins, getEditorDocument]);
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-100">
       {/* Main App Toolbar */}
@@ -1908,6 +1942,97 @@ IMPORTANT GUIDELINES:
               Export
             </Button>
           </Tooltip>
+          
+          <Tooltip anchorElement="target" position="bottom" content={() => "Adjust document margins"}>
+            <Button
+              themeColor="base"
+              onClick={toggleMarginSettings}
+              icon="ruler"
+              className="k-button-md"
+              title="Margin Settings"
+            >
+              Margins
+            </Button>
+          </Tooltip>
+          
+          <div className="relative" ref={marginSettingsRef}>
+            <Popup
+              anchor={marginSettingsRef.current}
+              show={showMarginSettings}
+              popupClass="popup-content"
+              animate={true}
+              anchorAlign={{ horizontal: 'center', vertical: 'bottom' }}
+              popupAlign={{ horizontal: 'center', vertical: 'top' }}
+              onClose={() => setShowMarginSettings(false)}
+            >
+              <div className="bg-white rounded shadow-lg p-4 min-w-72 border border-gray-200">
+                <h3 className="font-medium text-sm mb-3 border-b pb-2">Document Margins (px)</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">Top</label>
+                    <NumericTextBox
+                      min={0}
+                      max={100}
+                      value={margins.top}
+                      onChange={(e: NumericTextBoxChangeEvent) => handleMarginChange('top', e.value || 0)}
+                      spinners={true}
+                      step={4}
+                      size="small"
+                      width="100%"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">Right</label>
+                    <NumericTextBox
+                      min={0}
+                      max={100}
+                      value={margins.right}
+                      onChange={(e: NumericTextBoxChangeEvent) => handleMarginChange('right', e.value || 0)}
+                      spinners={true}
+                      step={4}
+                      size="small"
+                      width="100%"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">Bottom</label>
+                    <NumericTextBox
+                      min={0}
+                      max={100}
+                      value={margins.bottom}
+                      onChange={(e: NumericTextBoxChangeEvent) => handleMarginChange('bottom', e.value || 0)}
+                      spinners={true}
+                      step={4}
+                      size="small"
+                      width="100%"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">Left</label>
+                    <NumericTextBox
+                      min={0}
+                      max={100}
+                      value={margins.left}
+                      onChange={(e: NumericTextBoxChangeEvent) => handleMarginChange('left', e.value || 0)}
+                      spinners={true}
+                      step={4}
+                      size="small"
+                      width="100%"
+                    />
+                  </div>
+                </div>
+                <div className="mt-4 flex justify-end">
+                  <Button
+                    themeColor="base"
+                    onClick={() => setShowMarginSettings(false)}
+                    className="text-xs"
+                  >
+                    Close
+                  </Button>
+                </div>
+              </div>
+            </Popup>
+          </div>
           
           <Tooltip anchorElement="target" position="bottom" content={() => "View help documentation"}>
             <Button
@@ -1990,7 +2115,17 @@ IMPORTANT GUIDELINES:
           >
             <div className="relative flex-1 overflow-auto py-8 border-blue-500">
                 {/* Editor Content Area with built-in toolbar */}
-              <div className="editor-page-container mx-auto shadow-md relative border-green-500">
+              <div className="editor-page-container mx-auto shadow-md relative">
+                {/* Add margin guides */}
+                <div className="absolute inset-0 pointer-events-none border border-dashed border-blue-300 opacity-50"
+                  style={{
+                    top: `${margins.top - 1}px`,
+                    right: `${margins.right - 1}px`,
+                    bottom: `${margins.bottom - 1}px`,
+                    left: `${margins.left - 1}px`,
+                    borderWidth: '1px'
+                  }}
+                />
                 <Editor
                   key={`editor-instance-${editorKey}`}
                   ref={editorRef}
@@ -2023,7 +2158,7 @@ IMPORTANT GUIDELINES:
                   contentStyle={{ 
                     border: 'none',
                     boxShadow: 'none',
-                    padding: '24px',
+                    padding: `${margins.top}px ${margins.right}px ${margins.bottom}px ${margins.left}px`,
                     minHeight: 'calc(100vh - 164px)', // Adjusted for AppBar height
                   }}
                   defaultContent={document.content}
