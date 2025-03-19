@@ -2132,7 +2132,7 @@ IMPORTANT GUIDELINES:
                   maxWidth: "calc(100vw - 220px)",
                 }}
               >
-                {/* Add margin guides */}
+                {/* Margin guides */}
                 <div 
                   className={`absolute inset-0 pointer-events-none border border-dashed ${marginUpdateAnimation ? 'border-blue-500 animate-pulse-margin' : 'border-blue-300'} opacity-50`}
                   style={{
@@ -2196,16 +2196,20 @@ IMPORTANT GUIDELINES:
                       {margins.left}px
                     </div>
                     
-                    {/* Page size indicator */}
-                    {marginUpdateAnimation && (
-                      <div 
-                        className="absolute left-1/2 transform -translate-x-1/2 top-0 -mt-6 bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-xs font-medium pointer-events-none"
-                      >
-                        {pageSize} ({(pageSizes[pageSize] || pageSizes["A4"]).width} × {(pageSizes[pageSize] || pageSizes["A4"]).height}mm)
-                      </div>
-                    )}
+                    {/* Page size indicator - always visible */}
                   </>
                 )}
+                
+                {/* Page size indicator - always visible */}
+                <div 
+                  className="absolute right-0 top-0 -mt-8 bg-blue-50 text-blue-700 px-3 py-1 rounded-tl rounded-tr-none text-xs font-medium pointer-events-none border border-blue-200"
+                  style={{
+                    opacity: marginUpdateAnimation ? 1 : 0.85,
+                    transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
+                  }}
+                >
+                  {pageSize} ({(pageSizes[pageSize] || pageSizes["A4"]).width} × {(pageSizes[pageSize] || pageSizes["A4"]).height}mm)
+                </div>
                 
                 <Editor
                   key={`editor-instance-${editorKey}`}
