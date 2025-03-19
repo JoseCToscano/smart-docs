@@ -12,7 +12,12 @@ interface FileUploadDialogProps {
 
 interface CustomFile {
   name: string;
-  rawFile?: File;
+  extension?: string;
+  size?: number;
+  status?: number;
+  uid?: string;
+  progress?: number;
+  getRawFile?: () => File;
 }
 
 export default function FileUploadDialog({ onClose, onFileProcessed }: FileUploadDialogProps) {
@@ -35,15 +40,19 @@ export default function FileUploadDialog({ onClose, onFileProcessed }: FileUploa
     if (!file) return;
     
     console.log('Selected file:', file);
-    console.log('File type:', file.rawFile?.type);
+    // Check if the file has getRawFile method
+    const rawFile = file.getRawFile && typeof file.getRawFile === 'function' ? file.getRawFile() : null;
+    
+    console.log('File methods:', Object.getOwnPropertyNames(file));
     console.log('File extension:', file.extension);
+    console.log('Raw file:', rawFile);
     
     // Check file type
     const isDocx = 
       file.extension === '.docx' || 
       file.name?.toLowerCase().endsWith('.docx') || 
-      (file.rawFile && 
-       file.rawFile.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+      (rawFile && 
+       rawFile.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
     
     if (!isDocx) {
       try {
@@ -52,7 +61,7 @@ export default function FileUploadDialog({ onClose, onFileProcessed }: FileUploa
         // Ignore if preventDefault is not available
       }
       setError('Please select a valid Word document (.docx file)');
-    } else if (!file.rawFile) {
+    } else if (!rawFile) {
       setError('Invalid file data - missing file content');
     } else {
       setFiles([file]);
@@ -69,8 +78,20 @@ export default function FileUploadDialog({ onClose, onFileProcessed }: FileUploa
     }
 
     const file = files[0] as CustomFile;
-    console.log('file', file, file.rawFile);
-    if (!file || !file.rawFile) {
+    console.log('Processing file:', file);
+    
+    // Get the raw file using the getRawFile method
+    let rawFile = null;
+    if (file.getRawFile && typeof file.getRawFile === 'function') {
+      try {
+        rawFile = file.getRawFile();
+        console.log('Raw file obtained:', rawFile);
+      } catch (err) {
+        console.error('Error getting raw file:', err);
+      }
+    }
+    
+    if (!file || !rawFile) {
       setError('Invalid file data or missing file content');
       return;
     }
@@ -79,8 +100,8 @@ export default function FileUploadDialog({ onClose, onFileProcessed }: FileUploa
     setError(null);
 
     try {
-      console.log('Processing file with mammoth...', file.rawFile);
-      const result = await convertDocxToHtml(file.rawFile);
+      console.log('Processing file with mammoth...', rawFile);
+      const result = await convertDocxToHtml(rawFile);
       console.log('Conversion successful');
       
       // If there are warnings but conversion succeeded, we can still proceed

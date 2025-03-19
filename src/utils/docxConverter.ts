@@ -6,7 +6,7 @@ import mammoth from 'mammoth';
  * @param file The Word (.docx) file to convert
  * @returns Promise containing the HTML content and any warnings
  */
-export async function convertDocxToHtml(file: File): Promise<{ html: string; warnings: string[] }> {
+export async function convertDocxToHtml(file: File | Blob): Promise<{ html: string; warnings: string[] }> {
   return new Promise((resolve, reject) => {
     // Validate the file parameter
     if (!file) {
@@ -19,7 +19,12 @@ export async function convertDocxToHtml(file: File): Promise<{ html: string; war
       return;
     }
     
-    console.log('Converting file:', file.name, 'Size:', file.size, 'Type:', file.type);
+    // Log file information if available
+    const fileInfo = file instanceof File ? 
+      `name: ${file.name}, size: ${file.size}, type: ${file.type}` : 
+      `size: ${file.size}, type: ${file.type || 'unknown'}`;
+      
+    console.log('Converting file:', fileInfo);
     
     // Read the file as an ArrayBuffer
     const reader = new FileReader();
