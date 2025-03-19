@@ -2,7 +2,7 @@ import { useState, useRef, useCallback } from 'react';
 import { Dialog, DialogActionsBar } from '@/components/kendo/free';
 import { Button } from '@/components/kendo/free';
 import { Upload } from '@progress/kendo-react-upload';
-import { convertDocxToHtml } from '@/utils/docxConverter';
+import { convertFileToHtml } from '@/utils/fileConverter';
 import { Notification, NotificationGroup } from '@/components/kendo/free';
 
 interface FileUploadDialogProps {
@@ -48,25 +48,39 @@ export default function FileUploadDialog({ onClose, onFileProcessed }: FileUploa
     console.log('Raw file:', rawFile);
     
     // Check file type
-    const isDocx = 
-      file.extension === '.docx' || 
-      file.name?.toLowerCase().endsWith('.docx') || 
-      (rawFile && 
-       rawFile.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    const fileName = file.name?.toLowerCase() || '';
+    const fileExtension = file.extension?.toLowerCase() || '';
     
-    if (!isDocx) {
+    const isDocx = 
+      fileExtension === '.docx' || 
+      fileName.endsWith('.docx') || 
+      (rawFile && rawFile.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+
+    const isDoc = 
+      fileExtension === '.doc' || 
+      fileName.endsWith('.doc') || 
+      (rawFile && rawFile.type === 'application/msword');
+      
+    const isTxt = 
+      fileExtension === '.txt' || 
+      fileName.endsWith('.txt') || 
+      (rawFile && rawFile.type === 'text/plain');
+    
+    const isSupportedFileType = isDocx || isDoc || isTxt;
+    
+    if (!isSupportedFileType) {
       try {
         event.preventDefault();
       } catch (e) {
         // Ignore if preventDefault is not available
       }
-      setError('Please select a valid Word document (.docx file)');
+      setError('Please select a valid document (.docx, .doc, or .txt file)');
     } else if (!rawFile) {
       setError('Invalid file data - missing file content');
     } else {
       setFiles([file]);
       setError(null);
-      console.log('Valid .docx file selected:', file.name);
+      console.log(`Valid file selected: ${file.name}, type: ${isDocx ? 'docx' : isDoc ? 'doc' : 'txt'}`);
     }
   }, []);
 
@@ -100,8 +114,8 @@ export default function FileUploadDialog({ onClose, onFileProcessed }: FileUploa
     setError(null);
 
     try {
-      console.log('Processing file with mammoth...', rawFile);
-      const result = await convertDocxToHtml(rawFile);
+      console.log('Processing file...', rawFile);
+      const result = await convertFileToHtml(rawFile);
       console.log('Conversion successful');
       
       // If there are warnings but conversion succeeded, we can still proceed
@@ -120,11 +134,11 @@ export default function FileUploadDialog({ onClose, onFileProcessed }: FileUploa
   }, [files, onFileProcessed, onClose]);
 
   return (
-    <Dialog title="Open Word Document" onClose={onClose} width={500}>
+    <Dialog title="Open Document" onClose={onClose} width={500}>
       <div className="p-4">
         <p className="mb-4">
-          Select a Word document (.docx) to open in the editor. 
-          The document will be converted to HTML format.
+          Select a document to open in the editor. 
+          Supported formats: Word documents (.docx, .doc) and text files (.txt).
         </p>
         
         <Upload
@@ -133,7 +147,7 @@ export default function FileUploadDialog({ onClose, onFileProcessed }: FileUploa
           multiple={false}
           autoUpload={false}
           restrictions={{
-            allowedExtensions: ['.docx'],
+            allowedExtensions: ['.docx', '.doc', '.txt'],
             maxFileSize: 10485760 // 10MB max
           }}
           files={files as any}
