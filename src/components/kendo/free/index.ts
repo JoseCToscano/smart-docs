@@ -8,5 +8,5 @@ export { default as Tooltip } from './Tooltip';
 export * from './Notification';
 export { default as ProgressBar } from './ProgressBar';
 export { default as AppBar, AppBarSection, AppBarSpacer, AppBarSeparator } from './AppBar';
-
+export { Dialog, DialogActionsBar } from './Dialog';
 // Add new free components exports here as they are created 

@@ -194,7 +194,8 @@ IMPORTANT: Please follow the two-part format in your response:
 2. "<<<USER_MESSAGE>>>" followed by your conversational response
 
 CRITICAL REQUIREMENTS:
-- NEVER use placeholders like "[... rest of the document remains the same ...]" or similar. Always include the COMPLETE document with ONLY the specific changes marked with XML tags.
+- NEVER use placeholders like "[... rest of the document remains the same ...]" or similar.
+- ALWAYS include the COMPLETE document with ONLY the specific changes marked with XML tags
 - When adding content, ALWAYS place it INSIDE the existing HTML structure. Analyze the document structure and place additions within the appropriate elements, NOT outside the main container.
 - DO NOT place <addition> tags after closing divs or outside the document structure.
 
@@ -264,7 +265,7 @@ If my request is just a question with no document changes, only include the seco
       "Here is the document with dummy data:",
       "I've made the following changes to the document:",
       "Below is the updated document:",
-      "Here's the updated document:"
+      "Here's the updated document:",
     ];
     
     // More thorough approach to remove prefixes from XML content
