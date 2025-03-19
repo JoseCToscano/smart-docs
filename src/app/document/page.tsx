@@ -28,6 +28,7 @@ import { Window } from "@progress/kendo-react-dialogs";
 import { parseXmlDiff, xmlDiffToChanges } from "@/utils/xmlDiffParser";
 import FileUploadDialog from "@/components/FileUploadDialog";
 import MarginsPopup from "@/components/document-tools/MarginsPopup";
+import { PageSize } from "@/components/document-tools/MarginsPopup";
 
 // Import all necessary editor tools
 const {
@@ -49,6 +50,15 @@ const {
   DeleteRow, DeleteColumn, DeleteTable,
   MergeCells, SplitCell
 } = EditorTools;
+
+// Page size definitions in millimeters
+const pageSizes = {
+  A4: { width: 210, height: 297, name: "A4" },
+  A3: { width: 297, height: 420, name: "A3" },
+  Letter: { width: 215.9, height: 279.4, name: "Letter" },
+  Legal: { width: 215.9, height: 355.6, name: "Legal" },
+  Tabloid: { width: 279.4, height: 431.8, name: "Tabloid" }
+};
 
 export default function DocumentPage() {
   const [document, setDocument] = useState<DocType>({
@@ -74,6 +84,7 @@ export default function DocumentPage() {
     top: 24,
     bottom: 24
   });
+  const [pageSize, setPageSize] = useState<PageSize>("A4");
   const marginSettingsRef = useRef<HTMLDivElement | null>(null);
   const editorRef = useRef<any>(null);
   const aiSidebarRef = useRef<AISidebarHandle>(null);
@@ -100,6 +111,19 @@ export default function DocumentPage() {
     setTimeout(() => {
       setMarginUpdateAnimation(false);
     }, 1000); // Match this to the CSS transition duration
+  };
+  
+  // Handler for page size changes
+  const handlePageSizeChange = (newSize: PageSize) => {
+    setPageSize(newSize);
+    
+    // Trigger the animation effect for the page size change
+    setMarginUpdateAnimation(true);
+    
+    // Reset animation state after animation completes
+    setTimeout(() => {
+      setMarginUpdateAnimation(false);
+    }, 1000);
   };
   
   const toggleMarginSettings = () => {
@@ -1882,6 +1906,20 @@ IMPORTANT GUIDELINES:
     }
   }, [margins, getEditorDocument]);
 
+  // Convert page size from mm to pixels for display
+  const getPageSizeInPixels = () => {
+    const pageDetails = pageSizes[pageSize];
+    // Convert mm to px (1mm ≈ 3.78px)
+    return {
+      width: `${pageDetails.width * 3.78}px`,
+      height: `${pageDetails.height * 3.78}px`,
+      aspectRatio: pageDetails.width / pageDetails.height
+    };
+  };
+
+  // Calculate page dimensions for container
+  const pageDimensions = getPageSizeInPixels();
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-100">
       {/* Main App Toolbar */}
@@ -2067,13 +2105,22 @@ IMPORTANT GUIDELINES:
                   showMarginSettings={showMarginSettings} 
                   setShowMarginSettings={setShowMarginSettings}
                   margins={margins}
-                  handleMarginChange={handleMarginChange} 
+                  handleMarginChange={handleMarginChange}
+                  pageSize={pageSize}
+                  onPageSizeChange={handlePageSizeChange}
                 />
               </div>
             </div>
             <div className="relative flex-1 overflow-auto py-8 border-blue-500">
                 {/* Editor Content Area with built-in toolbar */}
-              <div className="editor-page-container mx-auto shadow-md relative">
+              <div 
+                className="editor-page-container mx-auto shadow-md relative transition-all duration-500"
+                style={{
+                  width: pageDimensions.width,
+                  // Remove height constraint to maintain aspect ratio
+                  maxWidth: "calc(100vw - 220px)",
+                }}
+              >
                 {/* Add margin guides */}
                 <div 
                   className={`absolute inset-0 pointer-events-none border border-dashed ${marginUpdateAnimation ? 'border-blue-500 animate-pulse-margin' : 'border-blue-300'} opacity-50`}
@@ -2137,6 +2184,15 @@ IMPORTANT GUIDELINES:
                     >
                       {margins.left}px
                     </div>
+                    
+                    {/* Page size indicator */}
+                    {marginUpdateAnimation && (
+                      <div 
+                        className="absolute left-1/2 transform -translate-x-1/2 top-0 -mt-6 bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-xs font-medium pointer-events-none"
+                      >
+                        {pageSize} ({pageSizes[pageSize].width} × {pageSizes[pageSize].height}mm)
+                      </div>
+                    )}
                   </>
                 )}
                 
@@ -2184,22 +2240,22 @@ IMPORTANT GUIDELINES:
           
           {/* AI Sidebar */}
           <div className="">
-          <div className=""
+            <div className=""
                     style={{
                       height: 'calc(100vh - 56px)',
                     }}>
-            <AISidebar 
-              key="ai-sidebar"
-              onPromptSubmit={handleAIPrompt}
-              isLoading={isAIProcessing}
-              editorRef={editorRef}
-              onApplyChanges={handleApplyChanges}
-              onFinalizeChanges={finalizeChanges}
-              onRevertChanges={revertChanges}
-              hasActiveChanges={hasActiveChanges}
-              ref={aiSidebarRef}
-            />
-          </div>
+              <AISidebar 
+                key="ai-sidebar"
+                onPromptSubmit={handleAIPrompt}
+                isLoading={isAIProcessing}
+                editorRef={editorRef}
+                onApplyChanges={handleApplyChanges}
+                onFinalizeChanges={finalizeChanges}
+                onRevertChanges={revertChanges}
+                hasActiveChanges={hasActiveChanges}
+                ref={aiSidebarRef}
+              />
+            </div>
           </div>
         </Splitter>
       </div>

@@ -1,18 +1,67 @@
 import { Popup } from "@/components/kendo/free/Popup";
 import { NumericTextBox, NumericTextBoxChangeEvent } from "@/components/kendo/free/NumericTextBox";
 import Button from "@/components/kendo/free/Button";
+import { DropDownList } from "@/components/kendo/free/DropDownList";
+import { useState, useEffect } from "react";
+
+// Page size definitions in millimeters
+const pageSizes = {
+  A4: { width: 210, height: 297, name: "A4" },
+  A3: { width: 297, height: 420, name: "A3" },
+  Letter: { width: 215.9, height: 279.4, name: "Letter" },
+  Legal: { width: 215.9, height: 355.6, name: "Legal" },
+  Tabloid: { width: 279.4, height: 431.8, name: "Tabloid" }
+};
+
+// Define the page size type
+export type PageSize = "A4" | "A3" | "Letter" | "Legal" | "Tabloid";
 
 interface MarginPopupProps {
     marginSettingsRef: React.RefObject<HTMLDivElement>,
-     showMarginSettings: boolean,
-      setShowMarginSettings: (show: boolean) => void,
-       margins: { left: number; right: number; top: number; bottom: number; }, 
-       handleMarginChange: (margin: "top" | "right" | "bottom" | "left", value: number) => void
+    showMarginSettings: boolean,
+    setShowMarginSettings: (show: boolean) => void,
+    margins: { left: number; right: number; top: number; bottom: number; }, 
+    handleMarginChange: (margin: "top" | "right" | "bottom" | "left", value: number) => void,
+    pageSize?: PageSize,
+    onPageSizeChange?: (newSize: PageSize) => void
 }
 
-export default function MarginsPopup({marginSettingsRef, showMarginSettings, setShowMarginSettings, margins, handleMarginChange}: MarginPopupProps) {
+export default function MarginsPopup({
+  marginSettingsRef, 
+  showMarginSettings, 
+  setShowMarginSettings, 
+  margins, 
+  handleMarginChange,
+  pageSize = "A4",
+  onPageSizeChange = () => {}
+}: MarginPopupProps) {
   // Calculate the scale factor for the preview (making it responsive)
-  const previewScale = 0.8; // This will scale down the pixel values for the preview
+  const previewScale = 0.25; // This will scale down the pixel values for the preview
+  
+  // Convert a page size to pixels for the preview at the given scale
+  const pageToPixels = (size: PageSize) => {
+    const pageDetails = pageSizes[size];
+    // Convert mm to px (1mm ≈ 3.78px)
+    return {
+      width: Math.round(pageDetails.width * 3.78 * previewScale),
+      height: Math.round(pageDetails.height * 3.78 * previewScale),
+      aspectRatio: pageDetails.width / pageDetails.height
+    };
+  };
+
+  // Calculate preview dimensions
+  const [previewDimensions, setPreviewDimensions] = useState(pageToPixels(pageSize));
+
+  // Update preview dimensions when page size changes
+  useEffect(() => {
+    setPreviewDimensions(pageToPixels(pageSize));
+  }, [pageSize]);
+
+  // Page size dropdown data
+  const pageSizeData = Object.keys(pageSizes).map(key => ({
+    text: `${key} (${pageSizes[key as PageSize].width}×${pageSizes[key as PageSize].height}mm)`,
+    value: key
+  }));
   
   return (<Popup
     anchor={marginSettingsRef.current}
@@ -23,12 +72,32 @@ export default function MarginsPopup({marginSettingsRef, showMarginSettings, set
     popupAlign={{ horizontal: 'center', vertical: 'top' }}
     onClose={() => setShowMarginSettings(false)}
   >
-    <div className="bg-white rounded shadow-lg p-4 min-w-72 border border-gray-200">
-      <h3 className="font-medium text-sm mb-3 border-b pb-2">Document Margins (px)</h3>
+    <div className="bg-white rounded shadow-lg p-4 min-w-80 border border-gray-200">
+      <h3 className="font-medium text-sm mb-3 border-b pb-2">Page Settings</h3>
+      
+      {/* Page size selection */}
+      <div className="mb-3">
+        <label className="block text-xs text-gray-600 mb-1">Page Size</label>
+        <DropDownList
+          data={pageSizeData}
+          textField="text"
+          dataItemKey="value"
+          value={pageSize}
+          onChange={(e) => onPageSizeChange(e.value as PageSize)}
+          size="small"
+          style={{ width: '100%' }}
+        />
+      </div>
       
       {/* Margin preview */}
-      <div className="mb-4 relative mx-auto" style={{ height: '100px', width: '160px' }}>
-        <div className="absolute inset-0 border border-gray-200 bg-gray-50">
+      <div 
+        className="mb-4 relative mx-auto border border-gray-300"
+        style={{ 
+          height: previewDimensions.height, 
+          width: previewDimensions.width 
+        }}
+      >
+        <div className="absolute inset-0 bg-gray-50">
           {/* Document area representing the content */}
           <div 
             className="absolute bg-white border border-dashed border-blue-400 transition-all duration-300"
@@ -40,30 +109,36 @@ export default function MarginsPopup({marginSettingsRef, showMarginSettings, set
             }}
           >
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-xs text-gray-400">Content</span>
+              <span className="text-[8px] text-gray-400">Content</span>
             </div>
           </div>
           
           {/* Margin labels */}
-          <div className="absolute left-1/2 transform -translate-x-1/2 text-[9px] text-blue-600 font-medium"
+          <div className="absolute left-1/2 transform -translate-x-1/2 text-[7px] text-blue-600 font-medium"
                style={{ top: `${margins.top * previewScale / 2}px` }}>
             {margins.top}px
           </div>
-          <div className="absolute top-1/2 transform -translate-y-1/2 text-[9px] text-blue-600 font-medium"
+          <div className="absolute top-1/2 transform -translate-y-1/2 text-[7px] text-blue-600 font-medium"
                style={{ right: `${margins.right * previewScale / 2}px` }}>
             {margins.right}px
           </div>
-          <div className="absolute left-1/2 transform -translate-x-1/2 text-[9px] text-blue-600 font-medium"
+          <div className="absolute left-1/2 transform -translate-x-1/2 text-[7px] text-blue-600 font-medium"
                style={{ bottom: `${margins.bottom * previewScale / 2}px` }}>
             {margins.bottom}px
           </div>
-          <div className="absolute top-1/2 transform -translate-y-1/2 text-[9px] text-blue-600 font-medium"
+          <div className="absolute top-1/2 transform -translate-y-1/2 text-[7px] text-blue-600 font-medium"
                style={{ left: `${margins.left * previewScale / 2}px` }}>
             {margins.left}px
+          </div>
+          
+          {/* Page size label */}
+          <div className="absolute right-0 bottom-0 bg-gray-100 text-[7px] text-gray-500 p-0.5">
+            {pageSizes[pageSize].width} × {pageSizes[pageSize].height}mm
           </div>
         </div>
       </div>
       
+      <h4 className="font-medium text-xs mb-2">Margins (px)</h4>
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block text-xs text-gray-600 mb-1">Top</label>
@@ -137,7 +212,7 @@ export default function MarginsPopup({marginSettingsRef, showMarginSettings, set
           onClick={() => setShowMarginSettings(false)}
           className="text-xs"
         >
-          Close
+          Apply & Close
         </Button>
       </div>
     </div>
