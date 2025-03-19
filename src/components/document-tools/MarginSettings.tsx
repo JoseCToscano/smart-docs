@@ -107,35 +107,21 @@ const MarginSettings = ({
         <div className="mb-3">
           <label className="block text-xs text-gray-600 mb-1">Page Size</label>
           <DropDownList
+            style={{ width: '100%' }}
             data={pageSizeData}
             textField="text"
             dataItemKey="value"
             value={currentPageSize}
             defaultValue="A4"
-            onChange={(e: any) => {
-              // Log the entire event object to understand its structure
-              console.log("[MarginSettings] DropDownList onChange event:", e);
-              
-              // Check if the event has a target with a value property (like a DOM event)
-              if (e.target && e.target.value) {
-                const newSize = e.target.value as PageSize;
-                console.log("[MarginSettings] Using e.target.value:", newSize);
+            onChange={(event) => {
+              console.log("[MarginSettings] DropDownList onChange:", event.target.value);
+              // In the official Kendo implementation, the selected value is in event.target.value
+              if (event.target.value) {
+                const newSize = event.target.value as PageSize;
                 handlePageSizeChange(newSize);
-              }
-              // Check if the event itself has a value property (Kendo UI style)
-              else if (e.value !== undefined) {
-                const newSize = e.value as PageSize;
-                console.log("[MarginSettings] Using e.value:", newSize);
-                handlePageSizeChange(newSize);
-              }
-              // Fallback to A4 if we can't determine the value
-              else {
-                console.warn("[MarginSettings] Could not determine selected value, defaulting to A4");
-                handlePageSizeChange("A4");
               }
             }}
             size="small"
-            style={{ width: '100%' }}
           />
         </div>
         

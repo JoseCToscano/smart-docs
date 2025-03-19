@@ -79,43 +79,25 @@ export default function MarginsPopup({
       <div className="mb-3">
         <label className="block text-xs text-gray-600 mb-1">Page Size</label>
         <DropDownList
+          style={{ width: '100%' }}
           data={pageSizeData}
           textField="text"
           dataItemKey="value"
-          value={pageSize || "A4"}
+          value={pageSize}
           defaultValue="A4"
-          onChange={(e) => {
-            // Log the entire event object to understand its structure
-            console.log("[MarginsPopup] DropDownList onChange event:", e);
-            
-            // Check if the event has a target with a value property (like a DOM event)
-            if (e.target && e.target.value) {
-              const newSize = e.target.value as PageSize;
-              console.log("[MarginsPopup] Using e.target.value:", newSize);
+          onChange={(event) => {
+            console.log("[MarginsPopup] DropDownList onChange:", event.target.value);
+            // In the official Kendo implementation, the selected value is in event.target.value
+            if (event.target.value) {
+              const newSize = event.target.value as PageSize;
               if (pageSizes[newSize]) {
                 onPageSizeChange(newSize);
               } else {
                 onPageSizeChange("A4");
               }
-            }
-            // Check if the event itself has a value property (Kendo UI style)
-            else if (e.value !== undefined) {
-              const newSize = e.value as PageSize;
-              console.log("[MarginsPopup] Using e.value:", newSize);
-              if (pageSizes[newSize]) {
-                onPageSizeChange(newSize);
-              } else {
-                onPageSizeChange("A4");
-              }
-            }
-            // Fallback to A4 if we can't determine the value
-            else {
-              console.warn("[MarginsPopup] Could not determine selected value, defaulting to A4");
-              onPageSizeChange("A4");
             }
           }}
           size="small"
-          style={{ width: '100%' }}
         />
       </div>
       
