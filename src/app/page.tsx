@@ -1,48 +1,71 @@
+"use client";
+
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import Link from "next/link";
+import { Button } from "@/components/kendo/free";
+import { UserProfile } from "@/components/UserProfile";
 import NotificationDemo from "@/components/NotificationDemo";
 import DirectNotificationTest from "@/components/DirectNotificationTest";
 
 export default function HomePage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  
+  // Redirect to documents page if authenticated
+  useEffect(() => {
+    if (status === "authenticated") {
+      router.push("/documents");
+    }
+  }, [status, router]);
+  
   return (
-    <main className="min-h-screen bg-white text-black">
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-4xl font-bold mb-6 text-center">
-          Smart Docs App
-        </h1>
-        
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-8 mb-8">
-          <Link
-            className="flex flex-col gap-4 rounded-xl border border-gray-200 p-4 hover:bg-gray-50"
-            href="/document"
-          >
-            <h3 className="text-2xl font-bold">Document Editor →</h3>
-            <div className="text-lg">
-              Create and edit documents with our powerful Smart Document Editor.
-            </div>
-          </Link>
-          <Link
-            className="flex flex-col gap-4 rounded-xl border border-gray-200 p-4 hover:bg-gray-50"
-            href="https://create.t3.gg/en/introduction"
-            target="_blank"
-          >
-            <h3 className="text-2xl font-bold">Documentation →</h3>
-            <div className="text-lg">
-              Learn more about Create T3 App, the libraries it uses, and how to
-              deploy it.
-            </div>
-          </Link>
-        </div>
-        
-        <div className="w-full max-w-4xl mx-auto rounded-xl border border-gray-200 p-6 bg-white shadow-md">
-          <h2 className="text-2xl font-bold mb-6 text-center">Notification Testing</h2>
-          <div className="border-b border-gray-200 pb-6 mb-6">
-            <NotificationDemo />
-          </div>
-          <div className="border-b border-gray-200 pb-6">
-            <DirectNotificationTest />
+    <div className="min-h-screen bg-gray-50">
+      <header className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+          <h1 className="text-xl font-semibold text-gray-900">Smart Docs</h1>
+          <div>
+            <UserProfile />
           </div>
         </div>
-      </div>
-    </main>
+      </header>
+      
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="text-center">
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            Your documents, smarter than ever
+          </h2>
+          <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
+            Create, edit, and manage your documents with powerful AI assistance. Collaborate with your team and access your documents from anywhere.
+          </p>
+          
+          {status === "authenticated" ? (
+            <div className="space-x-4">
+              <Button
+                themeColor="primary"
+                onClick={() => router.push("/documents")}
+                size="large"
+              >
+                My Documents
+              </Button>
+              <Button
+                themeColor="base"
+                onClick={() => router.push("/document")}
+                size="large"
+              >
+                Create New Document
+              </Button>
+            </div>
+          ) : status === "loading" ? (
+            <div className="flex justify-center items-center py-4">
+              <div className="w-6 h-6 border-t-2 border-b-2 border-blue-500 rounded-full animate-spin"></div>
+            </div>
+          ) : (
+            <p className="text-gray-600">Sign in to get started</p>
+          )}
+        </div>
+      </main>
+    </div>
   );
 }

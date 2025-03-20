@@ -57,7 +57,7 @@ const {
 } = EditorTools;
 
 
-export default function DocumentPage() {
+export default function DocumentPage({ documentId }: { documentId?: string }) {
   const [document, setDocument] = useState<DocType>({
     title: "Untitled Document",
     content: "<p></p>",
@@ -65,6 +65,7 @@ export default function DocumentPage() {
     updatedAt: new Date(),
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(documentId ? true : false);
   const [showSidebar, setShowSidebar] = useState(true);
   const [isAIProcessing, setIsAIProcessing] = useState(false);
   const [lastSaved, setLastSaved] = useState<string | null>(null);
@@ -246,19 +247,51 @@ export default function DocumentPage() {
     }
   }, [document.title]);
 
-  const handleSave = useCallback(() => {
+  const handleSave = useCallback(async () => {
     setIsSaving(true);
     
-    // Simulate saving to server
-    setTimeout(() => {
-      console.log("Document saved:", document);
-      setIsSaving(false);
+    try {
+      const content = getEditorContent();
+      const endpoint = document.id 
+        ? `/api/document/${document.id}` 
+        : "/api/document";
+      
+      const method = document.id ? "PUT" : "POST";
+      const body = document.id 
+        ? { title: document.title, content }
+        : { title: document.title, content };
+        
+      const response = await fetch(endpoint, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to save document");
+      }
+      
+      const savedDocument = await response.json();
+      
+      // Update document state with the saved document
+      setDocument(prev => ({
+        ...prev,
+        id: savedDocument.id,
+        updatedAt: new Date(savedDocument.updatedAt),
+      }));
       
       // Update last saved time
       const now = new Date();
       setLastSaved(`Last saved at ${now.toLocaleTimeString()}`);
-    }, 1500);
-  }, [document]);
+    } catch (err) {
+      console.error("Error saving document:", err);
+      alert("Failed to save document. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
+  }, [document.id, document.title, getEditorContent]);
 
   const handleExport = useCallback(() => {
     console.log("Exporting document...");
@@ -1688,6 +1721,45 @@ IMPORTANT GUIDELINES:
 
   // Calculate page dimensions for container
   const pageDimensions = getPageSizeInPixels(pageSize);
+
+  // Add a function to load the document by ID
+  const loadDocument = useCallback(async () => {
+    if (!documentId) return;
+    
+    try {
+      setIsLoading(true);
+      const response = await fetch(`/api/document/${documentId}`);
+      
+      if (!response.ok) {
+        throw new Error("Failed to load document");
+      }
+      
+      const data = await response.json();
+      setDocument({
+        id: data.id,
+        title: data.title,
+        content: data.content,
+        createdAt: new Date(data.createdAt),
+        updatedAt: new Date(data.updatedAt),
+        userId: data.userId
+      });
+      
+      // Force a re-render of the editor with the new content
+      setEditorKey(prevKey => prevKey + 1);
+    } catch (err) {
+      console.error("Error loading document:", err);
+      // You could set an error state here if needed
+    } finally {
+      setIsLoading(false);
+    }
+  }, [documentId]);
+  
+  // Load document when component mounts or documentId changes
+  useEffect(() => {
+    if (documentId) {
+      loadDocument();
+    }
+  }, [documentId, loadDocument]);
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-100">

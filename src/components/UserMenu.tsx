@@ -1,6 +1,7 @@
 "use client";
 
 import { useSession, signIn, signOut } from "next-auth/react";
+import Link from "next/link";
 
 export const UserMenu = () => {
   const { data: session, status } = useSession();
@@ -39,9 +40,9 @@ export const UserMenu = () => {
           </button>
         </li>
         <li>
-          <button className="w-full text-left px-3 py-1.5 text-sm hover:bg-gray-100 rounded">
+          <Link href="/documents" className="block w-full text-left px-3 py-1.5 text-sm hover:bg-gray-100 rounded">
             My Documents
-          </button>
+          </Link>
         </li>
         <li className="border-t border-gray-200 mt-1 pt-1">
           <button 

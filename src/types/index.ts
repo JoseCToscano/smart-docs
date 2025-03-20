@@ -5,4 +5,11 @@ export type Document = {
   createdAt?: Date;
   updatedAt?: Date;
   userId?: string;
+};
+
+export type DocumentSummary = {
+  id: string;
+  title: string;
+  createdAt: Date;
+  updatedAt: Date;
 }; 
