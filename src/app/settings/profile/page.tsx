@@ -190,7 +190,7 @@ export default function ProfileSettingsPage() {
             <h1 className="text-xl font-semibold text-gray-900">Profile Settings</h1>
             {promptCount && !promptCount.isPremium && (
               <Button
-                onClick={() => window.location.href = "https://buy.stripe.com/test_00g02Pbdx65afzadQQ"}
+                onClick={() => window.location.href = "https://buy.stripe.com/test_00g02Pbdx65afzadQQ?prefilled_email=" + session?.user?.email}
                 themeColor="primary"
                 size="small"
               >
@@ -222,32 +222,59 @@ export default function ProfileSettingsPage() {
               <CardTitle>AI Assistant Usage</CardTitle>
             </CardHeader>
             <CardBody>
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className={`text-sm ${
-                    promptCount.remaining <= 3 ? 'text-red-600' : 
-                    promptCount.remaining <= 5 ? 'text-orange-600' : 
-                    'text-gray-600'
-                  }`}>
-                    {promptCount.remaining > 0 ? (
-                      <>
-                        <span className="font-medium">{promptCount.remaining}</span> of{' '}
-                        <span className="font-medium">{promptCount.limit}</span> free prompts remaining
-                      </>
-                    ) : (
-                      <span className="font-medium">You have reached your limit of free prompts</span>
-                    )}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className={`text-sm ${
+                      promptCount.remaining <= 3 ? 'text-red-600' : 
+                      promptCount.remaining <= 5 ? 'text-orange-600' : 
+                      'text-gray-600'
+                    }`}>
+                      {promptCount.remaining > 0 ? (
+                        <>
+                          <span className="font-medium">{promptCount.remaining}</span> of{' '}
+                          <span className="font-medium">{promptCount.limit}</span> free prompts remaining
+                        </>
+                      ) : (
+                        <span className="font-medium">You have reached your limit of free prompts</span>
+                      )}
+                    </div>
                   </div>
-                  <p className="text-sm text-gray-500 mt-2">
-                    Upgrade to Premium for unlimited AI assistant usage and additional features
-                  </p>
                 </div>
-                <Button
-                  onClick={() => window.location.href = "https://buy.stripe.com/test_00g02Pbdx65afzadQQ"}
-                  themeColor="primary"
-                >
-                  Upgrade to Premium
-                </Button>
+
+                <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
+                  <h4 className="text-sm font-medium text-blue-900 mb-2">Why Premium? 🤔</h4>
+                  <p className="text-sm text-blue-800 mb-3">
+                    We love providing AI assistance, but running advanced AI models is quite resource-intensive. 
+                    Your premium subscription helps us:
+                  </p>
+                  <ul className="text-sm text-blue-800 space-y-2">
+                    <li className="flex items-start">
+                      <span className="mr-2">🚀</span>
+                      <span>Maintain fast, reliable AI responses</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="mr-2">🧠</span>
+                      <span>Use the most advanced AI models available</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="mr-2">💡</span>
+                      <span>Keep developing new smart features</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="flex items-center justify-between pt-2">
+                  <p className="text-sm text-gray-600">
+                    Join our premium community and unlock unlimited AI assistance!
+                  </p>
+                  <Button
+                    onClick={() => window.location.href = "https://buy.stripe.com/test_00g02Pbdx65afzadQQ?prefilled_email=" + session?.user?.email}
+                    themeColor="primary"
+                  >
+                    Upgrade to Premium
+                  </Button>
+                </div>
               </div>
             </CardBody>
           </Card>
@@ -282,7 +309,6 @@ export default function ProfileSettingsPage() {
                         />
                       </Avatar>
                       <div>
-                        {session?.user?.isPremium ? (
                           <>
                             <input
                               type="file"
@@ -316,20 +342,7 @@ export default function ProfileSettingsPage() {
                               Recommended: Square image, at least 400x400 pixels
                             </p>
                           </>
-                        ) : (
-                          <div>
-                            <p className="text-sm text-gray-600 mb-2">
-                              Upgrade to Premium to customize your avatar
-                            </p>
-                            <Button
-                              onClick={() => window.location.href = "https://buy.stripe.com/test_00g02Pbdx65afzadQQ"}
-                              themeColor="primary"
-                              size="small"
-                            >
-                              Upgrade to Premium
-                            </Button>
-                          </div>
-                        )}
+                      
                       </div>
                     </div>
 
