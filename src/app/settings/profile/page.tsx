@@ -198,25 +198,6 @@ export default function ProfileSettingsPage() {
               </Button>
             )}
           </div>
-          {/* Show prompt count for non-premium users */}
-          {promptCount && !promptCount.isPremium && (
-            <div className="mt-2 flex items-center justify-between">
-              <div className={`text-xs ${
-                promptCount.remaining <= 3 ? 'text-red-600' : 
-                promptCount.remaining <= 5 ? 'text-orange-600' : 
-                'text-gray-600'
-              }`}>
-                {promptCount.remaining > 0 ? (
-                  <>
-                    <span className="font-medium">{promptCount.remaining}</span> of{' '}
-                    <span className="font-medium">{promptCount.limit}</span> free prompts remaining
-                  </>
-                ) : (
-                  <span className="font-medium">You have reached your limit of free prompts</span>
-                )}
-              </div>
-            </div>
-          )}
         </div>
       </header>
 
@@ -232,6 +213,44 @@ export default function ProfileSettingsPage() {
           <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded mb-6">
             {success}
           </div>
+        )}
+
+        {/* Prompt Count Card for non-premium users */}
+        {promptCount && !promptCount.isPremium && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>AI Assistant Usage</CardTitle>
+            </CardHeader>
+            <CardBody>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className={`text-sm ${
+                    promptCount.remaining <= 3 ? 'text-red-600' : 
+                    promptCount.remaining <= 5 ? 'text-orange-600' : 
+                    'text-gray-600'
+                  }`}>
+                    {promptCount.remaining > 0 ? (
+                      <>
+                        <span className="font-medium">{promptCount.remaining}</span> of{' '}
+                        <span className="font-medium">{promptCount.limit}</span> free prompts remaining
+                      </>
+                    ) : (
+                      <span className="font-medium">You have reached your limit of free prompts</span>
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-500 mt-2">
+                    Upgrade to Premium for unlimited AI assistant usage and additional features
+                  </p>
+                </div>
+                <Button
+                  onClick={() => window.location.href = "https://buy.stripe.com/test_00g02Pbdx65afzadQQ"}
+                  themeColor="primary"
+                >
+                  Upgrade to Premium
+                </Button>
+              </div>
+            </CardBody>
+          </Card>
         )}
 
         <Card>
