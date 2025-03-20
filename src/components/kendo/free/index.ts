@@ -9,4 +9,5 @@ export * from './Notification';
 export { default as ProgressBar } from './ProgressBar';
 export { default as AppBar, AppBarSection, AppBarSpacer, AppBarSeparator } from './AppBar';
 export { Dialog, DialogActionsBar } from './Dialog';
+export * from './Card';
 // Add new free components exports here as they are created 

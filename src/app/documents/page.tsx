@@ -1,18 +1,17 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { Button, Input } from "@/components/kendo/free";
-import { Card, CardHeader, CardTitle, CardBody, CardActions } from "@/components/kendo/free/Card";
+import { Button } from "@/components/kendo/free";
+import { Card, CardHeader, CardTitle, CardActions } from "@progress/kendo-react-layout";
 import { UserProfile } from "@/components/UserProfile";
 import { DocumentSummary } from "@/types";
 import { 
   fetchUserDocuments, 
   createDocument, 
-  deleteDocument, 
-  updateDocumentTitle 
+  deleteDocument 
 } from "@/utils/documentService";
 
 export default function DocumentsPage() {
@@ -21,9 +20,6 @@ export default function DocumentsPage() {
   const [documents, setDocuments] = useState<DocumentSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [editingTitleId, setEditingTitleId] = useState<string | null>(null);
-  const [newTitle, setNewTitle] = useState<string>("");
-  const titleInputRef = useRef<HTMLInputElement>(null);
   
   // Fetch user's documents
   const getDocuments = async () => {
@@ -47,13 +43,6 @@ export default function DocumentsPage() {
     }
   }, [status, router]);
   
-  useEffect(() => {
-    // Focus the input when editing starts
-    if (editingTitleId && titleInputRef.current) {
-      titleInputRef.current.focus();
-    }
-  }, [editingTitleId]);
-  
   const handleCreateDocument = async () => {
     try {
       const newDocument = await createDocument("Untitled Document");
@@ -71,55 +60,12 @@ export default function DocumentsPage() {
     
     try {
       await deleteDocument(id);
-      
-      // Remove the deleted document from the state
       setDocuments((prevDocuments) => 
         prevDocuments.filter((doc) => doc.id !== id)
       );
     } catch (err) {
       console.error("Error deleting document:", err);
       setError("Failed to delete the document. Please try again.");
-    }
-  };
-  
-  const startEditingTitle = (doc: DocumentSummary) => {
-    setEditingTitleId(doc.id);
-    setNewTitle(doc.title);
-  };
-  
-  const saveDocumentTitle = async () => {
-    if (!editingTitleId) return;
-    
-    try {
-      // Only update if the title actually changed
-      const doc = documents.find(d => d.id === editingTitleId);
-      if (doc && doc.title !== newTitle && newTitle.trim()) {
-        const updatedDoc = await updateDocumentTitle(editingTitleId, newTitle);
-        
-        // Update the document in the list
-        setDocuments(prevDocs => 
-          prevDocs.map(d => 
-            d.id === editingTitleId 
-              ? { ...d, title: updatedDoc.title, updatedAt: new Date(updatedDoc.updatedAt) } 
-              : d
-          )
-        );
-      }
-    } catch (err) {
-      console.error("Error updating document title:", err);
-      setError("Failed to update the document title. Please try again.");
-    } finally {
-      setEditingTitleId(null);
-      setNewTitle("");
-    }
-  };
-  
-  const handleTitleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      saveDocumentTitle();
-    } else if (e.key === 'Escape') {
-      setEditingTitleId(null);
-      setNewTitle("");
     }
   };
   
@@ -179,31 +125,9 @@ export default function DocumentsPage() {
             {documents.map((doc) => (
               <Card key={doc.id}>
                 <CardHeader>
-                  {editingTitleId === doc.id ? (
-                    <div className="mb-2">
-                      <Input
-                        ref={titleInputRef}
-                        value={newTitle}
-                        onChange={(e) => setNewTitle(e.value)}
-                        onBlur={saveDocumentTitle}
-                        onKeyDown={handleTitleKeyDown}
-                        className="w-full"
-                      />
-                      <div className="text-xs text-gray-500 mt-1">
-                        Press Enter to save, Esc to cancel
-                      </div>
-                    </div>
-                  ) : (
-                    <CardTitle>
-                      <span 
-                        className="cursor-pointer hover:text-blue-600"
-                        onClick={() => startEditingTitle(doc)}
-                        title="Click to edit title"
-                      >
-                        {doc.title}
-                      </span>
-                    </CardTitle>
-                  )}
+                  <CardTitle>
+                    {doc.title}
+                  </CardTitle>
                   <p className="text-sm text-gray-500">
                     Last edited: {new Date(doc.updatedAt).toLocaleString()}
                   </p>
