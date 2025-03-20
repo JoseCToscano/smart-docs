@@ -581,12 +581,7 @@ export default function HomePage() {
                       <span className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
                     </Button>
                     
-                    <a href="#pricing" className="group flex items-center gap-1 text-blue-600 hover:text-blue-800 font-medium py-2 pl-2 transition-colors">
-                      View pricing plans
-                      <svg className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                      </svg>
-                    </a>
+    
                   </div>
                 </div>
                 
@@ -670,6 +665,188 @@ export default function HomePage() {
             </div>
           </div>
         </section>
+        
+        {/* Pricing Section */}
+        <section id="pricing" className="py-16 md:py-20 relative z-10 overflow-hidden">
+          {/* Subtle background effects */}
+          <div className="absolute inset-0 opacity-30">
+            <div className="absolute top-0 left-[15%] w-64 h-64 bg-purple-100 rounded-full mix-blend-multiply filter blur-3xl"></div>
+            <div className="absolute bottom-20 right-[20%] w-48 h-48 bg-blue-100 rounded-full mix-blend-multiply filter blur-2xl"></div>
+          </div>
+          
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+            <div className="text-center mb-12">
+              <span className="inline-block px-3 py-1 text-sm font-medium text-indigo-700 bg-indigo-100 rounded-full mb-4">
+                SIMPLE PRICING
+              </span>
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                Choose the plan that's right for you
+              </h2>
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                Early adopter special: Get lifetime access at a one-time price while we're in development.
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+              {/* Free Tier */}
+              <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+                <div className="p-8">
+                  <div className="flex justify-between items-start mb-5">
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-900">Free Trial</h3>
+                      <p className="text-gray-500 mt-1">Perfect for trying it out</p>
+                    </div>
+                    <span className="inline-block px-3 py-1 text-xs font-medium text-gray-700 bg-gray-100 rounded-full">
+                      LIMITED
+                    </span>
+                  </div>
+                  
+                  <div className="mb-6">
+                    <span className="text-4xl font-bold text-gray-900">$0</span>
+                    <span className="text-gray-500 ml-1">/ forever</span>
+                  </div>
+                  
+                  <ul className="space-y-3 mb-8">
+                    <li className="flex items-start gap-3">
+                      <div className="flex-shrink-0 mt-1">
+                        <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center">
+                          <svg className="w-3 h-3 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                      </div>
+                      <span className="text-gray-700">Up to 15 AI document prompts</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <div className="flex-shrink-0 mt-1">
+                        <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center">
+                          <svg className="w-3 h-3 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                      </div>
+                      <span className="text-gray-700">Basic document editing</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <div className="flex-shrink-0 mt-1">
+                        <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center">
+                          <svg className="w-3 h-3 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                      </div>
+                      <span className="text-gray-700">PDF export</span>
+                    </li>
+                  </ul>
+                  
+                  <Button
+                    themeColor="base"
+                    onClick={()=>signIn('google')}
+                    size="large"
+                    className="w-full py-3 border border-gray-300 bg-white hover:bg-gray-50 text-gray-800 font-medium rounded-xl transition-colors"
+                  >
+                    Start for free
+                  </Button>
+                </div>
+              </div>
+              
+              {/* Lifetime Tier */}
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl shadow-xl border border-indigo-100 overflow-hidden transform transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 relative">
+                <div className="absolute top-0 right-0 -mt-2 -mr-2 w-24 h-24 overflow-hidden">
+                  <div className="absolute top-0 right-0 bg-blue-600 text-white text-xs font-bold py-1 px-4 transform rotate-45 translate-y-8 translate-x-3">
+                    BEST DEAL
+                  </div>
+                </div>
+                
+                <div className="p-8">
+                  <div className="flex justify-between items-start mb-5">
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-900">Lifetime Access</h3>
+                      <p className="text-gray-600 mt-1">Early adopter special</p>
+                    </div>
+                    <span className="inline-block px-3 py-1 text-xs font-medium text-indigo-700 bg-indigo-100 rounded-full">
+                      LIMITED TIME
+                    </span>
+                  </div>
+                  
+                  <div className="mb-6">
+                    <span className="text-4xl font-bold text-gray-900">$79</span>
+                    <span className="text-gray-600 ml-1">one-time</span>
+                    <p className="text-sm text-gray-500 mt-1">No recurring fees, ever</p>
+                  </div>
+                  
+                  <ul className="space-y-3 mb-8">
+                    <li className="flex items-start gap-3">
+                      <div className="flex-shrink-0 mt-1">
+                        <div className="w-5 h-5 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center justify-center">
+                          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                      </div>
+                      <span className="text-gray-700">Unlimited AI document prompts</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <div className="flex-shrink-0 mt-1">
+                        <div className="w-5 h-5 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center justify-center">
+                          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                      </div>
+                      <span className="text-gray-700">Advanced document editing features</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <div className="flex-shrink-0 mt-1">
+                        <div className="w-5 h-5 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center justify-center">
+                          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                      </div>
+                      <span className="text-gray-700">Priority updates & features</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <div className="flex-shrink-0 mt-1">
+                        <div className="w-5 h-5 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center justify-center">
+                          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                      </div>
+                      <span className="text-gray-700">All export formats (PDF, Word, etc.)</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <div className="flex-shrink-0 mt-1">
+                        <div className="w-5 h-5 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center justify-center">
+                          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                      </div>
+                      <span className="text-gray-700">Lifetime access to all future updates</span>
+                    </li>
+                  </ul>
+                  
+                  <Button
+                    themeColor="primary"
+                    onClick={()=>signIn('google')}
+                    size="large"
+                    className="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-xl shadow-lg hover:shadow-indigo-500/30 transition-all duration-300 hover:scale-[1.01] group overflow-hidden"
+                  >
+                    <span className="relative z-10">Get lifetime access</span>
+                    <span className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                  </Button>
+                  
+                  <p className="text-center text-sm text-gray-500 mt-4">
+                    30-day money-back guarantee
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+        
         {/* Footer */}
         <section className="relative z-10 py-8 text-center text-gray-600 text-sm">
           <p>&copy; {new Date().getFullYear()} Smart Docs. All rights reserved.</p>
