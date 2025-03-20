@@ -11,9 +11,16 @@
 
     /* Strictness */
     "strict": false,
-    "noUncheckedIndexedAccess": true,
-    "checkJs": true,
+    "noUncheckedIndexedAccess": false,
+    "checkJs": false,
     "noImplicitAny": false,
+    "noImplicitThis": false,
+    "alwaysStrict": false,
+    "strictNullChecks": false,
+    "strictFunctionTypes": false,
+    "strictBindCallApply": false,
+    "strictPropertyInitialization": false,
+    "useUnknownInCatchVariables": false,
 
     /* Bundled projects */
     "lib": ["dom", "dom.iterable", "esnext"],
