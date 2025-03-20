@@ -182,6 +182,7 @@ export default function HomePage() {
   }, [status, router]);
   
   return (
+    <>
     <div className="min-h-screen relative overflow-hidden bg-blue-50">
       {/* Fluid Background - applied to entire page */}
       <div className="fixed inset-0 bg-gradient-to-br from-blue-100 via-blue-200 to-indigo-300 opacity-70"></div>
@@ -271,13 +272,6 @@ export default function HomePage() {
         <section className="py-8 md:py-12 relative z-10 overflow-hidden">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="relative">
-              {/* Typing text */}
-              <div className="text-center mb-8">
-                <h2 className="inline-block text-3xl md:text-4xl font-bold text-gray-900">
-                  Try it out for free!
-                </h2>
-              </div>
-              
               {/* Zoomed document preview */}
               <div className="relative mx-auto max-w-4xl overflow-hidden">
                 {/* Document top part (zoomed in) */}
@@ -299,12 +293,26 @@ export default function HomePage() {
                     </div>
                   </div>
                   
-                  {/* Document content - blank state */}
+                  {/* Document content - blank state with typing animation */}
                   <div className="p-8 flex flex-col items-center">
                     <svg className="w-20 h-20 text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
-                    <p className="text-gray-500 text-lg text-center max-w-xl">Just tell the AI what you need, and watch your document take shape instantly...</p>
+                    
+                    {/* Typing animation container */}
+                    <div className="relative w-full max-w-md mx-auto mb-4">
+                      <div className="flex flex-col items-center">
+                        {/* Simulated cursor and text being typed */}
+                        <div className="relative inline-flex">
+                          <h2 className="text-3xl md:text-4xl font-bold text-gray-800 typing-effect">
+                            Try it out for free!
+                          </h2>
+                          <div className="typing-cursor"></div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <p className="text-gray-500 text-lg text-center max-w-xl mt-4">Just tell the AI what you need, and watch your document take shape instantly...</p>
                   </div>
                   
                   {/* Document gradient fade at bottom to create cut-off effect */}
@@ -593,5 +601,41 @@ export default function HomePage() {
         </section>
       </main>
     </div>
+    <style jsx global>{`
+      /* Typing animation effect */
+      .typing-effect {
+        overflow: hidden;
+        border-right: 0px solid transparent;
+        white-space: nowrap;
+        margin: 0 auto;
+        animation: 
+          typing 3s steps(30, end),
+          blink-caret .75s step-end infinite;
+      }
+      
+      .typing-cursor {
+        display: inline-block;
+        width: 2px;
+        height: 1.2em;
+        background-color: #111827;
+        margin-left: 2px;
+        animation: blink-caret .75s step-end infinite;
+        position: absolute;
+        right: -4px;
+        top: 50%;
+        transform: translateY(-50%);
+      }
+      
+      @keyframes typing {
+        from { width: 0 }
+        to { width: 100% }
+      }
+      
+      @keyframes blink-caret {
+        from, to { opacity: 1 }
+        50% { opacity: 0 }
+      }
+    `}</style>
+    </>
   );
 }
