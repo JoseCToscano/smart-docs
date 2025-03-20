@@ -21,6 +21,7 @@ import {
   Button,
   Avatar
 } from "@/components/kendo/free";
+import PremiumCheck from "@/components/PremiumCheck";
 
 interface ProfileFormModel {
   name: string;
@@ -181,51 +182,53 @@ export default function ProfileSettingsPage() {
                 <FormElement>
                   <div className="space-y-6">
                     {/* Avatar Section */}
-                    <div className="flex items-center space-x-4">
-                      <Avatar
-                        type="image"
-                        size="large"
-                      >
-                        <img 
-                          src={avatarPreview || session?.user?.image || "/default-avatar.png"} 
-                          alt={session?.user?.name || "User avatar"}
-                          className="w-full h-full object-cover rounded-full"
-                        />
-                      </Avatar>
-                      <div>
-                        <input
-                          type="file"
-                          ref={fileInputRef}
-                          className="hidden"
-                          accept="image/*"
-                          onChange={handleAvatarChange}
-                        />
-                        <Button
-                          onClick={() => fileInputRef.current?.click()}
-                          className="mb-2"
+                    <PremiumCheck>
+                      <div className="flex items-center space-x-4">
+                        <Avatar
+                          type="image"
+                          size="large"
                         >
-                          Change Avatar
-                        </Button>
-                        {avatarPreview && (
+                          <img 
+                            src={avatarPreview || session?.user?.image || "/default-avatar.png"} 
+                            alt={session?.user?.name || "User avatar"}
+                            className="w-full h-full object-cover rounded-full"
+                          />
+                        </Avatar>
+                        <div>
+                          <input
+                            type="file"
+                            ref={fileInputRef}
+                            className="hidden"
+                            accept="image/*"
+                            onChange={handleAvatarChange}
+                          />
                           <Button
-                            onClick={() => {
-                              setAvatarPreview(null);
-                              setAvatarFile(null);
-                              if (fileInputRef.current) {
-                                fileInputRef.current.value = "";
-                              }
-                            }}
-                            themeColor="error"
-                            className="ml-2"
+                            onClick={() => fileInputRef.current?.click()}
+                            className="mb-2"
                           >
-                            Remove
+                            Change Avatar
                           </Button>
-                        )}
-                        <p className="text-sm text-gray-500">
-                          Recommended: Square image, at least 400x400 pixels
-                        </p>
+                          {avatarPreview && (
+                            <Button
+                              onClick={() => {
+                                setAvatarPreview(null);
+                                setAvatarFile(null);
+                                if (fileInputRef.current) {
+                                  fileInputRef.current.value = "";
+                                }
+                              }}
+                              themeColor="error"
+                              className="ml-2"
+                            >
+                              Remove
+                            </Button>
+                          )}
+                          <p className="text-sm text-gray-500">
+                            Recommended: Square image, at least 400x400 pixels
+                          </p>
+                        </div>
                       </div>
-                    </div>
+                    </PremiumCheck>
 
                     {/* Name Field */}
                     <Field
