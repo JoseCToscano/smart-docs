@@ -414,9 +414,22 @@ const AISidebar = forwardRef<AISidebarHandle, AISidebarProps>(({
                 themeColor="primary"
                 rounded="full"
                 size="small"
-                icon="caret-alt-up"
-                className="p-2"
-              />
+                className="w-8 h-8 flex items-center justify-center bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-sm transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:from-blue-600 disabled:hover:to-blue-700"
+              >
+                <svg 
+                  className="w-4 h-4 transform transition-transform group-hover:translate-y-[-1px]" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth={2} 
+                    d="M5 10l7-7m0 0l7 7m-7-7v18"
+                  />
+                </svg>
+              </Button>
             </div>
           </div>
           <div className="mt-2 text-xs text-gray-500 flex justify-between">

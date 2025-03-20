@@ -1816,11 +1816,14 @@ IMPORTANT GUIDELINES:
       {/* Main App Toolbar */}
       <AppBar position="sticky" themeColor="light">
         <AppBarSection>
-          <Link href="/" className="flex items-center mr-6">
-            <span className="self-center text-xl font-semibold whitespace-nowrap text-blue-600">
-              SmartDocs
-            </span>
-          </Link>
+        <Link href="/" className="flex items-center group">
+                    <span className="flex items-center text-xl font-semibold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent group-hover:from-blue-700 group-hover:to-blue-900 transition-all duration-200">
+                      <svg className="h-6 w-6 text-blue-600 group-hover:text-blue-700 transition-colors mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      SmartDocs
+                    </span>
+                  </Link>
           <Tooltip anchorElement="target" position="bottom" content={() => document.title}>
             <Input
               value={document.title}
@@ -1884,12 +1887,12 @@ IMPORTANT GUIDELINES:
           }}
         >
           {/* Main Editor Area */}
-          <div className="h-full flex flex-col relative bg-gray-200 border-red-500"
+          <div className="h-full flex flex-col relative bg-gray-200"
           style={{ height: 'calc(100vh - 56px)' }} // Adjusted for AppBar height
           >
 
             {/* Document Settings Toolbar */}
-            <div className="w-full border-b border-gray-300 bg-white p-2 flex items-center flex-wrap">
+            <div className="w-full border-b border-gray-300 bg-gradient-to-b from-white/50 to-white/70 p-2 flex items-center flex-wrap">
               {/* File operations */}
               <div className="flex items-center mr-4">
                 <Tooltip anchorElement="target" position="bottom" content={() => "Open a Word document (.docx file)"}>
