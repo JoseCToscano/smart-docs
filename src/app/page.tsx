@@ -599,14 +599,3 @@ export default function HomePage() {
     </div>
   );
 }
-
-<style jsx global>{`
-  @keyframes fade-in {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  
-  .animate-fade-in {
-    animation-name: fade-in;
-  }
-`}</style>
