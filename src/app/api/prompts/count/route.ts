@@ -14,21 +14,31 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Get count of prompts for current user
-    const promptCount = await db.prompt.count({
-      where: {
-        user_id: userId,
-        // Optional: Add date filter if you want to reset counts periodically
-        // createdAt: {
-        //   gte: new Date(new Date().setDate(new Date().getDate() - 30)) // Last 30 days
-        // }
+    // Get user data including premium status and prompt count
+    const user = await db.user.findUnique({
+      where: { id: userId },
+      select: {
+        isPremium: true,
+        _count: {
+          select: { prompts: true }
+        }
       }
     });
+
+    if (!user) {
+      return NextResponse.json(
+        { error: "User not found" },
+        { status: 404 }
+      );
+    }
+
+    const promptCount = user._count.prompts;
 
     return NextResponse.json({
       total: promptCount,
       remaining: Math.max(0, 15 - promptCount),
-      limit: 15
+      limit: 15,
+      isPremium: user.isPremium
     });
 
   } catch (error) {

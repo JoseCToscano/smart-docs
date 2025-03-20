@@ -7,6 +7,7 @@ interface PromptCount {
   total: number;
   remaining: number;
   limit: number;
+  isPremium: boolean;
 }
 
 interface AISidebarProps {
@@ -201,21 +202,31 @@ const AISidebar = forwardRef<AISidebarHandle, AISidebarProps>(({
         <h2 className="text-lg font-semibold text-gray-800">AI Assistant</h2>
         <p className="text-xs text-gray-500 mt-1">Ask questions or request document changes</p>
         
-        {/* Add prompt count display */}
-        {promptCount && (
-          <div className={`mt-2 text-xs ${
-            promptCount.remaining <= 3 ? 'text-red-600' : 
-            promptCount.remaining <= 5 ? 'text-orange-600' : 
-            'text-gray-600'
-          }`}>
-            {promptCount.remaining > 0 ? (
-              <>
-                <span className="font-medium">{promptCount.remaining}</span> of{' '}
-                <span className="font-medium">{promptCount.limit}</span> free prompts remaining
-              </>
-            ) : (
-              <span className="font-medium">You have reached your limit of free prompts</span>
-            )}
+        {/* Show prompt count only for non-premium users */}
+        {promptCount && !promptCount.isPremium && (
+          <div className="mt-2 flex items-center justify-between">
+            <div className={`text-xs ${
+              promptCount.remaining <= 3 ? 'text-red-600' : 
+              promptCount.remaining <= 5 ? 'text-orange-600' : 
+              'text-gray-600'
+            }`}>
+              {promptCount.remaining > 0 ? (
+                <>
+                  <span className="font-medium">{promptCount.remaining}</span> of{' '}
+                  <span className="font-medium">{promptCount.limit}</span> free prompts remaining
+                </>
+              ) : (
+                <span className="font-medium">You have reached your limit of free prompts</span>
+              )}
+            </div>
+            <Button
+              onClick={() => window.location.href = '/settings'}
+              themeColor="primary"
+              size="small"
+              className="text-xs ml-2"
+            >
+              Upgrade
+            </Button>
           </div>
         )}
       </div>
