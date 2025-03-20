@@ -220,7 +220,7 @@ const AISidebar = forwardRef<AISidebarHandle, AISidebarProps>(({
               )}
             </div>
             <Button
-              onClick={() => window.location.href = '/settings'}
+              onClick={() => window.location.href = '/settings/profile'}
               themeColor="primary"
               size="small"
               className="text-xs ml-2"

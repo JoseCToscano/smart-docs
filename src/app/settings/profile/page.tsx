@@ -22,6 +22,17 @@ import {
   Avatar
 } from "@/components/kendo/free";
 import PremiumCheck from "@/components/PremiumCheck";
+import { Session } from "next-auth";
+
+interface ExtendedSession extends Session {
+  user: {
+    id: string;
+    name?: string | null;
+    email?: string | null;
+    image?: string | null;
+    isPremium?: boolean;
+  }
+}
 
 interface ProfileFormModel {
   name: string;
@@ -31,15 +42,43 @@ interface ProfileFormModel {
   language: string;
 }
 
+interface PromptCount {
+  total: number;
+  remaining: number;
+  limit: number;
+  isPremium: boolean;
+}
+
 export default function ProfileSettingsPage() {
   const router = useRouter();
-  const { data: session, status, update } = useSession();
+  const { data: session, status, update } = useSession() as { 
+    data: ExtendedSession | null;
+    status: "loading" | "authenticated" | "unauthenticated";
+    update: (data?: any) => Promise<ExtendedSession | null>;
+  };
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [promptCount, setPromptCount] = useState<PromptCount | null>(null);
+
+  // Fetch prompt count
+  const fetchPromptCount = async () => {
+    try {
+      const response = await fetch('/api/prompts/count');
+      if (!response.ok) throw new Error('Failed to fetch prompt count');
+      const data = await response.json();
+      setPromptCount(data);
+    } catch (error) {
+      console.error('Error fetching prompt count:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchPromptCount();
+  }, []);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -147,7 +186,37 @@ export default function ProfileSettingsPage() {
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <h1 className="text-xl font-semibold text-gray-900">Profile Settings</h1>
+          <div className="flex justify-between items-center">
+            <h1 className="text-xl font-semibold text-gray-900">Profile Settings</h1>
+            {promptCount && !promptCount.isPremium && (
+              <Button
+                onClick={() => window.location.href = "https://buy.stripe.com/test_00g02Pbdx65afzadQQ"}
+                themeColor="primary"
+                size="small"
+              >
+                Upgrade to Premium
+              </Button>
+            )}
+          </div>
+          {/* Show prompt count for non-premium users */}
+          {promptCount && !promptCount.isPremium && (
+            <div className="mt-2 flex items-center justify-between">
+              <div className={`text-xs ${
+                promptCount.remaining <= 3 ? 'text-red-600' : 
+                promptCount.remaining <= 5 ? 'text-orange-600' : 
+                'text-gray-600'
+              }`}>
+                {promptCount.remaining > 0 ? (
+                  <>
+                    <span className="font-medium">{promptCount.remaining}</span> of{' '}
+                    <span className="font-medium">{promptCount.limit}</span> free prompts remaining
+                  </>
+                ) : (
+                  <span className="font-medium">You have reached your limit of free prompts</span>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </header>
 
@@ -182,53 +251,68 @@ export default function ProfileSettingsPage() {
                 <FormElement>
                   <div className="space-y-6">
                     {/* Avatar Section */}
-                    <PremiumCheck>
-                      <div className="flex items-center space-x-4">
-                        <Avatar
-                          type="image"
-                          size="large"
-                        >
-                          <img 
-                            src={avatarPreview || session?.user?.image || "/default-avatar.png"} 
-                            alt={session?.user?.name || "User avatar"}
-                            className="w-full h-full object-cover rounded-full"
-                          />
-                        </Avatar>
-                        <div>
-                          <input
-                            type="file"
-                            ref={fileInputRef}
-                            className="hidden"
-                            accept="image/*"
-                            onChange={handleAvatarChange}
-                          />
-                          <Button
-                            onClick={() => fileInputRef.current?.click()}
-                            className="mb-2"
-                          >
-                            Change Avatar
-                          </Button>
-                          {avatarPreview && (
+                    <div className="flex items-center space-x-4">
+                      <Avatar
+                        type="image"
+                        size="large"
+                      >
+                        <img 
+                          src={session?.user?.image || "/default-avatar.png"} 
+                          alt={session?.user?.name || "User avatar"}
+                          className="w-full h-full object-cover rounded-full"
+                        />
+                      </Avatar>
+                      <div>
+                        {session?.user?.isPremium ? (
+                          <>
+                            <input
+                              type="file"
+                              ref={fileInputRef}
+                              className="hidden"
+                              accept="image/*"
+                              onChange={handleAvatarChange}
+                            />
                             <Button
-                              onClick={() => {
-                                setAvatarPreview(null);
-                                setAvatarFile(null);
-                                if (fileInputRef.current) {
-                                  fileInputRef.current.value = "";
-                                }
-                              }}
-                              themeColor="error"
-                              className="ml-2"
+                              onClick={() => fileInputRef.current?.click()}
+                              className="mb-2"
                             >
-                              Remove
+                              Change Avatar
                             </Button>
-                          )}
-                          <p className="text-sm text-gray-500">
-                            Recommended: Square image, at least 400x400 pixels
-                          </p>
-                        </div>
+                            {avatarPreview && (
+                              <Button
+                                onClick={() => {
+                                  setAvatarPreview(null);
+                                  setAvatarFile(null);
+                                  if (fileInputRef.current) {
+                                    fileInputRef.current.value = "";
+                                  }
+                                }}
+                                themeColor="error"
+                                className="ml-2"
+                              >
+                                Remove
+                              </Button>
+                            )}
+                            <p className="text-sm text-gray-500">
+                              Recommended: Square image, at least 400x400 pixels
+                            </p>
+                          </>
+                        ) : (
+                          <div>
+                            <p className="text-sm text-gray-600 mb-2">
+                              Upgrade to Premium to customize your avatar
+                            </p>
+                            <Button
+                              onClick={() => window.location.href = "https://buy.stripe.com/test_00g02Pbdx65afzadQQ"}
+                              themeColor="primary"
+                              size="small"
+                            >
+                              Upgrade to Premium
+                            </Button>
+                          </div>
+                        )}
                       </div>
-                    </PremiumCheck>
+                    </div>
 
                     {/* Name Field */}
                     <Field
