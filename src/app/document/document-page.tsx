@@ -1252,7 +1252,7 @@ IMPORTANT GUIDELINES:
         console.log("[DocumentPage] Found unconverted XML tags, fixing...");
         
         // Apply a direct fix
-        let fixedContent = editorContent
+        const fixedContent = editorContent
           .replace(/<addition>([\s\S]*?)<\/addition>/g, '<span class="ai-addition ai-badge highlight">$1</span>')
           .replace(/<deletion>([\s\S]*?)<\/deletion>/g, '<span class="ai-deletion ai-badge highlight">$1</span>');
           
@@ -1492,8 +1492,8 @@ IMPORTANT GUIDELINES:
   const contentHasMeaningfulChanges = (original: string, current: string): boolean => {
     if (!original || !current) return original !== current;
     
-    let normalizedOriginal = normalizeContent(original);
-    let normalizedCurrent = normalizeContent(current);
+    const normalizedOriginal = normalizeContent(original);
+    const normalizedCurrent = normalizeContent(current);
     
     // Log normalized content for debugging
     console.log("[contentHasMeaningfulChanges] Normalized original:", normalizedOriginal.substring(0, 100));

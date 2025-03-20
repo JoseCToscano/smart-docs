@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/server/auth";
+import { getServerSession } from "next-auth";
+import { authConfig } from "@/server/auth/config";
 import { db } from "@/server/db";
 import { z } from "zod";
 
@@ -12,7 +13,7 @@ const documentSchema = z.object({
 
 // GET /api/document - Get all documents for the authenticated user
 export async function GET(_req: NextRequest) {
-  const session = await auth();
+  const session = await getServerSession(authConfig);
   
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -44,7 +45,7 @@ export async function GET(_req: NextRequest) {
 
 // POST /api/document - Create a new document
 export async function POST(req: NextRequest) {
-  const session = await auth();
+  const session = await getServerSession(authConfig);
   
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

@@ -2,15 +2,14 @@ import "@/styles/globals.css";
 import "@progress/kendo-theme-default/dist/all.css";
 
 import { GeistSans } from "geist/font/sans";
-import { SessionProvider } from "next-auth/react";
 import { Metadata } from "next";
 import { Toaster } from 'react-hot-toast'
+import { Providers } from "@/components/Providers";
 
 export const metadata: Metadata = {
   title: "Document AI",
   description: "Document AI",
 };
-
 
 export default function RootLayout({
   children,
@@ -18,10 +17,10 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${GeistSans.variable}`}>
       <body>
-          <SessionProvider>
+          <Providers>
             <Toaster />
             {children}
-          </SessionProvider>
+          </Providers>
       </body>
     </html>
   );
