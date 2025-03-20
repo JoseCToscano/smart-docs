@@ -683,7 +683,7 @@ export default function HomePage() {
                 Choose the plan that's right for you
               </h2>
               <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                Early adopter special: Get lifetime access for just <span className="font-semibold text-indigo-700">$119</span> with <span className="font-semibold text-indigo-700">30,000 tokens/month included</span> plus 30% off any additional usage.
+                Early adopter special: Get lifetime access for just <span className="font-semibold text-indigo-700">$199</span> with <span className="font-semibold text-indigo-700">30,000 tokens/month included</span> plus 30% off any additional usage.
               </p>
             </div>
             
@@ -791,8 +791,8 @@ export default function HomePage() {
                   </div>
                   
                   <div className="mb-6">
-                    <span className="text-4xl font-bold text-gray-900">$119</span>
-                    <span className="text-gray-600 ml-1">one-time</span>
+                    <span className="text-4xl font-bold text-gray-900">$199</span>
+                    <span className="text-gray-600 ml-1">one-time payment</span>
                     <p className="text-sm text-gray-500 mt-1">Includes 30k tokens/month</p>
                   </div>
                   
