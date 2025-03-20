@@ -143,11 +143,6 @@ export default function HomePage() {
     }
     else if (animationState === 'document-final') {
       // Show finalized document
-      
-      // Remove timeout that would reset the animation
-      // timerRef.current = setTimeout(() => {
-      //   setAnimationState('reset');
-      // }, 4000);
     }
     else if (animationState === 'reset') {
       // Reset to beginning
@@ -226,22 +221,7 @@ export default function HomePage() {
               real-time editing, and enterprise-grade security.
             </p>
 
-            {/* Condensed Stats */}
-            <div className="flex justify-center gap-8 sm:gap-16 my-10">
-              <div>
-                <div className="text-3xl font-bold text-blue-600 mb-1">99%</div>
-                <div className="text-sm text-gray-600">Uptime</div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold text-blue-600 mb-1">10k+</div>
-                <div className="text-sm text-gray-600">Documents</div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold text-blue-600 mb-1">2.5k+</div>
-                <div className="text-sm text-gray-600">Users</div>
-              </div>
-            </div>
-
+            
             {/* CTA Button */}
             <div className="mt-6 mb-12">
               {status === "authenticated" ? (
@@ -283,6 +263,67 @@ export default function HomePage() {
             <div className="relative">
               <div className="absolute -left-20 top-0 w-16 h-16 bg-blue-200 rounded-full opacity-20"></div>
               <div className="absolute -right-12 bottom-12 w-20 h-20 bg-indigo-200 rounded-full opacity-30"></div>
+            </div>
+          </div>
+        </section>
+        
+        {/* Try it out section with zoomed-in document */}
+        <section className="py-8 md:py-12 relative z-10 overflow-hidden">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="relative">
+              {/* Typing text */}
+              <div className="text-center mb-8">
+                <h2 className="inline-block text-3xl md:text-4xl font-bold text-gray-900">
+                  Try it out for free!
+                </h2>
+              </div>
+              
+              {/* Zoomed document preview */}
+              <div className="relative mx-auto max-w-4xl overflow-hidden">
+                {/* Document top part (zoomed in) */}
+                <div className="relative mx-auto bg-white rounded-t-lg shadow-xl border border-gray-200 w-full max-w-4xl h-[300px] transform origin-top transition-all scale-105">
+                  {/* Document controls bar */}
+                  <div className="bg-white border-b border-gray-200 px-6 py-3 rounded-t-lg flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-red-400"></div>
+                      <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
+                      <div className="w-3 h-3 rounded-full bg-green-400"></div>
+                    </div>
+                    <div className="flex-1 text-center">
+                      <span className="text-sm font-medium text-gray-600">New Document.docx</span>
+                    </div>
+                    <div className="text-blue-600">
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" />
+                      </svg>
+                    </div>
+                  </div>
+                  
+                  {/* Document content - blank state */}
+                  <div className="p-8 flex flex-col items-center">
+                    <svg className="w-20 h-20 text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <p className="text-gray-500 text-lg text-center max-w-xl">Just tell the AI what you need, and watch your document take shape instantly...</p>
+                  </div>
+                  
+                  {/* Document gradient fade at bottom to create cut-off effect */}
+                  <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-b from-transparent to-white pointer-events-none"></div>
+                </div>
+                
+                {/* Decorative elements */}
+                <div className="absolute -top-6 -left-10 w-16 h-16 bg-blue-100 rounded-full opacity-40 z-0"></div>
+                <div className="absolute top-1/2 -right-8 w-24 h-24 bg-indigo-100 rounded-full opacity-30 z-0"></div>
+              </div>
+              
+              {/* Animated arrow pointing down to main demo */}
+              <div className="mt-8 flex justify-center">
+                <div className="animate-bounce bg-blue-500 p-2 w-10 h-10 ring-1 ring-blue-300 shadow-lg rounded-full">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                  </svg>
+                </div>
+              </div>
             </div>
           </div>
         </section>
