@@ -188,11 +188,11 @@ export default function HomePage() {
   
   return (
     <div className="min-h-screen relative overflow-hidden bg-blue-50">
-      {/* Fluid Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-100 via-blue-200 to-indigo-300 opacity-70"></div>
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(59,130,246,0.3)_10%,rgba(99,102,241,0.4)_30%,rgba(147,197,253,0.2)_50%,transparent_80%)] blur-xl"></div>
-      <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-blue-300/30 to-transparent transform rotate-1 scale-110 origin-bottom-left"></div>
-      <div className="absolute inset-0 backdrop-blur-[1px]"></div>
+      {/* Fluid Background - applied to entire page */}
+      <div className="fixed inset-0 bg-gradient-to-br from-blue-100 via-blue-200 to-indigo-300 opacity-70"></div>
+      <div className="fixed inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(59,130,246,0.3)_10%,rgba(99,102,241,0.4)_30%,rgba(147,197,253,0.2)_50%,transparent_80%)] blur-xl"></div>
+      <div className="fixed bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-blue-300/30 to-transparent transform rotate-1 scale-110 origin-bottom-left"></div>
+      <div className="fixed inset-0 backdrop-blur-[1px]"></div>
 
       {/* Header - Blended with page */}
       <header className="relative z-10">
@@ -211,154 +211,89 @@ export default function HomePage() {
       </header>
 
       <main className="relative">
-        {/* Hero and Card Section */}
-        <section className="py-16 md:py-24 lg:py-32 relative z-10">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col lg:flex-row items-center lg:items-start gap-12 lg:gap-16">
-              {/* Hero Content - Left Side */}
-              <div className="lg:w-1/2 lg:pt-8">
-                <div className="max-w-xl">
-                  <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 tracking-tight mb-6">
-                    Document{" "}
-                    <span className="block">Management,</span>
-                    <span className="text-blue-600">
-                      Reimagined
-                    </span>
-                  </h1>
-                  <p className="text-lg md:text-xl text-gray-700 mb-8 leading-relaxed">
-                    Experience the future of intelligent document collaboration with AI-powered assistance,
-                    real-time editing, and enterprise-grade security.
-                  </p>
+        {/* Centered Hero Section */}
+        <section className="py-16 md:py-20 relative z-10">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 tracking-tight mb-6">
+              Document{" "}
+              <span className="block">Management,</span>
+              <span className="text-blue-600">
+                Reimagined
+              </span>
+            </h1>
+            <p className="text-lg md:text-xl text-gray-700 mb-8 leading-relaxed max-w-3xl mx-auto">
+              Experience the future of intelligent document collaboration with AI-powered assistance,
+              real-time editing, and enterprise-grade security.
+            </p>
 
-                  {/* Stats */}
-                  <div className="grid grid-cols-3 gap-4 text-center mt-10 mb-6">
-                    <div>
-                      <div className="text-3xl font-bold text-blue-600 mb-1">99%</div>
-                      <div className="text-sm text-gray-600">Uptime</div>
-                    </div>
-                    <div>
-                      <div className="text-3xl font-bold text-blue-600 mb-1">10k+</div>
-                      <div className="text-sm text-gray-600">Documents</div>
-                    </div>
-                    <div>
-                      <div className="text-3xl font-bold text-blue-600 mb-1">2.5k+</div>
-                      <div className="text-sm text-gray-600">Users</div>
-                    </div>
-                  </div>
-
-                  {/* Floating Elements */}
-                  <div className="hidden lg:block absolute -left-12 bottom-10 opacity-30">
-                    <div className="w-32 h-32 bg-blue-200 rounded-full"></div>
-                  </div>
-                </div>
+            {/* Condensed Stats */}
+            <div className="flex justify-center gap-8 sm:gap-16 my-10">
+              <div>
+                <div className="text-3xl font-bold text-blue-600 mb-1">99%</div>
+                <div className="text-sm text-gray-600">Uptime</div>
               </div>
-
-              {/* Card - Right Side with Stacked Effect */}
-              <div className="lg:w-1/2 relative perspective-1000">
-                {/* Background Cards (Stacked 3D Effect) */}
-                <div className="absolute top-8 -left-6 w-full max-w-xl opacity-20 rounded-xl bg-white/80 h-[480px] shadow-sm border border-gray-200/50 [transform:rotateX(8deg)_rotateY(-16deg)_translateZ(-20px)]"></div>
-                <div className="absolute top-4 -left-3 w-full max-w-xl opacity-40 rounded-xl bg-white/90 h-[480px] shadow-sm border border-gray-200/70 [transform:rotateX(4deg)_rotateY(-8deg)_translateZ(-10px)]"></div>
-                
-                {/* Main Card */}
-                <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-xl max-w-xl w-full mx-auto overflow-hidden relative [transform:rotateX(0deg)_rotateY(0deg)_translateZ(0px)] transition-transform duration-300 hover:[transform:rotateX(2deg)_rotateY(-4deg)_translateZ(10px)]">
-                  {/* Card Header */}
-                  <div className="flex items-center gap-3 px-6 py-4 border-b bg-white/90">
-                    <div className="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
-                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                    </div>
-                    <h2 className="text-xl font-medium text-gray-800">Document Editor</h2>
-                  </div>
-                  
-                  {/* Card Content - Document Editor Style */}
-                  <div className="p-6 pb-8">
-                    {/* Document Preview Area */}
-                    <div className="mb-6 bg-gray-50 rounded-lg p-4 border border-gray-200">
-                      <div className="flex items-center gap-2 mb-3">
-                        <div className="w-3 h-3 rounded-full bg-red-400"></div>
-                        <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
-                        <div className="w-3 h-3 rounded-full bg-green-400"></div>
-                        <div className="flex-1 text-center">
-                          <span className="text-xs text-gray-500">Untitled Document.docx</span>
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <div className="h-4 bg-blue-100 rounded w-3/4"></div>
-                        <div className="h-3 bg-gray-100 rounded w-full"></div>
-                        <div className="h-3 bg-gray-100 rounded w-5/6"></div>
-                        <div className="h-3 bg-gray-100 rounded w-full"></div>
-                        <div className="h-3 bg-gray-100 rounded w-4/5"></div>
-                        <div className="h-3 bg-gray-100 rounded w-full"></div>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-5 mb-8">
-                      <div className="flex gap-4 items-start group transition-all hover:-translate-y-1 duration-200">
-                        <div className="w-6 h-6 flex items-center justify-center rounded-full bg-blue-100 text-blue-700 font-medium mt-0.5">
-                          1
-                        </div>
-                        <p className="text-gray-600 flex-1">Create and format documents with intuitive editing tools</p>
-                      </div>
-                      <div className="flex gap-4 items-start group transition-all hover:-translate-y-1 duration-200">
-                        <div className="w-6 h-6 flex items-center justify-center rounded-full bg-blue-100 text-blue-700 font-medium mt-0.5">
-                          2
-                        </div>
-                        <p className="text-gray-600 flex-1">Collaborate in real-time with comments and suggestions</p>
-                      </div>
-                      <div className="flex gap-4 items-start group transition-all hover:-translate-y-1 duration-200">
-                        <div className="w-6 h-6 flex items-center justify-center rounded-full bg-blue-100 text-blue-700 font-medium mt-0.5">
-                          3
-                        </div>
-                        <p className="text-gray-600 flex-1">Get AI-powered writing assistance and formatting suggestions</p>
-                      </div>
-                    </div>
-                    
-                    {status === "authenticated" ? (
-                      <div className="flex flex-col gap-3">
-                        <Button
-                          themeColor="primary"
-                          onClick={() => router.push("/documents")}
-                          size="large"
-                          className="w-full py-3 bg-blue-600 hover:bg-blue-700"
-                        >
-                          My Documents
-                        </Button>
-                        <Button
-                          themeColor="base"
-                          onClick={() => router.push("/document")}
-                          size="large"
-                          className="w-full py-3"
-                        >
-                          Create New Document
-                        </Button>
-                      </div>
-                    ) : status === "loading" ? (
-                      <div className="flex justify-center items-center py-4">
-                        <div className="w-6 h-6 border-t-2 border-b-2 border-blue-500 rounded-full animate-spin"></div>
-                      </div>
-                    ) : (
-                      <Button
-                        themeColor="primary"
-                        onClick={signIn}
-                        size="large"
-                        className="w-full py-3 bg-red-500 hover:bg-red-600"
-                      >
-                        Get Started
-                      </Button>
-                    )}
-                  </div>
-                </div>
+              <div>
+                <div className="text-3xl font-bold text-blue-600 mb-1">10k+</div>
+                <div className="text-sm text-gray-600">Documents</div>
               </div>
+              <div>
+                <div className="text-3xl font-bold text-blue-600 mb-1">2.5k+</div>
+                <div className="text-sm text-gray-600">Users</div>
+              </div>
+            </div>
+
+            {/* CTA Button */}
+            <div className="mt-6 mb-12">
+              {status === "authenticated" ? (
+                <div className="flex gap-4 justify-center">
+                  <Button
+                    themeColor="primary"
+                    onClick={() => router.push("/documents")}
+                    size="large"
+                    className="px-8 py-3 bg-blue-600 hover:bg-blue-700"
+                  >
+                    My Documents
+                  </Button>
+                  <Button
+                    themeColor="base"
+                    onClick={() => router.push("/document")}
+                    size="large"
+                    className="px-8 py-3"
+                  >
+                    Create New Document
+                  </Button>
+                </div>
+              ) : status === "loading" ? (
+                <div className="flex justify-center items-center py-4">
+                  <div className="w-6 h-6 border-t-2 border-b-2 border-blue-500 rounded-full animate-spin"></div>
+                </div>
+              ) : (
+                <Button
+                  themeColor="primary"
+                  onClick={signIn}
+                  size="large"
+                  className="px-8 py-3 bg-blue-600 hover:bg-blue-700"
+                >
+                  Get Started
+                </Button>
+              )}
+            </div>
+
+            {/* Decorative Elements */}
+            <div className="relative">
+              <div className="absolute -left-20 top-0 w-16 h-16 bg-blue-200 rounded-full opacity-20"></div>
+              <div className="absolute -right-12 bottom-12 w-20 h-20 bg-indigo-200 rounded-full opacity-30"></div>
             </div>
           </div>
         </section>
         
-        {/* AI Chat Editor Section */}
-        <section className="py-16 md:py-24 bg-gradient-to-br from-blue-50 to-indigo-50 relative z-10">
+        {/* AI Chat Editor Section - Now more prominent */}
+        <section className="py-12 md:py-16 relative z-10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
+              <span className="inline-block px-3 py-1 text-sm font-medium text-blue-700 bg-blue-100 rounded-full mb-3">
+                AI-Powered
+              </span>
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Edit Documents with AI Chat</h2>
               <p className="text-lg text-gray-700 max-w-3xl mx-auto">
                 Simply tell our AI assistant what you want to change, and watch as your document transforms in real-time.
@@ -464,7 +399,7 @@ export default function HomePage() {
                     </div>
                     <div className="flex-1 text-center">
                       <span className="text-xs font-medium text-gray-600">
-                        {documentState === 'blank' ? 'New Document.docx' : 'Web Developer Contractor Agreement.docx'}
+                        {documentState === 'blank' ? 'New Document.docx' : 'Web_Developer_Contractor_Agreement.docx'}
                       </span>
                     </div>
                     <div className="text-blue-600 hover:text-blue-800 transition-colors">
