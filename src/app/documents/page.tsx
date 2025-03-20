@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { Button, Input } from "@/components/kendo/free";
+import { Card, CardHeader, CardTitle, CardBody, CardActions } from "@/components/kendo/free/Card";
 import { UserProfile } from "@/components/UserProfile";
 import { DocumentSummary } from "@/types";
 import { 
@@ -176,11 +177,8 @@ export default function DocumentsPage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {documents.map((doc) => (
-              <div
-                key={doc.id}
-                className="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden"
-              >
-                <div className="p-5">
+              <Card key={doc.id}>
+                <CardHeader>
                   {editingTitleId === doc.id ? (
                     <div className="mb-2">
                       <Input
@@ -196,19 +194,21 @@ export default function DocumentsPage() {
                       </div>
                     </div>
                   ) : (
-                    <h2 
-                      className="text-lg font-medium text-gray-900 truncate mb-2 cursor-pointer hover:text-blue-600"
-                      onClick={() => startEditingTitle(doc)}
-                      title="Click to edit title"
-                    >
-                      {doc.title}
-                    </h2>
+                    <CardTitle>
+                      <span 
+                        className="cursor-pointer hover:text-blue-600"
+                        onClick={() => startEditingTitle(doc)}
+                        title="Click to edit title"
+                      >
+                        {doc.title}
+                      </span>
+                    </CardTitle>
                   )}
                   <p className="text-sm text-gray-500">
                     Last edited: {new Date(doc.updatedAt).toLocaleString()}
                   </p>
-                </div>
-                <div className="bg-gray-50 px-5 py-3 border-t border-gray-200 flex justify-between">
+                </CardHeader>
+                <CardActions>
                   <Link
                     href={`/document/${doc.id}`}
                     className="text-blue-600 hover:text-blue-800 text-sm font-medium"
@@ -221,8 +221,8 @@ export default function DocumentsPage() {
                   >
                     Delete
                   </button>
-                </div>
-              </div>
+                </CardActions>
+              </Card>
             ))}
           </div>
         )}
