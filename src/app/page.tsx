@@ -229,7 +229,7 @@ export default function HomePage() {
     
         
         {/* AI Chat Editor Section - Now more prominent */}
-        <section className="py-12 md:py-20 lg:py-24 relative z-10 overflow-hidden">
+        <section className="pt-12 relative z-10 overflow-hidden">
           {/* Decorative background elements */}
           <div className="absolute inset-0 opacity-30">
             <div className="absolute top-20 right-[10%] w-64 h-64 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl"></div>
@@ -286,13 +286,20 @@ export default function HomePage() {
                     themeColor="primary"
                     onClick={signIn}
                     size="large"
-                    className="px-10 py-4 bg-blue-600 hover:bg-blue-700 text-base font-semibold shadow-lg transition-all duration-300 transform hover:scale-105"
+                    className="relative px-10 py-4 bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 text-white text-base font-bold rounded-xl shadow-lg hover:shadow-blue-500/30 transition-all duration-300 hover:scale-[1.03] group overflow-hidden"
                   >
-                    Get Started
+                    <span className="relative z-10">Try it out for free</span>
+                    <span className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-blue-500 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                    <span className="absolute -inset-3 bg-gradient-to-r from-blue-400 to-indigo-400 blur-xl opacity-30 group-hover:opacity-50 transition-opacity duration-300 -z-10"></span>
+                    <span className="absolute right-2 top-1/2 transform -translate-y-1/2 transition-transform duration-300 group-hover:translate-x-1">
+                      <svg className="w-5 h-5 text-white opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                      </svg>
+                    </span>
                   </Button>
-                  <a href="#demo" className="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-2 py-2">
+                  <a href="#demo" className="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-2 py-2 hover:underline transition-all duration-200">
                     See how it works
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-4 h-4 transition-transform duration-200 group-hover:translate-y-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                     </svg>
                   </a>
