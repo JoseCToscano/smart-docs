@@ -29,12 +29,12 @@ export default function HomePage() {
       <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-blue-300/30 to-transparent transform rotate-1 scale-110 origin-bottom-left"></div>
       <div className="absolute inset-0 backdrop-blur-[1px]"></div>
 
-      {/* Header */}
-      <header className="relative bg-white/70 backdrop-blur-sm shadow-sm">
+      {/* Header - Blended with page */}
+      <header className="relative z-10">
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
+          <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <h1 className="text-xl font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              <h1 className="text-xl font-semibold text-blue-600">
                 Smart Docs
               </h1>
             </div>
@@ -54,8 +54,9 @@ export default function HomePage() {
               <div className="lg:w-1/2 lg:pt-8">
                 <div className="max-w-xl">
                   <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 tracking-tight mb-6">
-                    Document Management,{" "}
-                    <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                    Document{" "}
+                    <span className="block">Management,</span>
+                    <span className="text-blue-600">
                       Reimagined
                     </span>
                   </h1>
@@ -103,9 +104,9 @@ export default function HomePage() {
                   
                   {/* Card Content */}
                   <div className="p-6">
-                    <div className="flex justify-center mb-10">
-                      <div className="w-32 h-32 bg-blue-50 rounded-xl flex items-center justify-center p-4">
-                        <svg className="w-full h-full text-blue-500 transform rotate-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div className="flex justify-center mb-8">
+                      <div className="w-24 h-24 bg-blue-50 rounded-xl flex items-center justify-center p-3">
+                        <svg className="w-full h-full text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                           <path d="M14 3v4a1 1 0 001 1h4" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
                         </svg>
@@ -161,7 +162,7 @@ export default function HomePage() {
                         themeColor="primary"
                         onClick={signIn}
                         size="large"
-                        className="w-full py-3 bg-blue-600 hover:bg-blue-700"
+                        className="w-full py-3 bg-red-500 hover:bg-red-600"
                       >
                         Get Started
                       </Button>
