@@ -23,6 +23,8 @@ import {
 } from "@/components/kendo/free";
 import PremiumCheck from "@/components/PremiumCheck";
 import { Session } from "next-auth";
+import { UserProfile } from "@/components/UserProfile";
+import Link from "next/link";
 
 interface ExtendedSession extends Session {
   user: {
@@ -186,17 +188,33 @@ export default function ProfileSettingsPage() {
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
-            <h1 className="text-xl font-semibold text-gray-900">Profile Settings</h1>
-            {promptCount && !promptCount.isPremium && (
-              <Button
-                onClick={() => window.location.href = "https://buy.stripe.com/test_00g02Pbdx65afzadQQ?prefilled_email=" + session?.user?.email}
-                themeColor="primary"
-                size="small"
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <Link 
+                href="/documents" 
+                className="text-gray-600 hover:text-gray-900 flex items-center"
               >
-                Upgrade to Premium
-              </Button>
-            )}
+                <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+                </svg>
+                Back to Documents
+              </Link>
+              <div className="h-4 w-px bg-gray-300"></div>
+              <h1 className="text-xl font-semibold text-gray-900">Profile Settings</h1>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              {promptCount && !promptCount.isPremium && (
+                <Button
+                  onClick={() => window.location.href = "https://buy.stripe.com/test_00g02Pbdx65afzadQQ?prefilled_email=" + session?.user?.email}
+                  themeColor="primary"
+                  size="small"
+                >
+                  Upgrade to Premium
+                </Button>
+              )}
+              <UserProfile />
+            </div>
           </div>
         </div>
       </header>

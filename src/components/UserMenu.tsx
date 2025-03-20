@@ -2,9 +2,11 @@
 
 import { useSession, signIn, signOut } from "next-auth/react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export const UserMenu = () => {
   const { data: session, status } = useSession();
+  const pathname = usePathname();
   
   if (status === "loading") {
     return (
@@ -35,12 +37,26 @@ export const UserMenu = () => {
       </div>
       <ul className="space-y-1">
         <li>
-          <button className="w-full text-left px-3 py-1.5 text-sm hover:bg-gray-100 rounded">
+          <Link 
+            href="/settings/profile"
+            className={`block w-full text-left px-3 py-1.5 text-sm rounded ${
+              pathname === '/settings/profile' 
+                ? 'bg-blue-50 text-blue-700' 
+                : 'hover:bg-gray-100'
+            }`}
+          >
             Profile Settings
-          </button>
+          </Link>
         </li>
         <li>
-          <Link href="/documents" className="block w-full text-left px-3 py-1.5 text-sm hover:bg-gray-100 rounded">
+          <Link 
+            href="/documents" 
+            className={`block w-full text-left px-3 py-1.5 text-sm rounded ${
+              pathname === '/documents' 
+                ? 'bg-blue-50 text-blue-700' 
+                : 'hover:bg-gray-100'
+            }`}
+          >
             My Documents
           </Link>
         </li>
