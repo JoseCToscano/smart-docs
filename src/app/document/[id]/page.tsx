@@ -3,13 +3,12 @@
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
-import DocumentPage from "../page";
+import DocumentPage from "../document-page";
 
 export default function DocumentByIdPage() {
   const router = useRouter();
   const params = useParams();
   const { status } = useSession();
-  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
   useEffect(() => {
@@ -18,7 +17,7 @@ export default function DocumentByIdPage() {
     }
   }, [status, router]);
   
-  if (status === "loading" || isLoading) {
+  if (status === "loading") {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <div className="w-8 h-8 border-t-2 border-b-2 border-blue-500 rounded-full animate-spin"></div>

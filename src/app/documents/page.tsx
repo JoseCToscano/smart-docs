@@ -1,12 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { Button } from "@/components/kendo/free";
+import { Button, Input } from "@/components/kendo/free";
 import { UserProfile } from "@/components/UserProfile";
 import { DocumentSummary } from "@/types";
+import { 
+  fetchUserDocuments, 
+  createDocument, 
+  deleteDocument, 
+  updateDocumentTitle 
+} from "@/utils/documentService";
 
 export default function DocumentsPage() {
   const router = useRouter();
@@ -14,18 +20,15 @@ export default function DocumentsPage() {
   const [documents, setDocuments] = useState<DocumentSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [editingTitleId, setEditingTitleId] = useState<string | null>(null);
+  const [newTitle, setNewTitle] = useState<string>("");
+  const titleInputRef = useRef<HTMLInputElement>(null);
   
   // Fetch user's documents
-  const fetchDocuments = async () => {
+  const getDocuments = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch("/api/document");
-      
-      if (!response.ok) {
-        throw new Error("Failed to fetch documents");
-      }
-      
-      const data = await response.json();
+      const data = await fetchUserDocuments();
       setDocuments(data);
     } catch (err) {
       console.error("Error fetching documents:", err);
@@ -37,30 +40,22 @@ export default function DocumentsPage() {
   
   useEffect(() => {
     if (status === "authenticated") {
-      fetchDocuments();
+      getDocuments();
     } else if (status === "unauthenticated") {
       router.push("/");
     }
   }, [status, router]);
   
+  useEffect(() => {
+    // Focus the input when editing starts
+    if (editingTitleId && titleInputRef.current) {
+      titleInputRef.current.focus();
+    }
+  }, [editingTitleId]);
+  
   const handleCreateDocument = async () => {
     try {
-      const response = await fetch("/api/document", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          title: "Untitled Document",
-          content: "<p></p>",
-        }),
-      });
-      
-      if (!response.ok) {
-        throw new Error("Failed to create document");
-      }
-      
-      const newDocument = await response.json();
+      const newDocument = await createDocument("Untitled Document");
       router.push(`/document/${newDocument.id}`);
     } catch (err) {
       console.error("Error creating document:", err);
@@ -74,13 +69,7 @@ export default function DocumentsPage() {
     }
     
     try {
-      const response = await fetch(`/api/document/${id}`, {
-        method: "DELETE",
-      });
-      
-      if (!response.ok) {
-        throw new Error("Failed to delete document");
-      }
+      await deleteDocument(id);
       
       // Remove the deleted document from the state
       setDocuments((prevDocuments) => 
@@ -89,6 +78,47 @@ export default function DocumentsPage() {
     } catch (err) {
       console.error("Error deleting document:", err);
       setError("Failed to delete the document. Please try again.");
+    }
+  };
+  
+  const startEditingTitle = (doc: DocumentSummary) => {
+    setEditingTitleId(doc.id);
+    setNewTitle(doc.title);
+  };
+  
+  const saveDocumentTitle = async () => {
+    if (!editingTitleId) return;
+    
+    try {
+      // Only update if the title actually changed
+      const doc = documents.find(d => d.id === editingTitleId);
+      if (doc && doc.title !== newTitle && newTitle.trim()) {
+        const updatedDoc = await updateDocumentTitle(editingTitleId, newTitle);
+        
+        // Update the document in the list
+        setDocuments(prevDocs => 
+          prevDocs.map(d => 
+            d.id === editingTitleId 
+              ? { ...d, title: updatedDoc.title, updatedAt: new Date(updatedDoc.updatedAt) } 
+              : d
+          )
+        );
+      }
+    } catch (err) {
+      console.error("Error updating document title:", err);
+      setError("Failed to update the document title. Please try again.");
+    } finally {
+      setEditingTitleId(null);
+      setNewTitle("");
+    }
+  };
+  
+  const handleTitleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      saveDocumentTitle();
+    } else if (e.key === 'Escape') {
+      setEditingTitleId(null);
+      setNewTitle("");
     }
   };
   
@@ -151,9 +181,29 @@ export default function DocumentsPage() {
                 className="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden"
               >
                 <div className="p-5">
-                  <h2 className="text-lg font-medium text-gray-900 truncate mb-2">
-                    {doc.title}
-                  </h2>
+                  {editingTitleId === doc.id ? (
+                    <div className="mb-2">
+                      <Input
+                        ref={titleInputRef}
+                        value={newTitle}
+                        onChange={(e) => setNewTitle(e.value)}
+                        onBlur={saveDocumentTitle}
+                        onKeyDown={handleTitleKeyDown}
+                        className="w-full"
+                      />
+                      <div className="text-xs text-gray-500 mt-1">
+                        Press Enter to save, Esc to cancel
+                      </div>
+                    </div>
+                  ) : (
+                    <h2 
+                      className="text-lg font-medium text-gray-900 truncate mb-2 cursor-pointer hover:text-blue-600"
+                      onClick={() => startEditingTitle(doc)}
+                      title="Click to edit title"
+                    >
+                      {doc.title}
+                    </h2>
+                  )}
                   <p className="text-sm text-gray-500">
                     Last edited: {new Date(doc.updatedAt).toLocaleString()}
                   </p>

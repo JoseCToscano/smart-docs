@@ -34,6 +34,9 @@ import { injectEditorStyles } from "@/utils/injectEditorStyles";
 import { normalizeContent } from "@/utils/normalizeContent";
 import { findNodeAndOffset } from "@/utils/findNodeAndOffset";
 import { UserProfile } from "@/components/UserProfile";
+import { updateDocumentTitle, debouncedUpdatePageSettings } from "@/utils/documentService";
+import { useDebounce } from "@/hooks/useDebounce";
+import { debounce } from "lodash";
 
 // Import all necessary editor tools
 const {
@@ -65,6 +68,7 @@ export default function DocumentPage({ documentId }: { documentId?: string }) {
     updatedAt: new Date(),
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [isTitleSaving, setIsTitleSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(documentId ? true : false);
   const [showSidebar, setShowSidebar] = useState(true);
   const [isAIProcessing, setIsAIProcessing] = useState(false);
@@ -94,25 +98,29 @@ export default function DocumentPage({ documentId }: { documentId?: string }) {
 
   // Add handlers for margin changes
   const handleMarginChange = (margin: 'top' | 'right' | 'bottom' | 'left', value: number) => {
-    setMargins(prev => ({
-      ...prev,
+    const newMargins = {
+      ...margins,
       [margin]: value
-    }));
+    };
     
-    // Trigger the animation effect
+    setMargins(newMargins);
     setMarginUpdateAnimation(true);
     
-    // Reset animation state after animation completes
+    // Save to server if we have a document ID
+    const docId = document?.id;
+    if (typeof docId === 'string') {
+      debouncedUpdatePageSettings(docId, pageSize, newMargins)
+    }
+    
     setTimeout(() => {
       setMarginUpdateAnimation(false);
-    }, 1000); // Match this to the CSS transition duration
+    }, 1000);
   };
   
   // Handler for page size changes
   const handlePageSizeChange = (newSize: PageSize) => {
     console.log("[DocumentPage] handlePageSizeChange called with:", newSize);
     
-    // Ensure newSize is a valid page size
     if (!pageSizes[newSize]) {
       console.warn(`Invalid page size: ${newSize}, defaulting to A4`);
       newSize = "A4";
@@ -121,10 +129,13 @@ export default function DocumentPage({ documentId }: { documentId?: string }) {
     setPageSize(newSize);
     console.log("[DocumentPage] Page dimensions updated to:", pageSizes[newSize].width, "x", pageSizes[newSize].height, "mm");
     
-    // Trigger the animation effect for the page size change
-    setMarginUpdateAnimation(true);
+    // Save to server if we have a document ID
+    const documentId = document?.id;
+    if (typeof documentId === 'string') {
+      debouncedUpdatePageSettings(documentId, newSize, margins)
+    }
     
-    // Reset animation state after animation completes
+    setMarginUpdateAnimation(true);
     setTimeout(() => {
       setMarginUpdateAnimation(false);
     }, 1000);
@@ -228,24 +239,108 @@ export default function DocumentPage({ documentId }: { documentId?: string }) {
     }
   };
 
-  const handleTitleChange = useCallback((e: any) => {
+  const debouncedUpdateTitle = useCallback(
+    debounce(async (id: string, title: string) => {
+      try {
+        if(title.length > 0) {
+          await updateDocumentTitle(id, title);
+          setLastSaved(`Last saved at ${new Date().toLocaleTimeString()}`);
+        }
+      } catch (err) {
+        console.error("Error updating document title:", err);
+      } finally {
+        setIsTitleSaving(false);
+      }
+    }, 500), // Adjust delay as needed
+    []
+  );
+
+  const handleTitleChange = useCallback(async(e: any) => {
     const newTitle = e.value;
+    
+    // Update local state immediately for responsive UI
     setDocument(prev => ({
       ...prev,
       title: newTitle,
-      updatedAt: new Date()
     }));
-  }, []);
+    
+    // If we have a document ID, update the title via the API
+    if (document.id) {
+      setIsTitleSaving(true);
+      try {
+        await debouncedUpdateTitle(document.id, newTitle);
+        // Show last saved indicator
+        const now = new Date();
+        setLastSaved(`Last saved at ${now.toLocaleTimeString()}`);
+      } catch (err) {
+        console.error("Error updating document title:", err);
+        // Revert to previous title if there was an error
+        // This could be enhanced with a toast notification
+      } finally {
+        setIsTitleSaving(false);
+      }
+    }
+  }, [document.id]);
 
+  // Handle title blur to ensure title is not empty
   const handleTitleBlur = useCallback(() => {
-    // Ensure title is not empty
     if (!document.title.trim()) {
       setDocument(prev => ({
         ...prev,
         title: "Untitled Document",
       }));
+      
+      // If we have a document ID, update the title via the API
+      if (document.id) {
+        updateDocumentTitle(document.id, "Untitled Document")
+          .catch(err => console.error("Error updating document title:", err));
+      }
     }
-  }, [document.title]);
+  }, [document.id, document.title]);
+
+  
+  const handleExport = useCallback(() => {
+    console.log("Exporting document...");
+    // PDF export functionality could be implemented here
+    alert("Export functionality will be implemented in a future update.");
+  }, []);
+
+  // Function to get the editor document and window
+  const getEditorDocument = (): Document | null => {
+    if (!editorRef.current) return null;
+    
+    let iframeElement = null;
+    
+    // Try to get the iframe element
+    if (editorRef.current.iframe) {
+      iframeElement = editorRef.current.iframe;
+    } else if (editorRef.current.element?.querySelector) {
+      iframeElement = editorRef.current.element.querySelector('iframe');
+    } else if (typeof window !== 'undefined') {
+      const editorElements = window.document.getElementsByClassName('k-editor');
+      if (editorElements.length > 0) {
+        const iframes = (editorElements[0] as HTMLElement).getElementsByTagName('iframe');
+        if (iframes.length > 0) {
+          iframeElement = iframes[0];
+        }
+      }
+    }
+    
+    if (iframeElement) {
+      return iframeElement.contentDocument || (iframeElement.contentWindow?.document as Document);
+    }
+    
+    return null;
+  };
+
+  // Get the editor's content as HTML string
+  const getEditorContent = (): string => {
+    const doc = getEditorDocument();
+    if (doc && doc.body) {
+      return doc.body.innerHTML;
+    }
+    return document.content;
+  };
 
   const handleSave = useCallback(async () => {
     setIsSaving(true);
@@ -292,49 +387,6 @@ export default function DocumentPage({ documentId }: { documentId?: string }) {
       setIsSaving(false);
     }
   }, [document.id, document.title, getEditorContent]);
-
-  const handleExport = useCallback(() => {
-    console.log("Exporting document...");
-    // PDF export functionality could be implemented here
-    alert("Export functionality will be implemented in a future update.");
-  }, []);
-
-  // Function to get the editor document and window
-  const getEditorDocument = (): Document | null => {
-    if (!editorRef.current) return null;
-    
-    let iframeElement = null;
-    
-    // Try to get the iframe element
-    if (editorRef.current.iframe) {
-      iframeElement = editorRef.current.iframe;
-    } else if (editorRef.current.element?.querySelector) {
-      iframeElement = editorRef.current.element.querySelector('iframe');
-    } else if (typeof window !== 'undefined') {
-      const editorElements = window.document.getElementsByClassName('k-editor');
-      if (editorElements.length > 0) {
-        const iframes = (editorElements[0] as HTMLElement).getElementsByTagName('iframe');
-        if (iframes.length > 0) {
-          iframeElement = iframes[0];
-        }
-      }
-    }
-    
-    if (iframeElement) {
-      return iframeElement.contentDocument || (iframeElement.contentWindow?.document as Document);
-    }
-    
-    return null;
-  };
-
-  // Get the editor's content as HTML string
-  const getEditorContent = (): string => {
-    const doc = getEditorDocument();
-    if (doc && doc.body) {
-      return doc.body.innerHTML;
-    }
-    return document.content;
-  };
 
 
   // Apply changes to the editor
@@ -1744,11 +1796,18 @@ IMPORTANT GUIDELINES:
         userId: data.userId
       });
       
+      // Set page settings if they exist
+      if (data.pageSize) {
+        setPageSize(data.pageSize);
+      }
+      if (data.margins) {
+        setMargins(data.margins);
+      }
+      
       // Force a re-render of the editor with the new content
       setEditorKey(prevKey => prevKey + 1);
     } catch (err) {
       console.error("Error loading document:", err);
-      // You could set an error state here if needed
     } finally {
       setIsLoading(false);
     }
@@ -1776,16 +1835,13 @@ IMPORTANT GUIDELINES:
               value={document.title}
               onChange={handleTitleChange}
               onBlur={handleTitleBlur}
-              className="w-64 font-medium"
-              style={{ 
-                border: 'none', 
-                boxShadow: 'none', 
-                background: 'transparent',
-                fontSize: '14px'
-              }}
+              className="w-64 font-medium border-none"
               aria-label="Document title"
             />
           </Tooltip>
+          {isTitleSaving && (
+            <span className="text-xs text-gray-500 animate-pulse ml-2">Saving title...</span>
+          )}
         </AppBarSection>
         
         <AppBarSpacer />
@@ -1853,7 +1909,7 @@ IMPORTANT GUIDELINES:
                     className="k-button-sm mr-2"
                     size="small"
                   >
-                    Open
+                    Load from file
                   </Button>
                 </Tooltip>
                 
@@ -1870,7 +1926,7 @@ IMPORTANT GUIDELINES:
                   </Button>
                 </Tooltip>
                 
-                <Tooltip anchorElement="target" position="bottom" content={() => "Export document as PDF"}>
+                {/* <Tooltip anchorElement="target" position="bottom" content={() => "Export document as PDF"}>
                   <Button 
                     themeColor="base"
                     onClick={handleExport}
@@ -1880,7 +1936,7 @@ IMPORTANT GUIDELINES:
                   >
                     Export
                   </Button>
-                </Tooltip>
+                </Tooltip> */}
               </div>
               
               {/* Separator */}
@@ -1897,7 +1953,7 @@ IMPORTANT GUIDELINES:
                     size="small"
                     title="Margin Settings"
                   >
-                    Margins
+                    Page settings
                   </Button>
                 </Tooltip>
               </div>
