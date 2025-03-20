@@ -8,12 +8,12 @@ import {
   AppBar, 
   AppBarSection, 
   AppBarSpacer, 
+  Tooltip
 } from "@/components/kendo/free";
 import { 
   Splitter,
   SplitterOnChangeEvent,
   SplitterPaneProps,
-  Tooltip
 } from "@/components/kendo";
 import "@progress/kendo-theme-default/dist/all.css";
 import "./styles.css";
@@ -32,6 +32,7 @@ import { findNodeAndOffset } from "@/utils/findNodeAndOffset";
 import { UserProfile } from "@/components/UserProfile";
 import { updateDocumentTitle, debouncedUpdatePageSettings } from "@/utils/documentService";
 import { debounce } from "lodash";
+import HTMLtoDOCX from 'html-to-docx';
 
 // Import all necessary editor tools
 const {
@@ -294,11 +295,54 @@ export default function DocumentPage({ documentId }: { documentId?: string }) {
   }, [document.id, document.title]);
 
   
-  const handleExport = useCallback(() => {
-    console.log("Exporting document...");
-    // PDF export functionality could be implemented here
-    alert("Export functionality will be implemented in a future update.");
-  }, []);
+  const handleExport = useCallback(async () => {
+    try {
+      // Get current content from the editor
+      const content = getEditorContent();
+      
+      // Get document title for the filename
+      const filename = document.title.replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'document';
+      
+      // Convert HTML to DOCX
+      const docxBuffer = await HTMLtoDOCX(content, null, {
+        table: { row: { cantSplit: true } },
+        footer: true,
+        pageNumber: true,
+        font: 'Calibri',
+        margins: {
+          top: margins.top * 0.0393701, // Convert px to inches (1 inch = 96px)
+          right: margins.right * 0.0393701,
+          bottom: margins.bottom * 0.0393701,
+          left: margins.left * 0.0393701,
+        },
+      });
+
+      // Create a Blob from the buffer
+      const blob = new Blob([docxBuffer], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+      
+      // Create a download link and trigger the download
+      const url = window.URL.createObjectURL(blob);
+      const link = window.document.createElement('a');
+      link.href = url;
+      link.download = `${filename}.docx`;
+      window.document.body.appendChild(link);
+      link.click();
+      
+      // Clean up
+      window.document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      // Add a confirmation message to the AI sidebar
+      if (aiSidebarRef.current && typeof aiSidebarRef.current.addAIResponse === 'function') {
+        aiSidebarRef.current.addAIResponse(
+          "I've exported your document to DOCX format. The download should start automatically."
+        );
+      }
+    } catch (error) {
+      console.error("Error exporting document:", error);
+      alert("Failed to export document. Please try again.");
+    }
+  }, [document.title, margins, getEditorContent]);
 
   // Function to get the editor document and window
   const getEditorDocument = (): Document | null => {
@@ -1920,17 +1964,17 @@ IMPORTANT GUIDELINES:
                   </Button>
                 </Tooltip>
                 
-                {/* <Tooltip anchorElement="target" position="bottom" content={() => "Export document as PDF"}>
+                <Tooltip anchorElement="target" position="bottom" content={() => "Export document as DOCX"}>
                   <Button 
                     themeColor="base"
                     onClick={handleExport}
-                    icon="pdf"
+                    icon="file"
                     className="k-button-sm"
                     size="small"
                   >
-                    Export
+                    Export DOCX
                   </Button>
-                </Tooltip> */}
+                </Tooltip>
               </div>
               
               {/* Separator */}
