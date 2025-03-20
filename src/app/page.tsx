@@ -3,6 +3,7 @@
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { Button } from "@/components/kendo/free";
 import { UserProfile } from "@/components/UserProfile";
@@ -64,7 +65,7 @@ export default function HomePage() {
           ) : (
             <Button
               themeColor="primary"
-              onClick={() => router.push("/api/auth/signin")}
+              onClick={signIn}
               size="large"
             >
               Sign in to get started
