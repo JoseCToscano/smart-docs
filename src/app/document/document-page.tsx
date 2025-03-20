@@ -32,7 +32,6 @@ import { findNodeAndOffset } from "@/utils/findNodeAndOffset";
 import { UserProfile } from "@/components/UserProfile";
 import { updateDocumentTitle, debouncedUpdatePageSettings } from "@/utils/documentService";
 import { debounce } from "lodash";
-import HTMLtoDOCX from 'html-to-docx';
 
 // Import all necessary editor tools
 const {
@@ -303,22 +302,25 @@ export default function DocumentPage({ documentId }: { documentId?: string }) {
       // Get document title for the filename
       const filename = document.title.replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'document';
       
-      // Convert HTML to DOCX
-      const docxBuffer = await HTMLtoDOCX(content, null, {
-        table: { row: { cantSplit: true } },
-        footer: true,
-        pageNumber: true,
-        font: 'Calibri',
-        margins: {
-          top: margins.top * 0.0393701, // Convert px to inches (1 inch = 96px)
-          right: margins.right * 0.0393701,
-          bottom: margins.bottom * 0.0393701,
-          left: margins.left * 0.0393701,
+      // Call our API endpoint
+      const response = await fetch('/api/document/export', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          content,
+          title: filename,
+          margins,
+        }),
       });
-
-      // Create a Blob from the buffer
-      const blob = new Blob([docxBuffer], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+      
+      if (!response.ok) {
+        throw new Error('Failed to generate DOCX');
+      }
+      
+      // Get the blob from the response
+      const blob = await response.blob();
       
       // Create a download link and trigger the download
       const url = window.URL.createObjectURL(blob);
