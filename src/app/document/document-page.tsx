@@ -294,57 +294,7 @@ export default function DocumentPage({ documentId }: { documentId?: string }) {
   }, [document.id, document.title]);
 
   
-  const handleExport = useCallback(async () => {
-    try {
-      // Get current content from the editor
-      const content = getEditorContent();
-      
-      // Get document title for the filename
-      const filename = document.title.replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'document';
-      
-      // Call our API endpoint
-      const response = await fetch('/api/document/export', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          content,
-          title: filename,
-          margins,
-        }),
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to generate DOCX');
-      }
-      
-      // Get the blob from the response
-      const blob = await response.blob();
-      
-      // Create a download link and trigger the download
-      const url = window.URL.createObjectURL(blob);
-      const link = window.document.createElement('a');
-      link.href = url;
-      link.download = `${filename}.docx`;
-      window.document.body.appendChild(link);
-      link.click();
-      
-      // Clean up
-      window.document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      
-      // Add a confirmation message to the AI sidebar
-      if (aiSidebarRef.current && typeof aiSidebarRef.current.addAIResponse === 'function') {
-        aiSidebarRef.current.addAIResponse(
-          "I've exported your document to DOCX format. The download should start automatically."
-        );
-      }
-    } catch (error) {
-      console.error("Error exporting document:", error);
-      alert("Failed to export document. Please try again.");
-    }
-  }, [document.title, margins, getEditorContent]);
+  
 
   // Function to get the editor document and window
   const getEditorDocument = (): Document | null => {
@@ -382,6 +332,65 @@ export default function DocumentPage({ documentId }: { documentId?: string }) {
     }
     return document.content;
   };
+
+const handleExport = useCallback(async () => {
+    try {
+      // Get current content from the editor
+      const content = getEditorContent();
+      
+      // Get document title for the filename
+      const filename = document.title.replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'document';
+      
+      // Get page dimensions in millimeters
+      const pageDims = pageSizes[pageSize] || pageSizes["A4"];
+      
+      // Call our API endpoint
+      const response = await fetch('/api/document/export', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content,
+          title: filename,
+          margins,
+          pageSize: {
+            width: pageDims.width,
+            height: pageDims.height,
+          }
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to generate DOCX');
+      }
+      
+      // Get the blob from the response
+      const blob = await response.blob();
+      
+      // Create a download link and trigger the download
+      const url = window.URL.createObjectURL(blob);
+      const link = window.document.createElement('a');
+      link.href = url;
+      link.download = `${filename}.docx`;
+      window.document.body.appendChild(link);
+      link.click();
+      
+      // Clean up
+      window.document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      // Add a confirmation message to the AI sidebar
+      if (aiSidebarRef.current && typeof aiSidebarRef.current.addAIResponse === 'function') {
+        aiSidebarRef.current.addAIResponse(
+          "I've exported your document to DOCX format. The download should start automatically."
+        );
+      }
+    } catch (error) {
+      console.error("Error exporting document:", error);
+      alert("Failed to export document. Please try again.");
+    }
+  }, [document.title, margins, pageSize, getEditorContent]);
 
   const handleSave = useCallback(async () => {
     setIsSaving(true);
@@ -1966,17 +1975,26 @@ IMPORTANT GUIDELINES:
                   </Button>
                 </Tooltip>
                 
-                <Tooltip anchorElement="target" position="bottom" content={() => "Export document as DOCX"}>
                   <Button 
                     themeColor="base"
                     onClick={handleExport}
                     icon="file"
                     className="k-button-sm"
                     size="small"
+
                   >
-                    Export DOCX
+                    <div className="flex flex-row items-center justify-center gap-2 px-2 py-1">
+                      <p>
+                        Export as 
+                        </p>
+                    <div className="bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 text-[10px] font-medium px-2 py-0.5 rounded-full flex items-center shadow-sm">
+                      <svg className="w-2.5 h-2.5 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                      </svg>
+                      .docx
+                    </div>
+                    </div>
                   </Button>
-                </Tooltip>
               </div>
               
               {/* Separator */}
