@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { env } from "@/env.js";
+import { db } from "@/server/db";
+import { auth } from "@/server/auth";
 import Anthropic from "@anthropic-ai/sdk";
 
 export const maxDuration = 60; // 60 seconds timeout for Edge function
 
 export async function POST(req: NextRequest) {
   try {
+    const session = await auth();
+    const userId = session?.user?.id;
+
     const { prompt, content } = await req.json();
 
     if (!prompt || !content) {
@@ -168,7 +173,7 @@ Always prioritize the USER's specific requests while using your expertise to hel
 `;
 
     const response = await anthropic.messages.create({
-      model: "claude-3-5-haiku-latest",
+      model: "claude-3-haiku-20240307",
       max_tokens: 4000,
       temperature: 0.7,
       system: [{
@@ -203,18 +208,30 @@ If my request is just a question with no document changes, only include the seco
         },
       ],
     });
-    console.log("Current Content:", content);
 
-    console.log("API Response from Claude:", {
-      status: "success",
-      contentLength: response.content[0]?.type === 'text' ? response.content[0].text.length : 0,
-      contentPreview: response.content[0]?.type === 'text' 
-        ? response.content[0].text.substring(0, 100) + "..." 
-        : "No text content",
+    // Log detailed cache metrics
+    console.log("Cache Performance Metrics:", {
+      totalInputTokens: response.usage.input_tokens,
+      cacheCreationTokens: response.usage.cache_creation_input_tokens ?? 0,
+      cacheReadTokens: response.usage.cache_read_input_tokens ?? 0,
+      outputTokens: response.usage.output_tokens,
+      timestamp: new Date().toISOString(),
+      hasCacheHit: (response.usage.cache_read_input_tokens ?? 0) > 0,
+      hasCacheCreation: (response.usage.cache_creation_input_tokens ?? 0) > 0,
     });
 
-    console.log("New Content:", response.content[0]?.type === 'text' ? response.content[0].text : 'Unable to process document');
-
+    await db.prompt.create({
+      data: {
+        userPrompt: prompt,
+        user_id: userId,
+        inputTokens: response.usage.input_tokens,
+        outputTokens: response.usage.output_tokens,
+        cache_read_input_tokens: response.usage.cache_read_input_tokens,
+        cache_creation_input_tokens: response.usage.cache_creation_input_tokens,
+        modelUsed: "claude-3-haiku-20240307",
+      },
+    });
+    
     // Get the content from the response safely
     let responseText = response.content[0]?.type === 'text' 
       ? response.content[0].text 
@@ -316,14 +333,7 @@ If my request is just a question with no document changes, only include the seco
 
     // Normalize line breaks (convert \r\n to \n)
     xmlContent = xmlContent.replace(/\r\n/g, '\n');
-    
-    console.log("Final processed response:", {
-      xmlContentLength: xmlContent.length,
-      userMessageLength: userMessage.length,
-      containsPlaceholders,
-      xmlContentPreview: xmlContent.substring(0, 100) + "...",
-      userMessagePreview: userMessage.substring(0, 100) + "..."
-    });
+  
 
     return NextResponse.json({
       xmlContent,
