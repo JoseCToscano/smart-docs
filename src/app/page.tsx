@@ -312,66 +312,82 @@ export default function HomePage() {
               </div>
               
               {/* Document Preview - Right Side */}
-              <div className="lg:w-1/2 bg-white rounded-xl shadow-xl overflow-hidden border border-gray-200 transition-all duration-300 hover:shadow-2xl">
-                <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-blue-50 to-indigo-50">
-                  <div className="flex items-center gap-3">
-                    <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    <h3 className="font-medium text-gray-800">Team Meeting Agenda.docx</h3>
-                  </div>
-                  <div className="flex gap-2">
-                    <button className="text-blue-600 hover:text-blue-800 transition-colors p-1 hover:bg-blue-50 rounded">
+              <div className="lg:w-1/2 relative min-h-[500px] perspective-1000">
+                {/* Floating decorative elements */}
+                <div className="absolute top-12 -right-6 w-12 h-12 rounded-full bg-blue-100 opacity-30"></div>
+                <div className="absolute bottom-20 -right-10 w-16 h-16 rounded-full bg-indigo-100 opacity-20"></div>
+                
+                {/* Floating Document */}
+                <div className="relative mx-auto transform-gpu transition-all duration-500 hover:rotate-1 [transform:rotateX(2deg)_rotateY(-1deg)]">
+                  {/* Document Controls Bar */}
+                  <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-sm px-5 py-2 rounded-t-lg shadow-sm border border-gray-200 flex items-center gap-4 w-4/5 max-w-md">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-red-400"></div>
+                      <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
+                      <div className="w-3 h-3 rounded-full bg-green-400"></div>
+                    </div>
+                    <div className="flex-1 text-center">
+                      <span className="text-sm font-medium text-gray-600">Team Meeting Agenda.docx</span>
+                    </div>
+                    <div className="text-blue-600 hover:text-blue-800 transition-colors">
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
                       </svg>
-                    </button>
-                    <button className="text-blue-600 hover:text-blue-800 transition-colors p-1 hover:bg-blue-50 rounded">
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                      </svg>
-                    </button>
+                    </div>
                   </div>
-                </div>
-                
-                <div className="p-6 h-[500px] overflow-y-auto bg-gray-50">
-                  <div className="max-w-2xl mx-auto bg-white shadow-sm rounded-lg p-8 border border-gray-100 transition-all duration-300 hover:shadow-md">
-                    <h1 className="text-2xl font-bold text-center text-gray-800 mb-6">Team Meeting Agenda</h1>
-                    <p className="text-gray-500 mb-6 text-center text-sm">Thursday, July 30, 2024 | 10:00 AM - 11:00 AM | Conference Room A</p>
+                  
+                  {/* Paper Document */}
+                  <div className="max-w-2xl mx-auto bg-white shadow-xl rounded-md p-10 border border-gray-100 transform transition-all duration-500 
+                    [transform-style:preserve-3d]
+                    [box-shadow:0_10px_20px_rgba(0,0,0,0.08),0_6px_6px_rgba(0,0,0,0.12),0_-2px_6px_rgba(0,0,0,0.03)]">
                     
-                    <div className="space-y-6">
-                      <div className="transform transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm rounded-lg p-3">
-                        <h2 className="text-lg font-semibold text-blue-700 mb-2">1. Project Updates (20 min)</h2>
-                        <ul className="list-disc pl-5 space-y-1 text-gray-700">
+                    {/* Paper texture and edge styling */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-gray-50 to-white rounded-md opacity-60 pointer-events-none"></div>
+                    <div className="absolute -left-1 top-10 bottom-10 w-1 bg-gradient-to-b from-gray-100 via-gray-200 to-gray-100 rounded-l-md transform -translate-x-0.5 shadow-sm pointer-events-none"></div>
+                    
+                    <h1 className="text-2xl font-bold text-center text-gray-800 mb-6 relative">Team Meeting Agenda</h1>
+                    <p className="text-gray-500 mb-8 text-center text-sm relative">Thursday, July 30, 2024 | 10:00 AM - 11:00 AM | Conference Room A</p>
+                    
+                    <div className="space-y-8 relative">
+                      <div className="transform transition-all duration-300 hover:-translate-y-1 hover:shadow-md rounded-lg p-4">
+                        <h2 className="text-lg font-semibold text-blue-700 mb-3">1. Project Updates (20 min)</h2>
+                        <ul className="list-disc pl-6 space-y-2 text-gray-700">
                           <li>Status updates from each team lead</li>
                           <li>Blockers and dependencies</li>
                           <li>Timeline adjustments if needed</li>
                         </ul>
                       </div>
                       
-                      <div className="transform transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm rounded-lg p-3">
-                        <h2 className="text-lg font-semibold text-blue-700 mb-2">2. Roadmap Planning (25 min)</h2>
-                        <ul className="list-disc pl-5 space-y-1 text-gray-700">
+                      <div className="transform transition-all duration-300 hover:-translate-y-1 hover:shadow-md rounded-lg p-4">
+                        <h2 className="text-lg font-semibold text-blue-700 mb-3">2. Roadmap Planning (25 min)</h2>
+                        <ul className="list-disc pl-6 space-y-2 text-gray-700">
                           <li>Review Q3 objectives</li>
                           <li>Discuss resource allocation</li>
                           <li>Prioritize upcoming features</li>
                         </ul>
                       </div>
                       
-                      <div className="transform transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm rounded-lg p-3">
-                        <h2 className="text-lg font-semibold text-blue-700 mb-2">3. Action Items Review (15 min)</h2>
-                        <ul className="list-disc pl-5 space-y-1 text-gray-700">
+                      <div className="transform transition-all duration-300 hover:-translate-y-1 hover:shadow-md rounded-lg p-4">
+                        <h2 className="text-lg font-semibold text-blue-700 mb-3">3. Action Items Review (15 min)</h2>
+                        <ul className="list-disc pl-6 space-y-2 text-gray-700">
                           <li>Follow-up on last meeting's action items</li>
                           <li>Assign new action items</li>
                           <li>Set deadlines and expectations</li>
                         </ul>
                       </div>
                       
-                      <div className="pt-4 border-t border-gray-200">
-                        <p className="text-sm text-gray-500">Note: Please come prepared with your updates. Send any materials you'd like to discuss to the team at least 2 hours before the meeting.</p>
+                      <div className="pt-6 border-t border-gray-200">
+                        <p className="text-sm text-gray-500 italic">Note: Please come prepared with your updates. Send any materials you'd like to discuss to the team at least 2 hours before the meeting.</p>
                       </div>
                     </div>
+                    
+                    {/* Page number */}
+                    <div className="absolute bottom-4 right-4 text-sm text-gray-400">1</div>
                   </div>
+                  
+                  {/* Shadow paper underneath - creates depth effect */}
+                  <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 w-[95%] h-[98%] bg-white rounded-md -z-10
+                    opacity-70 shadow-md [transform:rotateX(5deg)] blur-[1px]"></div>
                 </div>
               </div>
             </div>
