@@ -22,11 +22,11 @@ export default function HomePage() {
   }, [status, router]);
   
   return (
-    <div className="min-h-screen relative overflow-hidden bg-emerald-50">
+    <div className="min-h-screen relative overflow-hidden bg-blue-50">
       {/* Fluid Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-emerald-100 via-emerald-200 to-emerald-300 opacity-70"></div>
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(0,200,100,0.3)_10%,rgba(120,255,200,0.4)_30%,rgba(150,255,180,0.2)_50%,transparent_80%)] blur-xl"></div>
-      <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-emerald-300/30 to-transparent transform rotate-1 scale-110 origin-bottom-left"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-100 via-blue-200 to-indigo-300 opacity-70"></div>
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(59,130,246,0.3)_10%,rgba(99,102,241,0.4)_30%,rgba(147,197,253,0.2)_50%,transparent_80%)] blur-xl"></div>
+      <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-blue-300/30 to-transparent transform rotate-1 scale-110 origin-bottom-left"></div>
       <div className="absolute inset-0 backdrop-blur-[1px]"></div>
 
       {/* Header */}
@@ -34,7 +34,7 @@ export default function HomePage() {
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center">
-              <h1 className="text-xl font-semibold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
+              <h1 className="text-xl font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                 Smart Docs
               </h1>
             </div>
@@ -46,109 +46,129 @@ export default function HomePage() {
       </header>
 
       <main className="relative">
-        {/* Hero Section */}
-        <section className="pt-16 pb-8 md:pt-20 md:pb-12 relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-10 md:mb-16">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 tracking-tight mb-4">
-              Document Management,{" "}
-              <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
-                Reimagined
-              </span>
-            </h1>
-            <p className="text-lg md:text-xl text-gray-700 max-w-3xl mx-auto">
-              Experience the future of intelligent document collaboration with AI-powered assistance,
-              real-time editing, and enterprise-grade security.
-            </p>
-          </div>
+        {/* Hero and Card Section */}
+        <section className="py-16 md:py-24 lg:py-32 relative z-10">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col lg:flex-row items-center lg:items-start gap-12 lg:gap-16">
+              {/* Hero Content - Left Side */}
+              <div className="lg:w-1/2 lg:pt-8">
+                <div className="max-w-xl">
+                  <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 tracking-tight mb-6">
+                    Document Management,{" "}
+                    <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                      Reimagined
+                    </span>
+                  </h1>
+                  <p className="text-lg md:text-xl text-gray-700 mb-8 leading-relaxed">
+                    Experience the future of intelligent document collaboration with AI-powered assistance,
+                    real-time editing, and enterprise-grade security.
+                  </p>
 
-          {/* Floating Elements */}
-          <div className="hidden md:block absolute -right-16 top-10 opacity-30">
-            <div className="w-40 h-40 bg-teal-100 rounded-3xl rotate-12"></div>
-          </div>
-          <div className="hidden md:block absolute -left-12 bottom-10 opacity-30">
-            <div className="w-32 h-32 bg-emerald-200 rounded-full"></div>
-          </div>
-        </section>
-        
-        {/* Card Section */}
-        <section className="flex items-center justify-center py-8 md:py-12 relative z-10">
-          {/* Modal-like Card */}
-          <div className="bg-white rounded-xl shadow-xl max-w-xl w-full mx-4 overflow-hidden">
-            {/* Card Header */}
-            <div className="flex items-center gap-3 px-6 py-4 border-b">
-              <div className="w-8 h-8 bg-emerald-500 rounded-md flex items-center justify-center">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-              </div>
-              <h2 className="text-xl font-medium text-gray-800">Documents</h2>
-            </div>
-            
-            {/* Card Content */}
-            <div className="p-6">
-              <div className="flex justify-center mb-10">
-                <div className="w-32 h-32 bg-emerald-50 rounded-xl flex items-center justify-center p-4">
-                  <svg className="w-full h-full text-emerald-500 transform rotate-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    <path d="M14 3v4a1 1 0 001 1h4" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
-                  </svg>
+                  {/* Stats */}
+                  <div className="grid grid-cols-3 gap-4 text-center mt-10 mb-6">
+                    <div>
+                      <div className="text-3xl font-bold text-blue-600 mb-1">99%</div>
+                      <div className="text-sm text-gray-600">Uptime</div>
+                    </div>
+                    <div>
+                      <div className="text-3xl font-bold text-blue-600 mb-1">10k+</div>
+                      <div className="text-sm text-gray-600">Documents</div>
+                    </div>
+                    <div>
+                      <div className="text-3xl font-bold text-blue-600 mb-1">2.5k+</div>
+                      <div className="text-sm text-gray-600">Users</div>
+                    </div>
+                  </div>
+
+                  {/* Floating Elements */}
+                  <div className="hidden lg:block absolute -left-12 bottom-10 opacity-30">
+                    <div className="w-32 h-32 bg-blue-200 rounded-full"></div>
+                  </div>
                 </div>
               </div>
-              
-              <div className="space-y-5 mb-8">
-                <div className="flex gap-4 items-start">
-                  <div className="w-6 h-6 flex items-center justify-center rounded-full bg-emerald-100 text-emerald-700 font-medium mt-0.5">
-                    1
+
+              {/* Card - Right Side */}
+              <div className="lg:w-1/2">
+                {/* Modal-like Card */}
+                <div className="bg-white rounded-xl shadow-xl max-w-xl w-full mx-auto overflow-hidden">
+                  {/* Card Header */}
+                  <div className="flex items-center gap-3 px-6 py-4 border-b">
+                    <div className="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
+                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </div>
+                    <h2 className="text-xl font-medium text-gray-800">Documents</h2>
                   </div>
-                  <p className="text-gray-600 flex-1">Create and manage intelligent documents with AI assistance</p>
-                </div>
-                <div className="flex gap-4 items-start">
-                  <div className="w-6 h-6 flex items-center justify-center rounded-full bg-emerald-100 text-emerald-700 font-medium mt-0.5">
-                    2
+                  
+                  {/* Card Content */}
+                  <div className="p-6">
+                    <div className="flex justify-center mb-10">
+                      <div className="w-32 h-32 bg-blue-50 rounded-xl flex items-center justify-center p-4">
+                        <svg className="w-full h-full text-blue-500 transform rotate-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          <path d="M14 3v4a1 1 0 001 1h4" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
+                        </svg>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-5 mb-8">
+                      <div className="flex gap-4 items-start">
+                        <div className="w-6 h-6 flex items-center justify-center rounded-full bg-blue-100 text-blue-700 font-medium mt-0.5">
+                          1
+                        </div>
+                        <p className="text-gray-600 flex-1">Create and manage intelligent documents with AI assistance</p>
+                      </div>
+                      <div className="flex gap-4 items-start">
+                        <div className="w-6 h-6 flex items-center justify-center rounded-full bg-blue-100 text-blue-700 font-medium mt-0.5">
+                          2
+                        </div>
+                        <p className="text-gray-600 flex-1">Collaborate in real-time with your team from anywhere</p>
+                      </div>
+                      <div className="flex gap-4 items-start">
+                        <div className="w-6 h-6 flex items-center justify-center rounded-full bg-blue-100 text-blue-700 font-medium mt-0.5">
+                          3
+                        </div>
+                        <p className="text-gray-600 flex-1">Access enterprise-grade security and version control</p>
+                      </div>
+                    </div>
+                    
+                    {status === "authenticated" ? (
+                      <div className="flex flex-col gap-3">
+                        <Button
+                          themeColor="primary"
+                          onClick={() => router.push("/documents")}
+                          size="large"
+                          className="w-full py-3 bg-blue-600 hover:bg-blue-700"
+                        >
+                          My Documents
+                        </Button>
+                        <Button
+                          themeColor="base"
+                          onClick={() => router.push("/document")}
+                          size="large"
+                          className="w-full py-3"
+                        >
+                          Create New Document
+                        </Button>
+                      </div>
+                    ) : status === "loading" ? (
+                      <div className="flex justify-center items-center py-4">
+                        <div className="w-6 h-6 border-t-2 border-b-2 border-blue-500 rounded-full animate-spin"></div>
+                      </div>
+                    ) : (
+                      <Button
+                        themeColor="primary"
+                        onClick={signIn}
+                        size="large"
+                        className="w-full py-3 bg-blue-600 hover:bg-blue-700"
+                      >
+                        Get Started
+                      </Button>
+                    )}
                   </div>
-                  <p className="text-gray-600 flex-1">Collaborate in real-time with your team from anywhere</p>
-                </div>
-                <div className="flex gap-4 items-start">
-                  <div className="w-6 h-6 flex items-center justify-center rounded-full bg-emerald-100 text-emerald-700 font-medium mt-0.5">
-                    3
-                  </div>
-                  <p className="text-gray-600 flex-1">Access enterprise-grade security and version control</p>
                 </div>
               </div>
-              
-              {status === "authenticated" ? (
-                <div className="flex flex-col gap-3">
-                  <Button
-                    themeColor="primary"
-                    onClick={() => router.push("/documents")}
-                    size="large"
-                    className="w-full py-3 bg-emerald-600 hover:bg-emerald-700"
-                  >
-                    My Documents
-                  </Button>
-                  <Button
-                    themeColor="base"
-                    onClick={() => router.push("/document")}
-                    size="large"
-                    className="w-full py-3"
-                  >
-                    Create New Document
-                  </Button>
-                </div>
-              ) : status === "loading" ? (
-                <div className="flex justify-center items-center py-4">
-                  <div className="w-6 h-6 border-t-2 border-b-2 border-emerald-500 rounded-full animate-spin"></div>
-                </div>
-              ) : (
-                <Button
-                  themeColor="primary"
-                  onClick={signIn}
-                  size="large"
-                  className="w-full py-3 bg-emerald-600 hover:bg-emerald-700"
-                >
-                  Get Started
-                </Button>
-              )}
             </div>
           </div>
         </section>
