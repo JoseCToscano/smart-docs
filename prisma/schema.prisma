@@ -91,6 +91,23 @@ model Session {
     user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+model Feedback {
+    id        String   @id @default(cuid())
+    name      String
+    email     String
+    message   String   @db.Text
+    type      String   @default("suggestion") // suggestion, comment, bug, other
+    status    String   @default("new") // new, read, responded
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    user      User?    @relation(fields: [userId], references: [id])
+    userId    String?
+
+    @@index([userId])
+    @@index([type])
+    @@index([status])
+}
+
 model User {
     id            String    @id @default(cuid())
     name          String?
@@ -107,6 +124,7 @@ model User {
     posts         Post[]
     documents     Document[]
     prompts       Prompt[]
+    feedback      Feedback[]
 }
 
 model VerificationToken {
