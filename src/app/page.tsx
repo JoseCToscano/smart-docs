@@ -28,6 +28,24 @@ export default function HomePage() {
   ]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   
+  // Animation typing text effect - simple implementation
+  const [typedText, setTypedText] = useState("");
+  const fullText = "Try it out for free!";
+  
+  useEffect(() => {
+    let i = 0;
+    const typingInterval = setInterval(() => {
+      if (i < fullText.length) {
+        setTypedText(prev => prev + fullText.charAt(i));
+        i++;
+      } else {
+        clearInterval(typingInterval);
+      }
+    }, 100);
+    
+    return () => clearInterval(typingInterval);
+  }, []);
+  
   // Animation coordinating chat and document changes
   useEffect(() => {
     // Clear any existing timers when animation state changes
@@ -299,15 +317,15 @@ export default function HomePage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                     
-                    {/* Typing animation container */}
+                    {/* Simple typing animation with JS state */}
                     <div className="relative w-full max-w-md mx-auto mb-4">
                       <div className="flex flex-col items-center">
-                        {/* Simulated cursor and text being typed */}
                         <div className="relative inline-flex">
-                          <h2 className="text-3xl md:text-4xl font-bold text-gray-800 typing-effect">
-                            Try it out for free!
+                          <h2 className="text-3xl md:text-4xl font-bold text-gray-800">
+                            {typedText}
+                            <span className="inline-block w-[2px] h-[1.2em] bg-gray-800 ml-1 animate-pulse" 
+                                  style={{ animationDuration: '0.75s' }}></span>
                           </h2>
-                          <div className="typing-cursor"></div>
                         </div>
                       </div>
                     </div>
@@ -601,41 +619,6 @@ export default function HomePage() {
         </section>
       </main>
     </div>
-    <style jsx global>{`
-      /* Typing animation effect */
-      .typing-effect {
-        overflow: hidden;
-        border-right: 0px solid transparent;
-        white-space: nowrap;
-        margin: 0 auto;
-        animation: 
-          typing 3s steps(30, end),
-          blink-caret .75s step-end infinite;
-      }
-      
-      .typing-cursor {
-        display: inline-block;
-        width: 2px;
-        height: 1.2em;
-        background-color: #111827;
-        margin-left: 2px;
-        animation: blink-caret .75s step-end infinite;
-        position: absolute;
-        right: -4px;
-        top: 50%;
-        transform: translateY(-50%);
-      }
-      
-      @keyframes typing {
-        from { width: 0 }
-        to { width: 100% }
-      }
-      
-      @keyframes blink-caret {
-        from, to { opacity: 1 }
-        50% { opacity: 0 }
-      }
-    `}</style>
     </>
   );
 }
