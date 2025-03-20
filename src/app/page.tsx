@@ -2,7 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { Button } from "@/components/kendo/free";
@@ -10,35 +10,172 @@ import { UserProfile } from "@/components/UserProfile";
 import NotificationDemo from "@/components/NotificationDemo";
 import DirectNotificationTest from "@/components/DirectNotificationTest";
 
+// Define types for chat messages
+type ChatMessage = {
+  id: number; 
+  sender: 'ai' | 'user';
+  message: string;
+  visible: boolean;
+  typing?: boolean;
+};
+
 export default function HomePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [documentState, setDocumentState] = useState('initial');
+  const [animationState, setAnimationState] = useState('initial');
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
+    { id: 1, sender: 'ai', message: "Hello! I'm your document assistant. How can I help with your document today?", visible: true }
+  ]);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
   
-  // Animation for document changes
+  // Animation coordinating chat and document changes
   useEffect(() => {
-    if (documentState === 'initial') {
-      const timer = setTimeout(() => {
-        setDocumentState('adding');
-      }, 3000);
-      return () => clearTimeout(timer);
-    } else if (documentState === 'adding') {
-      const timer = setTimeout(() => {
-        setDocumentState('deleting');
-      }, 3000);
-      return () => clearTimeout(timer);
-    } else if (documentState === 'deleting') {
-      const timer = setTimeout(() => {
-        setDocumentState('final');
-      }, 3000);
-      return () => clearTimeout(timer);
-    } else if (documentState === 'final') {
-      const timer = setTimeout(() => {
-        setDocumentState('initial');
-      }, 3000);
-      return () => clearTimeout(timer);
+    // Clear any existing timers when animation state changes
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
     }
-  }, [documentState]);
+    
+    if (animationState === 'initial') {
+      // Initial state - only first message is shown
+      setChatMessages([
+        { id: 1, sender: 'ai', message: "Hello! I'm your document assistant. How can I help with your document today?", visible: true },
+        { id: 2, sender: 'user', message: "Can you help me create a meeting agenda for tomorrow's team sync?", visible: false },
+        { id: 3, sender: 'ai', message: "Of course! I'll create a meeting agenda template for you. Would you like to include specific topics or just use a standard format?", visible: false },
+        { id: 4, sender: 'user', message: "Let's include project updates, roadmap planning, and action items review.", visible: false },
+        { id: 5, sender: 'ai', message: "Perfect! I'm creating your meeting agenda now...", visible: false, typing: false },
+        { id: 6, sender: 'ai', message: "I've added some details to each section. Would you like me to make any adjustments?", visible: false },
+        { id: 7, sender: 'user', message: "Can you update 'resource allocation' to be more specific? And add something about tracking progress.", visible: false },
+        { id: 8, sender: 'ai', message: "I've made those changes! I replaced 'resource allocation' with 'team capacity planning' and added a focus on accountability with SMART goals.", visible: false, typing: false }
+      ]);
+      
+      timerRef.current = setTimeout(() => {
+        setAnimationState('user-question');
+      }, 2000);
+    } 
+    else if (animationState === 'user-question') {
+      // Show user asking for help
+      setChatMessages(prev => prev.map(msg => 
+        msg.id === 2 ? {...msg, visible: true} : msg
+      ));
+      
+      timerRef.current = setTimeout(() => {
+        setAnimationState('ai-response');
+      }, 2000);
+    }
+    else if (animationState === 'ai-response') {
+      // Show AI responding
+      setChatMessages(prev => prev.map(msg => 
+        msg.id === 3 ? {...msg, visible: true} : msg
+      ));
+      
+      timerRef.current = setTimeout(() => {
+        setAnimationState('user-details');
+      }, 2500);
+    }
+    else if (animationState === 'user-details') {
+      // User provides details
+      setChatMessages(prev => prev.map(msg => 
+        msg.id === 4 ? {...msg, visible: true} : msg
+      ));
+      
+      timerRef.current = setTimeout(() => {
+        setAnimationState('ai-typing');
+      }, 2000);
+    }
+    else if (animationState === 'ai-typing') {
+      // AI typing indicator
+      setChatMessages(prev => prev.map(msg => 
+        msg.id === 5 ? {...msg, visible: true, typing: true} : msg
+      ));
+      
+      timerRef.current = setTimeout(() => {
+        setAnimationState('document-adding');
+      }, 2000);
+    }
+    else if (animationState === 'document-adding') {
+      // Document starts showing changes
+      setChatMessages(prev => prev.map(msg => 
+        msg.id === 5 ? {...msg, typing: false} : msg
+      ));
+      
+      timerRef.current = setTimeout(() => {
+        setAnimationState('ai-review');
+      }, 3500);
+    }
+    else if (animationState === 'ai-review') {
+      // AI asks for review after creating document
+      setChatMessages(prev => prev.map(msg => 
+        msg.id === 6 ? {...msg, visible: true} : msg
+      ));
+      
+      timerRef.current = setTimeout(() => {
+        setAnimationState('user-feedback');
+      }, 3000);
+    }
+    else if (animationState === 'user-feedback') {
+      // User gives feedback on document
+      setChatMessages(prev => prev.map(msg => 
+        msg.id === 7 ? {...msg, visible: true} : msg
+      ));
+      
+      timerRef.current = setTimeout(() => {
+        setAnimationState('ai-final-typing');
+      }, 3000);
+    }
+    else if (animationState === 'ai-final-typing') {
+      // AI typing
+      setChatMessages(prev => prev.map(msg => 
+        msg.id === 8 ? {...msg, visible: true, typing: true} : msg
+      ));
+      
+      timerRef.current = setTimeout(() => {
+        setAnimationState('document-deleting');
+      }, 2000);
+    }
+    else if (animationState === 'document-deleting') {
+      // Document shows deletions/replacements
+      setChatMessages(prev => prev.map(msg => 
+        msg.id === 8 ? {...msg, typing: false} : msg
+      ));
+      
+      timerRef.current = setTimeout(() => {
+        setAnimationState('document-final');
+      }, 3500);
+    }
+    else if (animationState === 'document-final') {
+      // Show finalized document
+      
+      timerRef.current = setTimeout(() => {
+        setAnimationState('reset');
+      }, 4000);
+    }
+    else if (animationState === 'reset') {
+      // Reset to beginning
+      timerRef.current = setTimeout(() => {
+        setAnimationState('initial');
+      }, 1500);
+    }
+    
+    // Clean up on component unmount
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+    };
+  }, [animationState]);
+  
+  // Get document state based on animation state
+  const documentState = (() => {
+    if (animationState === 'document-adding' || animationState === 'ai-review' || animationState === 'user-feedback') {
+      return 'adding';
+    } else if (animationState === 'document-deleting' || animationState === 'ai-final-typing') {
+      return 'deleting';
+    } else if (animationState === 'document-final') {
+      return 'final';
+    } else {
+      return 'initial';
+    }
+  })();
   
   // Redirect to documents page if authenticated
   useEffect(() => {
@@ -236,88 +373,47 @@ export default function HomePage() {
                 
                 {/* Chat Message bubbles */}
                 <div className="space-y-8 relative">
-                  {/* AI Message */}
-                  <div 
-                    className="flex items-start gap-3 max-w-md transform transition-all duration-500 hover:-translate-y-1"
-                    data-aos="fade-right"
-                  >
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-md">
-                      <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                      </svg>
-                    </div>
-                    <div className="bg-white rounded-2xl px-5 py-3 shadow-lg border border-gray-100">
-                      <p className="text-gray-800">Hello! I'm your document assistant. How can I help with your document today?</p>
-                    </div>
-                  </div>
-                  
-                  {/* User Message */}
-                  <div 
-                    className="flex items-start gap-3 justify-end max-w-md ml-auto transform transition-all duration-500 hover:-translate-y-1"
-                    data-aos="fade-left"
-                  >
-                    <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl px-5 py-3 shadow-lg text-white">
-                      <p>Can you help me create a meeting agenda for tomorrow's team sync?</p>
-                    </div>
-                    <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0 shadow-md">
-                      <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
-                    </div>
-                  </div>
-                  
-                  {/* AI Message */}
-                  <div 
-                    className="flex items-start gap-3 max-w-md transform transition-all duration-500 hover:-translate-y-1"
-                    data-aos="fade-right" 
-                    data-aos-delay="200"
-                  >
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-md">
-                      <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                      </svg>
-                    </div>
-                    <div className="bg-white rounded-2xl px-5 py-3 shadow-lg border border-gray-100">
-                      <p className="text-gray-800">Of course! I'll create a meeting agenda template for you. Would you like to include specific topics or just use a standard format?</p>
-                    </div>
-                  </div>
-                  
-                  {/* User Message */}
-                  <div 
-                    className="flex items-start gap-3 justify-end max-w-md ml-auto transform transition-all duration-500 hover:-translate-y-1"
-                    data-aos="fade-left"
-                    data-aos-delay="200"
-                  >
-                    <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl px-5 py-3 shadow-lg text-white">
-                      <p>Let's include project updates, roadmap planning, and action items review.</p>
-                    </div>
-                    <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0 shadow-md">
-                      <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
-                    </div>
-                  </div>
-                  
-                  {/* AI Message with "typing" animation */}
-                  <div 
-                    className="flex items-start gap-3 max-w-md transform transition-all duration-500 hover:-translate-y-1"
-                    data-aos="fade-right"
-                    data-aos-delay="400"
-                  >
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-md">
-                      <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                      </svg>
-                    </div>
-                    <div className="bg-white rounded-2xl px-5 py-3 shadow-lg border border-gray-100">
-                      <p className="text-gray-800">Perfect! I'm creating your meeting agenda now...</p>
-                      <div className="flex gap-2 mt-2">
-                        <div className="w-2 h-2 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: '0s' }}></div>
-                        <div className="w-2 h-2 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                        <div className="w-2 h-2 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                  {/* AI Messages and User Responses */}
+                  {chatMessages.map((msg, index) => (
+                    msg.visible && (
+                      <div 
+                        key={msg.id}
+                        className={`flex items-start gap-3 ${msg.sender === 'user' ? 'justify-end max-w-md ml-auto' : 'max-w-md'} transform transition-all duration-500 hover:-translate-y-1 opacity-0 animate-fade-in`}
+                        style={{ 
+                          animationDelay: `${index * 0.2}s`, 
+                          animationDuration: '0.5s',
+                          animationFillMode: 'forwards'
+                        }}
+                      >
+                        {msg.sender === 'ai' && (
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-md">
+                            <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                            </svg>
+                          </div>
+                        )}
+                        <div className={`${msg.sender === 'user' 
+                          ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white' 
+                          : 'bg-white text-gray-800 border border-gray-100'} rounded-2xl px-5 py-3 shadow-lg`}>
+                          <p>{msg.message}</p>
+                          {msg.typing && (
+                            <div className="flex gap-2 mt-2">
+                              <div className="w-2 h-2 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: '0s' }}></div>
+                              <div className="w-2 h-2 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                              <div className="w-2 h-2 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                            </div>
+                          )}
+                        </div>
+                        {msg.sender === 'user' && (
+                          <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0 shadow-md">
+                            <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  </div>
+                    )
+                  ))}
                 </div>
                 
                 {/* Chat Input */}
@@ -503,3 +599,14 @@ export default function HomePage() {
     </div>
   );
 }
+
+<style jsx global>{`
+  @keyframes fade-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  .animate-fade-in {
+    animation-name: fade-in;
+  }
+`}</style>
