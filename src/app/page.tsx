@@ -44,7 +44,7 @@ export default function HomePage() {
         { id: 4, sender: 'user', message: "Thanks! Here's the specific info: Client is TechStart Inc, contractor is Alex Rivera, rate is $85 per hour, invoiced bi-weekly, and payment due within 15 days.", visible: false },
         { id: 5, sender: 'ai', message: "I've updated the agreement with TechStart Inc as the client, Alex Rivera as the contractor, $85/hour rate, bi-weekly invoicing, and 15-day payment terms.", visible: false, typing: false },
         { id: 6, sender: 'user', message: "For the timeline, start date is June 1, 2023, design approval by June 15, development complete by July 20, and final delivery on August 1.", visible: false },
-        { id: 7, sender: 'ai', message: "I've added all the timeline information to the contract. Is there anything else you'd like to modify?", visible: false, typing: false }
+        { id: 7, sender: 'ai', message: "I've added all the timeline information to the contract", visible: false, typing: false }
       ]);
       
       timerRef.current = setTimeout(() => {
@@ -456,7 +456,7 @@ export default function HomePage() {
                 {/* Floating Document */}
                 <div className="relative mx-auto transform-gpu transition-all duration-500 hover:rotate-1 [transform:rotateX(2deg)_rotateY(-1deg)] max-w-lg">
                   {/* Document Controls Bar */}
-                  <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-sm px-4 py-1.5 rounded-t-lg shadow-sm border border-gray-200 flex items-center gap-3 w-[85%] max-w-sm">
+                  <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-sm px-4 py-1.5 rounded-t-lg shadow-sm border border-gray-200 flex items-center gap-3 w-[85%] max-w-[calc(theme(maxWidth.md)*0.85)]">
                     <div className="flex items-center gap-1.5">
                       <div className="w-2.5 h-2.5 rounded-full bg-red-400"></div>
                       <div className="w-2.5 h-2.5 rounded-full bg-yellow-400"></div>
@@ -476,7 +476,7 @@ export default function HomePage() {
                   
                   {/* Paper Document */}
                   <div className="mx-auto bg-white shadow-xl rounded-md p-6 border border-gray-100 transform transition-all duration-500 
-                    [transform-style:preserve-3d] max-w-md
+                    [transform-style:preserve-3d] max-w-md aspect-[1/1.414]
                     [box-shadow:0_8px_16px_rgba(0,0,0,0.08),0_4px_4px_rgba(0,0,0,0.1),0_-2px_4px_rgba(0,0,0,0.03)]">
                     
                     {/* Paper texture and edge styling */}
@@ -484,8 +484,12 @@ export default function HomePage() {
                     <div className="absolute -left-1 top-10 bottom-10 w-0.5 bg-gradient-to-b from-gray-100 via-gray-200 to-gray-100 rounded-l-md transform -translate-x-0.5 shadow-sm pointer-events-none"></div>
                     
                     {documentState === 'blank' ? (
-                      <div className="h-64 flex items-center justify-center">
-                        <p className="text-gray-400 text-sm italic">Blank document. Start by asking the AI to create content.</p>
+                      <div className="h-[calc(100%-12px)] flex flex-col items-center justify-center">
+                        <svg className="w-16 h-16 text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <p className="text-gray-400 text-sm italic text-center max-w-xs">Blank document. Ask the AI assistant to create a document for you.</p>
+                        <p className="text-gray-300 text-xs mt-2">Try: "I need a contractor agreement for a web developer"</p>
                       </div>
                     ) : (
                       <>
@@ -600,7 +604,7 @@ export default function HomePage() {
                   
                   {/* Shadow paper underneath - creates depth effect */}
                   <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-[95%] h-[98%] bg-white rounded-md -z-10
-                    opacity-70 shadow-md [transform:rotateX(5deg)] blur-[1px] max-w-md"></div>
+                    opacity-70 shadow-md [transform:rotateX(5deg)] blur-[1px] max-w-md aspect-[1/1.414]"></div>
                 </div>
               </div>
             </div>
