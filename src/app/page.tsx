@@ -88,12 +88,16 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Card - Right Side */}
-              <div className="lg:w-1/2">
-                {/* Modal-like Card */}
-                <div className="bg-white rounded-xl shadow-xl max-w-xl w-full mx-auto overflow-hidden">
+              {/* Card - Right Side with Stacked Effect */}
+              <div className="lg:w-1/2 relative">
+                {/* Background Cards (Stacked Effect) */}
+                <div className="absolute top-6 -left-3 w-full max-w-xl opacity-20 rounded-xl bg-white/80 h-[480px] -rotate-2 shadow-sm border border-gray-200/50"></div>
+                <div className="absolute top-3 -left-1 w-full max-w-xl opacity-40 rounded-xl bg-white/90 h-[480px] -rotate-1 shadow-sm border border-gray-200/70"></div>
+                
+                {/* Main Card */}
+                <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-xl max-w-xl w-full mx-auto overflow-hidden relative">
                   {/* Card Header */}
-                  <div className="flex items-center gap-3 px-6 py-4 border-b">
+                  <div className="flex items-center gap-3 px-6 py-4 border-b bg-white/80">
                     <div className="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
                       <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -103,7 +107,7 @@ export default function HomePage() {
                   </div>
                   
                   {/* Card Content */}
-                  <div className="p-6">
+                  <div className="p-6 pb-8">
                     <div className="flex justify-center mb-8">
                       <div className="w-24 h-24 bg-blue-50 rounded-xl flex items-center justify-center p-3">
                         <svg className="w-full h-full text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -114,19 +118,19 @@ export default function HomePage() {
                     </div>
                     
                     <div className="space-y-5 mb-8">
-                      <div className="flex gap-4 items-start">
+                      <div className="flex gap-4 items-start group transition-all hover:-translate-y-1 duration-200">
                         <div className="w-6 h-6 flex items-center justify-center rounded-full bg-blue-100 text-blue-700 font-medium mt-0.5">
                           1
                         </div>
                         <p className="text-gray-600 flex-1">Create and manage intelligent documents with AI assistance</p>
                       </div>
-                      <div className="flex gap-4 items-start">
+                      <div className="flex gap-4 items-start group transition-all hover:-translate-y-1 duration-200">
                         <div className="w-6 h-6 flex items-center justify-center rounded-full bg-blue-100 text-blue-700 font-medium mt-0.5">
                           2
                         </div>
                         <p className="text-gray-600 flex-1">Collaborate in real-time with your team from anywhere</p>
                       </div>
-                      <div className="flex gap-4 items-start">
+                      <div className="flex gap-4 items-start group transition-all hover:-translate-y-1 duration-200">
                         <div className="w-6 h-6 flex items-center justify-center rounded-full bg-blue-100 text-blue-700 font-medium mt-0.5">
                           3
                         </div>
