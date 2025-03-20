@@ -89,31 +89,43 @@ export default function HomePage() {
               </div>
 
               {/* Card - Right Side with Stacked Effect */}
-              <div className="lg:w-1/2 relative">
-                {/* Background Cards (Stacked Effect) */}
-                <div className="absolute top-6 -left-3 w-full max-w-xl opacity-20 rounded-xl bg-white/80 h-[480px] -rotate-2 shadow-sm border border-gray-200/50"></div>
-                <div className="absolute top-3 -left-1 w-full max-w-xl opacity-40 rounded-xl bg-white/90 h-[480px] -rotate-1 shadow-sm border border-gray-200/70"></div>
+              <div className="lg:w-1/2 relative perspective-1000">
+                {/* Background Cards (Stacked 3D Effect) */}
+                <div className="absolute top-8 -left-6 w-full max-w-xl opacity-20 rounded-xl bg-white/80 h-[480px] shadow-sm border border-gray-200/50 [transform:rotateX(8deg)_rotateY(-16deg)_translateZ(-20px)]"></div>
+                <div className="absolute top-4 -left-3 w-full max-w-xl opacity-40 rounded-xl bg-white/90 h-[480px] shadow-sm border border-gray-200/70 [transform:rotateX(4deg)_rotateY(-8deg)_translateZ(-10px)]"></div>
                 
                 {/* Main Card */}
-                <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-xl max-w-xl w-full mx-auto overflow-hidden relative">
+                <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-xl max-w-xl w-full mx-auto overflow-hidden relative [transform:rotateX(0deg)_rotateY(0deg)_translateZ(0px)] transition-transform duration-300 hover:[transform:rotateX(2deg)_rotateY(-4deg)_translateZ(10px)]">
                   {/* Card Header */}
-                  <div className="flex items-center gap-3 px-6 py-4 border-b bg-white/80">
+                  <div className="flex items-center gap-3 px-6 py-4 border-b bg-white/90">
                     <div className="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
                       <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
                     </div>
-                    <h2 className="text-xl font-medium text-gray-800">Documents</h2>
+                    <h2 className="text-xl font-medium text-gray-800">Document Editor</h2>
                   </div>
                   
-                  {/* Card Content */}
+                  {/* Card Content - Document Editor Style */}
                   <div className="p-6 pb-8">
-                    <div className="flex justify-center mb-8">
-                      <div className="w-24 h-24 bg-blue-50 rounded-xl flex items-center justify-center p-3">
-                        <svg className="w-full h-full text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                          <path d="M14 3v4a1 1 0 001 1h4" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
-                        </svg>
+                    {/* Document Preview Area */}
+                    <div className="mb-6 bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="w-3 h-3 rounded-full bg-red-400"></div>
+                        <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
+                        <div className="w-3 h-3 rounded-full bg-green-400"></div>
+                        <div className="flex-1 text-center">
+                          <span className="text-xs text-gray-500">Untitled Document.docx</span>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <div className="h-4 bg-blue-100 rounded w-3/4"></div>
+                        <div className="h-3 bg-gray-100 rounded w-full"></div>
+                        <div className="h-3 bg-gray-100 rounded w-5/6"></div>
+                        <div className="h-3 bg-gray-100 rounded w-full"></div>
+                        <div className="h-3 bg-gray-100 rounded w-4/5"></div>
+                        <div className="h-3 bg-gray-100 rounded w-full"></div>
                       </div>
                     </div>
                     
@@ -122,19 +134,19 @@ export default function HomePage() {
                         <div className="w-6 h-6 flex items-center justify-center rounded-full bg-blue-100 text-blue-700 font-medium mt-0.5">
                           1
                         </div>
-                        <p className="text-gray-600 flex-1">Create and manage intelligent documents with AI assistance</p>
+                        <p className="text-gray-600 flex-1">Create and format documents with intuitive editing tools</p>
                       </div>
                       <div className="flex gap-4 items-start group transition-all hover:-translate-y-1 duration-200">
                         <div className="w-6 h-6 flex items-center justify-center rounded-full bg-blue-100 text-blue-700 font-medium mt-0.5">
                           2
                         </div>
-                        <p className="text-gray-600 flex-1">Collaborate in real-time with your team from anywhere</p>
+                        <p className="text-gray-600 flex-1">Collaborate in real-time with comments and suggestions</p>
                       </div>
                       <div className="flex gap-4 items-start group transition-all hover:-translate-y-1 duration-200">
                         <div className="w-6 h-6 flex items-center justify-center rounded-full bg-blue-100 text-blue-700 font-medium mt-0.5">
                           3
                         </div>
-                        <p className="text-gray-600 flex-1">Access enterprise-grade security and version control</p>
+                        <p className="text-gray-600 flex-1">Get AI-powered writing assistance and formatting suggestions</p>
                       </div>
                     </div>
                     
