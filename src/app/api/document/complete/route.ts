@@ -233,7 +233,7 @@ If my request is just a question with no document changes, only include the seco
     });
     
     // Get the content from the response safely
-    let responseText = response.content[0]?.type === 'text' 
+    const responseText = response.content[0]?.type === 'text' 
       ? response.content[0].text 
       : 'Unable to process document';
     

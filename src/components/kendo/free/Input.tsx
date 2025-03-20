@@ -1,13 +1,11 @@
 "use client";
 
 import React from 'react';
-import { Input as KendoInput } from "@progress/kendo-react-inputs";
+import { Input as KendoInput, InputProps as KendoInputProps } from "@progress/kendo-react-inputs";
 
 // Define types for our component props
-interface InputProps {
+interface InputProps extends KendoInputProps {
   value?: string;
-  onChange?: (e: any) => void;
-  onBlur?: (e: any) => void;
   placeholder?: string;
   className?: string;
   style?: React.CSSProperties;
@@ -18,7 +16,6 @@ interface InputProps {
   name?: string;
   id?: string;
   'aria-label'?: string;
-  [key: string]: any;
 }
 
 /**

@@ -12,7 +12,7 @@ const documentUpdateSchema = z.object({
 // GET /api/document/[id] - Get a specific document
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth();
   
@@ -21,7 +21,7 @@ export async function GET(
   }
   
   try {
-    const id = await params.id;
+    const id = (await params).id;
     const document = await db.document.findUnique({
       where: {
         id,
@@ -44,7 +44,7 @@ export async function GET(
 // PUT /api/document/[id] - Update a document
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth();
   
@@ -54,7 +54,7 @@ export async function PUT(
   
   try {
     // First check if the document exists and belongs to the user
-    const id = await params.id;
+    const id = (await params).id;
     const existingDocument = await db.document.findUnique({
       where: {
         id,
@@ -94,7 +94,7 @@ export async function PUT(
 // DELETE /api/document/[id] - Delete a document
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth();
   
@@ -104,7 +104,7 @@ export async function DELETE(
   
   try {
     // First check if the document exists and belongs to the user
-    const id = await params.id;
+    const id = (await params).id;
     const existingDocument = await db.document.findUnique({
       where: {
         id,

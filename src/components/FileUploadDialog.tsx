@@ -3,7 +3,7 @@ import { Dialog, DialogActionsBar } from '@/components/kendo/free';
 import { Button } from '@/components/kendo/free';
 import { Upload } from '@progress/kendo-react-upload';
 import { convertFileToHtml } from '@/utils/fileConverter';
-import { Notification, NotificationGroup } from '@/components/kendo/free';
+import toast from "react-hot-toast";
 
 interface FileUploadDialogProps {
   onClose: () => void;
@@ -21,15 +21,13 @@ interface CustomFile {
 }
 
 export default function FileUploadDialog({ onClose, onFileProcessed }: FileUploadDialogProps) {
-  const [files, setFiles] = useState<any[]>([]);
+  const [files, setFiles] = useState<File[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const uploadRef = useRef<Upload | null>(null);
 
   // Handle file selection
   const onFileChange = useCallback((event: any) => {
     setFiles(event.newState);
-    setError(null);
   }, []);
 
   // Validate file before upload
@@ -72,14 +70,14 @@ export default function FileUploadDialog({ onClose, onFileProcessed }: FileUploa
       try {
         event.preventDefault();
       } catch (e) {
+        console.error('Error preventing default:', e);
         // Ignore if preventDefault is not available
       }
-      setError('Please select a valid document (.docx, .doc, or .txt file)');
+      toast.error('Please select a valid document (.docx, .doc, or .txt file)');
     } else if (!rawFile) {
-      setError('Invalid file data - missing file content');
+      toast.error('Invalid file data - missing file content');
     } else {
       setFiles([file]);
-      setError(null);
       console.log(`Valid file selected: ${file.name}, type: ${isDocx ? 'docx' : isDoc ? 'doc' : 'txt'}`);
     }
   }, []);
@@ -87,7 +85,7 @@ export default function FileUploadDialog({ onClose, onFileProcessed }: FileUploa
   // Process the selected file
   const handleProcessFile = useCallback(async () => {
     if (files.length === 0) {
-      setError('Please select a file first');
+      toast.error('Please select a file first');
       return;
     }
 
@@ -106,12 +104,11 @@ export default function FileUploadDialog({ onClose, onFileProcessed }: FileUploa
     }
     
     if (!file || !rawFile) {
-      setError('Invalid file data or missing file content');
+      toast.error('Invalid file data or missing file content');
       return;
     }
 
     setIsProcessing(true);
-    setError(null);
 
     try {
       console.log('Processing file...', rawFile);
@@ -127,7 +124,7 @@ export default function FileUploadDialog({ onClose, onFileProcessed }: FileUploa
       onClose();
     } catch (err) {
       console.error('Error processing file:', err);
-      setError('Failed to process the file. Please try again with a different file.');
+      toast.error('Failed to process the file. Please try again with a different file.');
     } finally {
       setIsProcessing(false);
     }
@@ -156,17 +153,7 @@ export default function FileUploadDialog({ onClose, onFileProcessed }: FileUploa
           onStatusChange={onFileChange}
           saveUrl={''}
         />
-        
-        {error && (
-          <NotificationGroup>
-            <Notification
-              type='error'
-              closable={true}
-              onClose={() => setError(null)}
-              message={error}
-            />
-          </NotificationGroup>
-        )}
+      
       </div>
       
       <DialogActionsBar>

@@ -8,7 +8,7 @@ export const pageSizes = {
 
 export const getPageSizeInPixels = (pageSize: keyof typeof pageSizes) => {
   // Add a fallback to A4 if pageSize is not a valid key in pageSizes
-  const pageDetails = pageSizes[pageSize] || pageSizes["A4"];
+  const pageDetails = pageSizes[pageSize] ?? pageSizes.A4;
   
   // Convert mm to px using a more precise conversion factor
   // Standard conversion: 1mm ≈ 3.7795275591 pixels (96 DPI)

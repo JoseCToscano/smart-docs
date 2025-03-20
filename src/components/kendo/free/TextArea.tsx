@@ -1,26 +1,8 @@
 "use client";
 
 import React from 'react';
-import { TextArea as KendoTextArea } from "@progress/kendo-react-inputs";
+import { TextArea as KendoTextArea, TextAreaProps } from "@progress/kendo-react-inputs";
 
-// Define types for our component props
-interface TextAreaProps {
-  value?: string;
-  onChange?: (e: any) => void;
-  onBlur?: (e: any) => void;
-  placeholder?: string;
-  className?: string;
-  style?: React.CSSProperties;
-  disabled?: boolean;
-  readOnly?: boolean;
-  required?: boolean;
-  name?: string;
-  id?: string;
-  rows?: number;
-  cols?: number;
-  'aria-label'?: string;
-  [key: string]: any;
-}
 
 /**
  * TextArea component that wraps KendoReact TextArea

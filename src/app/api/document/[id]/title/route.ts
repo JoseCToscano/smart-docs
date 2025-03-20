@@ -11,7 +11,7 @@ const documentTitleSchema = z.object({
 // PATCH /api/document/[id]/title - Update only a document's title
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth();
   
@@ -21,9 +21,10 @@ export async function PATCH(
   
   try {
     // First check if the document exists and belongs to the user
+    const id = (await params).id;
     const existingDocument = await db.document.findUnique({
       where: {
-        id: params.id,
+        id,
         userId: session.user.id,
       },
       select: { id: true },
@@ -38,7 +39,7 @@ export async function PATCH(
     
     const updatedDocument = await db.document.update({
       where: {
-        id: params.id,
+        id,
       },
       data: {
         title: validatedData.title,

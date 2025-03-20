@@ -5,10 +5,9 @@ import { db } from "@/server/db";
 // 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    console.log("PATCH, params:", params);
     const session = await auth();
     if (!session?.user?.email) {
       return new NextResponse("Unauthorized", { status: 401 });
@@ -22,8 +21,9 @@ export async function PATCH(
     }
 
     // Get the document and verify ownership
+    const id = (await params).id;
     const document = await db.document.findUnique({
-      where: { id: params.id },
+      where: { id },
       select: { userId: true },
     });
 
@@ -41,7 +41,7 @@ export async function PATCH(
 
     // Update the document with new page settings
     const updatedDocument = await db.document.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         pageSize,
         margins,

@@ -11,7 +11,7 @@ const documentSchema = z.object({
 });
 
 // GET /api/document - Get all documents for the authenticated user
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   const session = await auth();
   
   if (!session?.user) {

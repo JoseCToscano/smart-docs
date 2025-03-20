@@ -1,23 +1,7 @@
 "use client";
 
 import React from 'react';
-import { Button as KendoButton } from "@progress/kendo-react-buttons";
-
-// Define types for our component props
-interface ButtonProps {
-  children?: React.ReactNode;
-  themeColor?: 'primary' | 'secondary' | 'tertiary' | 'info' | 'success' | 'warning' | 'error' | 'dark' | 'light' | 'inverse' | 'base';
-  fillMode?: 'solid' | 'flat' | 'outline' | 'link';
-  size?: 'small' | 'medium' | 'large';
-  rounded?: 'small' | 'medium' | 'large' | 'full';
-  className?: string;
-  disabled?: boolean;
-  icon?: string;
-  svgIcon?: any;  // For SVG icons
-  onClick?: (e: any) => void;
-  title?: string;
-  [key: string]: any;
-}
+import { Button as KendoButton, ButtonProps } from "@progress/kendo-react-buttons";
 
 /**
  * Button component that wraps KendoReact Button

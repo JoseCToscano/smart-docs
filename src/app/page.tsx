@@ -4,11 +4,8 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import { signIn } from "next-auth/react";
-import Link from "next/link";
 import { Button } from "@/components/kendo/free";
 import { UserProfile } from "@/components/UserProfile";
-import NotificationDemo from "@/components/NotificationDemo";
-import DirectNotificationTest from "@/components/DirectNotificationTest";
 
 // Define types for chat messages
 type ChatMessage = {
@@ -20,7 +17,7 @@ type ChatMessage = {
 };
 
 export default function HomePage() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
   const [animationState, setAnimationState] = useState('initial');
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([

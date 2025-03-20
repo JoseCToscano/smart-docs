@@ -1,5 +1,5 @@
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import { type DefaultSession, type NextAuthConfig } from "next-auth";
+import { type DefaultSession, type NextAuthOptions } from "next-auth";
 import GoogleProvider, { type GoogleProfile } from "next-auth/providers/google";
 import { db } from "@/server/db";
 import { env } from "@/env";
@@ -23,6 +23,7 @@ declare module "next-auth" {
   //   // role: UserRole;
   // }
 }
+
 
 /**
  * Options for NextAuth.js used to configure adapters, providers, callbacks, etc.
@@ -78,18 +79,18 @@ export const authConfig = {
         // session.user.role = user.role; <-- put other properties on the session here
         const authedUser = await db.user.findUnique({
           where: {
-            email: token.email as string,
+            email: token.email!,
           },
         });
         if (!authedUser) {
           throw new Error("User not found");
         }
         session.user.id = authedUser.id;
-        session.user.name = authedUser.name as string;
-        session.user.email = authedUser.email as string;
-        session.user.image = authedUser.image as string;
+        session.user.name = authedUser.name ?? "";
+        session.user.email = authedUser.email ?? "";
+        session.user.image = authedUser.image ?? "";
       }
       return session;
     },
   },
-} satisfies NextAuthConfig;
+} satisfies NextAuthOptions;

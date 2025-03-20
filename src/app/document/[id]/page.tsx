@@ -9,7 +9,7 @@ export default function DocumentByIdPage() {
   const router = useRouter();
   const params = useParams();
   const { status } = useSession();
-  const [error, setError] = useState<string | null>(null);
+  const [error, _setError] = useState<string | null>(null);
   
   useEffect(() => {
     if (status === "unauthenticated") {

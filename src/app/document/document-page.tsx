@@ -8,14 +8,11 @@ import {
   AppBar, 
   AppBarSection, 
   AppBarSpacer, 
-  AppBarSeparator
 } from "@/components/kendo/free";
 import { 
-  Avatar,
   Splitter,
   SplitterOnChangeEvent,
   SplitterPaneProps,
-  Popup,
   Tooltip
 } from "@/components/kendo";
 import "@progress/kendo-theme-default/dist/all.css";
@@ -29,13 +26,11 @@ import FileUploadDialog from "@/components/FileUploadDialog";
 import MarginsPopup from "@/components/document-tools/MarginsPopup";
 import { PageSize } from "@/components/document-tools/MarginsPopup";
 import { pageSizes, getPageSizeInPixels } from "@/utils/getPageSizeInPixels";
-import { UserMenu } from "@/components/UserMenu";
 import { injectEditorStyles } from "@/utils/injectEditorStyles";
 import { normalizeContent } from "@/utils/normalizeContent";
 import { findNodeAndOffset } from "@/utils/findNodeAndOffset";
 import { UserProfile } from "@/components/UserProfile";
 import { updateDocumentTitle, debouncedUpdatePageSettings } from "@/utils/documentService";
-import { useDebounce } from "@/hooks/useDebounce";
 import { debounce } from "lodash";
 
 // Import all necessary editor tools
@@ -1282,10 +1277,6 @@ IMPORTANT GUIDELINES:
     applyChangesToEditor(changes);
   }, []);
   
-  // Add a new function to apply XML diff directly
-  const handleApplyXmlChanges = useCallback((xmlContent: string) => {
-    applyXmlChangesToEditor(xmlContent);
-  }, []);
 
   // Function to finalize and accept all AI changes
   const finalizeChanges = useCallback(() => {

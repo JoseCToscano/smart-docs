@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { 
@@ -21,21 +21,9 @@ import {
   Button,
   Avatar
 } from "@/components/kendo/free";
-import PremiumCheck from "@/components/PremiumCheck";
-import { Session } from "next-auth";
 import { UserProfile } from "@/components/UserProfile";
 import Link from "next/link";
-import { useNotifications } from "@/utils/notificationService";
-
-interface ExtendedSession extends Session {
-  user: {
-    id: string;
-    name?: string | null;
-    email?: string | null;
-    image?: string | null;
-    isPremium?: boolean;
-  }
-}
+import toast from "react-hot-toast";
 
 interface ProfileFormModel {
   name: string;
@@ -51,12 +39,7 @@ interface PromptCount {
 
 export default function ProfileSettingsPage() {
   const router = useRouter();
-  const { data: session, status, update: updateSession } = useSession() as { 
-    data: ExtendedSession | null;
-    status: "loading" | "authenticated" | "unauthenticated";
-    update: (data?: any) => Promise<ExtendedSession | null>;
-  };
-  const notifications = useNotifications();
+  const { data: session, status, update: updateSession } = useSession();
   const [isLoading, setIsLoading] = useState(false);
   const [promptCount, setPromptCount] = useState<PromptCount | null>(null);
 
@@ -102,10 +85,10 @@ export default function ProfileSettingsPage() {
 
       await updateSession();
       
-      notifications.success("Your profile has been updated successfully");
+      toast.success("Your profile has been updated successfully");
     } catch (error) {
       console.error("Error updating profile:", error);
-      notifications.error("Failed to update your profile. Please try again.");
+      toast.error("Failed to update your profile. Please try again.");
     } finally {
       setIsLoading(false);
     }

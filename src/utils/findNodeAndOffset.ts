@@ -6,7 +6,7 @@ export const findNodeAndOffset = (container: HTMLElement, targetOffset: number):
     const walkNodes = (node: Node): { node: Node; offset: number } | null => {
       // If this is a text node, check if the target offset is within it
       if (node.nodeType === Node.TEXT_NODE) {
-        const length = node.textContent?.length || 0;
+        const length = node.textContent?.length ?? 0;
         
         // If the target offset is within this text node, return it
         if (currentOffset <= targetOffset && targetOffset <= currentOffset + length) {

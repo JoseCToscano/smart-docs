@@ -1,18 +1,14 @@
 "use client";
 
 import React from 'react';
-import { Editor as KendoEditor, EditorTools } from "@progress/kendo-react-editor";
+import { Editor as KendoEditor, EditorTools, EditorProps as KendoEditorProps } from "@progress/kendo-react-editor";
 
 // Re-export the EditorTools for easy access
 export { EditorTools };
 
 // Define types for our component props
-export interface EditorProps {
-  defaultContent?: string;
-  contentStyle?: React.CSSProperties;
-  onChange?: (event: any) => void;
-  tools?: any[];
-  [key: string]: any;
+export interface EditorProps extends KendoEditorProps {
+  children?: React.ReactNode;
 }
 
 /**
