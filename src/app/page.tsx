@@ -45,86 +45,118 @@ export default function HomePage() {
         </nav>
       </header>
 
-      <main className="relative flex items-center justify-center min-h-[85vh]">
-        {/* Modal-like Card */}
-        <div className="bg-white rounded-xl shadow-xl max-w-xl w-full mx-4 overflow-hidden">
-          {/* Card Header */}
-          <div className="flex items-center gap-3 px-6 py-4 border-b">
-            <div className="w-8 h-8 bg-emerald-500 rounded-md flex items-center justify-center">
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </div>
-            <h2 className="text-xl font-medium text-gray-800">Documents</h2>
+      <main className="relative">
+        {/* Hero Section */}
+        <section className="pt-16 pb-8 md:pt-20 md:pb-12 relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-10 md:mb-16">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 tracking-tight mb-4">
+              Document Management,{" "}
+              <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
+                Reimagined
+              </span>
+            </h1>
+            <p className="text-lg md:text-xl text-gray-700 max-w-3xl mx-auto">
+              Experience the future of intelligent document collaboration with AI-powered assistance,
+              real-time editing, and enterprise-grade security.
+            </p>
           </div>
-          
-          {/* Card Content */}
-          <div className="p-6">
-            <div className="flex justify-center mb-10">
-              <div className="w-32 h-32 bg-emerald-50 rounded-xl flex items-center justify-center p-4">
-                <svg className="w-full h-full text-emerald-500 transform rotate-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  <path d="M14 3v4a1 1 0 001 1h4" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
+
+          {/* Floating Elements */}
+          <div className="hidden md:block absolute -right-16 top-10 opacity-30">
+            <div className="w-40 h-40 bg-teal-100 rounded-3xl rotate-12"></div>
+          </div>
+          <div className="hidden md:block absolute -left-12 bottom-10 opacity-30">
+            <div className="w-32 h-32 bg-emerald-200 rounded-full"></div>
+          </div>
+        </section>
+        
+        {/* Card Section */}
+        <section className="flex items-center justify-center py-8 md:py-12 relative z-10">
+          {/* Modal-like Card */}
+          <div className="bg-white rounded-xl shadow-xl max-w-xl w-full mx-4 overflow-hidden">
+            {/* Card Header */}
+            <div className="flex items-center gap-3 px-6 py-4 border-b">
+              <div className="w-8 h-8 bg-emerald-500 rounded-md flex items-center justify-center">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
+              <h2 className="text-xl font-medium text-gray-800">Documents</h2>
             </div>
             
-            <div className="space-y-5 mb-8">
-              <div className="flex gap-4 items-start">
-                <div className="w-6 h-6 flex items-center justify-center rounded-full bg-emerald-100 text-emerald-700 font-medium mt-0.5">
-                  1
+            {/* Card Content */}
+            <div className="p-6">
+              <div className="flex justify-center mb-10">
+                <div className="w-32 h-32 bg-emerald-50 rounded-xl flex items-center justify-center p-4">
+                  <svg className="w-full h-full text-emerald-500 transform rotate-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    <path d="M14 3v4a1 1 0 001 1h4" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
+                  </svg>
                 </div>
-                <p className="text-gray-600 flex-1">Create and manage intelligent documents with AI assistance</p>
               </div>
-              <div className="flex gap-4 items-start">
-                <div className="w-6 h-6 flex items-center justify-center rounded-full bg-emerald-100 text-emerald-700 font-medium mt-0.5">
-                  2
+              
+              <div className="space-y-5 mb-8">
+                <div className="flex gap-4 items-start">
+                  <div className="w-6 h-6 flex items-center justify-center rounded-full bg-emerald-100 text-emerald-700 font-medium mt-0.5">
+                    1
+                  </div>
+                  <p className="text-gray-600 flex-1">Create and manage intelligent documents with AI assistance</p>
                 </div>
-                <p className="text-gray-600 flex-1">Collaborate in real-time with your team from anywhere</p>
-              </div>
-              <div className="flex gap-4 items-start">
-                <div className="w-6 h-6 flex items-center justify-center rounded-full bg-emerald-100 text-emerald-700 font-medium mt-0.5">
-                  3
+                <div className="flex gap-4 items-start">
+                  <div className="w-6 h-6 flex items-center justify-center rounded-full bg-emerald-100 text-emerald-700 font-medium mt-0.5">
+                    2
+                  </div>
+                  <p className="text-gray-600 flex-1">Collaborate in real-time with your team from anywhere</p>
                 </div>
-                <p className="text-gray-600 flex-1">Access enterprise-grade security and version control</p>
+                <div className="flex gap-4 items-start">
+                  <div className="w-6 h-6 flex items-center justify-center rounded-full bg-emerald-100 text-emerald-700 font-medium mt-0.5">
+                    3
+                  </div>
+                  <p className="text-gray-600 flex-1">Access enterprise-grade security and version control</p>
+                </div>
               </div>
-            </div>
-            
-            {status === "authenticated" ? (
-              <div className="flex flex-col gap-3">
+              
+              {status === "authenticated" ? (
+                <div className="flex flex-col gap-3">
+                  <Button
+                    themeColor="primary"
+                    onClick={() => router.push("/documents")}
+                    size="large"
+                    className="w-full py-3 bg-emerald-600 hover:bg-emerald-700"
+                  >
+                    My Documents
+                  </Button>
+                  <Button
+                    themeColor="base"
+                    onClick={() => router.push("/document")}
+                    size="large"
+                    className="w-full py-3"
+                  >
+                    Create New Document
+                  </Button>
+                </div>
+              ) : status === "loading" ? (
+                <div className="flex justify-center items-center py-4">
+                  <div className="w-6 h-6 border-t-2 border-b-2 border-emerald-500 rounded-full animate-spin"></div>
+                </div>
+              ) : (
                 <Button
                   themeColor="primary"
-                  onClick={() => router.push("/documents")}
+                  onClick={signIn}
                   size="large"
                   className="w-full py-3 bg-emerald-600 hover:bg-emerald-700"
                 >
-                  My Documents
+                  Get Started
                 </Button>
-                <Button
-                  themeColor="base"
-                  onClick={() => router.push("/document")}
-                  size="large"
-                  className="w-full py-3"
-                >
-                  Create New Document
-                </Button>
-              </div>
-            ) : status === "loading" ? (
-              <div className="flex justify-center items-center py-4">
-                <div className="w-6 h-6 border-t-2 border-b-2 border-emerald-500 rounded-full animate-spin"></div>
-              </div>
-            ) : (
-              <Button
-                themeColor="primary"
-                onClick={signIn}
-                size="large"
-                className="w-full py-3 bg-emerald-600 hover:bg-emerald-700"
-              >
-                Get Started
-              </Button>
-            )}
+              )}
+            </div>
           </div>
-        </div>
+        </section>
+        
+        {/* Footer */}
+        <section className="relative z-10 py-8 text-center text-gray-600 text-sm">
+          <p>&copy; {new Date().getFullYear()} Smart Docs. All rights reserved.</p>
+        </section>
       </main>
     </div>
   );
