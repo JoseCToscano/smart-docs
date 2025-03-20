@@ -144,9 +144,10 @@ export default function HomePage() {
     else if (animationState === 'document-final') {
       // Show finalized document
       
-      timerRef.current = setTimeout(() => {
-        setAnimationState('reset');
-      }, 4000);
+      // Remove timeout that would reset the animation
+      // timerRef.current = setTimeout(() => {
+      //   setAnimationState('reset');
+      // }, 4000);
     }
     else if (animationState === 'reset') {
       // Reset to beginning
@@ -431,6 +432,18 @@ export default function HomePage() {
                       </svg>
                     </button>
                   </div>
+                  
+                  {/* Add restart button */}
+                  {animationState === 'document-final' && (
+                    <div className="mt-4 text-center">
+                      <button 
+                        onClick={() => setAnimationState('initial')}
+                        className="text-sm text-blue-600 hover:text-blue-800 border border-blue-200 hover:border-blue-300 rounded-md px-3 py-1 transition-colors"
+                      >
+                        Restart Demo
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
               
@@ -531,15 +544,6 @@ export default function HomePage() {
                             <h2 className="text-sm font-semibold text-gray-800 mb-1">{(documentState === 'initial' || documentState === 'client-details') ? '5' : '5'}. CONFIDENTIALITY</h2>
                             <p className="text-xs text-gray-700">
                               Contractor agrees to keep confidential all proprietary information, business data, and trade secrets received from Client during the term of this Agreement and for [TIME PERIOD] thereafter. Contractor shall not disclose such information to any third party without Client's prior written consent.
-                            </p>
-                          </div>
-
-                          {/* Termination Section */}
-                          <div className={`transform transition-all duration-300 hover:-translate-y-1 hover:shadow-sm rounded-lg p-2 ${documentState === 'initial' ? 'animate-fade-in' : ''}`}
-                            style={{ animationDelay: '0.7s' }}>
-                            <h2 className="text-sm font-semibold text-gray-800 mb-1">{(documentState === 'initial' || documentState === 'client-details') ? '6' : '6'}. TERMINATION</h2>
-                            <p className="text-xs text-gray-700">
-                              Either party may terminate this Agreement with [NOTICE] days written notice. Client shall pay for all services completed prior to termination.
                             </p>
                           </div>
                           
