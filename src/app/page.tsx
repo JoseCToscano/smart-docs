@@ -454,9 +454,9 @@ export default function HomePage() {
                 <div className="absolute bottom-20 -right-10 w-16 h-16 rounded-full bg-indigo-100 opacity-20"></div>
                 
                 {/* Floating Document */}
-                <div className="relative mx-auto transform-gpu transition-all duration-500 hover:rotate-1 [transform:rotateX(2deg)_rotateY(-1deg)] max-w-lg">
+                <div className="relative mx-auto transform-gpu transition-all duration-500 hover:rotate-1 [transform:rotateX(2deg)_rotateY(-1deg)] w-full max-w-xl">
                   {/* Document Controls Bar */}
-                  <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-sm px-4 py-1.5 rounded-t-lg shadow-sm border border-gray-200 flex items-center gap-3 w-[85%] max-w-[calc(theme(maxWidth.md)*0.85)]">
+                  <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-sm px-4 py-1.5 rounded-t-lg shadow-sm border border-gray-200 flex items-center gap-3 w-[85%] max-w-[calc(450px*0.85)]">
                     <div className="flex items-center gap-1.5">
                       <div className="w-2.5 h-2.5 rounded-full bg-red-400"></div>
                       <div className="w-2.5 h-2.5 rounded-full bg-yellow-400"></div>
@@ -476,7 +476,7 @@ export default function HomePage() {
                   
                   {/* Paper Document */}
                   <div className="mx-auto bg-white shadow-xl rounded-md p-6 border border-gray-100 transform transition-all duration-500 
-                    [transform-style:preserve-3d] max-w-md aspect-[1/1.414]
+                    [transform-style:preserve-3d] max-w-[450px] aspect-[1/1.414]
                     [box-shadow:0_8px_16px_rgba(0,0,0,0.08),0_4px_4px_rgba(0,0,0,0.1),0_-2px_4px_rgba(0,0,0,0.03)]">
                     
                     {/* Paper texture and edge styling */}
@@ -547,7 +547,7 @@ export default function HomePage() {
                             style={{ animationDelay: '0.6s' }}>
                             <h2 className="text-sm font-semibold text-gray-800 mb-1">{(documentState === 'initial' || documentState === 'client-details') ? '5' : '5'}. CONFIDENTIALITY</h2>
                             <p className="text-xs text-gray-700">
-                              Contractor agrees to keep confidential all proprietary information, business data, and trade secrets received from Client during the term of this Agreement and for [TIME PERIOD] thereafter. Contractor shall not disclose such information to any third party without Client's prior written consent.
+                              Contractor agrees to keep confidential all proprietary information, business data, and trade secrets received from Client during the term of this Agreement. Contractor shall not disclose such information to any third party without Client's prior written consent.
                             </p>
                           </div>
                           
@@ -604,7 +604,7 @@ export default function HomePage() {
                   
                   {/* Shadow paper underneath - creates depth effect */}
                   <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-[95%] h-[98%] bg-white rounded-md -z-10
-                    opacity-70 shadow-md [transform:rotateX(5deg)] blur-[1px] max-w-md aspect-[1/1.414]"></div>
+                    opacity-70 shadow-md [transform:rotateX(5deg)] blur-[1px] max-w-[450px] aspect-[1/1.414]"></div>
                 </div>
               </div>
             </div>
