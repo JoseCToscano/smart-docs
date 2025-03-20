@@ -1866,6 +1866,25 @@ IMPORTANT GUIDELINES:
     }
   }, [documentId, loadDocument]);
 
+  // Add keyboard shortcut for toggling AI assistant
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Check for Cmd/Ctrl + A
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'a') {
+        e.preventDefault(); // Prevent default browser behavior
+        toggleSidebar();
+      }
+    };
+
+    // Add event listener
+    window.addEventListener('keydown', handleKeyDown);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [toggleSidebar]);
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-100">
       {/* Main App Toolbar */}
@@ -1909,15 +1928,22 @@ IMPORTANT GUIDELINES:
             </Button>
           </Tooltip>
           
-          <Tooltip anchorElement="target" position="bottom" content={() => showSidebar ? "Hide AI Assistant sidebar" : "Show AI Assistant sidebar"}>
+          <Tooltip anchorElement="target" position="bottom" content={() => 
+            showSidebar 
+              ? "Hide AI Assistant sidebar (⌘A on Mac, Ctrl+A on Windows/Linux)" 
+              : "Show AI Assistant sidebar (⌘A on Mac, Ctrl+A on Windows/Linux)"
+          }>
             <Button
               themeColor="base"
               onClick={toggleSidebar}
               icon={showSidebar ? "collapse" : "expand"}
               className="k-button-md mr-3"
-              title={showSidebar ? "Hide AI Assistant" : "Show AI Assistant"}
+              title={showSidebar ? "Hide AI Assistant (⌘A)" : "Show AI Assistant (⌘A)"}
             >
-              {showSidebar ? "Hide AI" : "Show AI"}
+              {showSidebar ? 
+              <p>Hide AI Assistant <span className="text-xs text-gray-500 font-mono">(⌘A)</span></p>
+               : <p>Show AI Assistant <span className="text-xs text-gray-500 font-mono">(⌘A)</span></p>
+               }
             </Button>
           </Tooltip>
           <UserProfile />
@@ -1983,7 +2009,7 @@ IMPORTANT GUIDELINES:
                     size="small"
 
                   >
-                    <div className="flex flex-row items-center justify-center gap-2 px-2 py-1">
+                    <div className="flex flex-row items-center justify-center gap-2 px-1">
                       <p>
                         Export as 
                         </p>

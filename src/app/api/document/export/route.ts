@@ -35,29 +35,25 @@ export async function POST(req: NextRequest) {
     };
 
     // Convert margins from pixels to inches
-    const marginInches = {
-      top: margins.top * PX_TO_INCHES,
-      right: margins.right * PX_TO_INCHES,
-      bottom: margins.bottom * PX_TO_INCHES,
-      left: margins.left * PX_TO_INCHES,
+    const marginTwips = {
+      top: Math.round(margins.top * MM_TO_TWIPS),
+      right: Math.round(margins.right * MM_TO_TWIPS),
+      bottom: Math.round(margins.bottom * MM_TO_TWIPS),
+      left: Math.round(margins.left * MM_TO_TWIPS),
     };
 
     // Convert HTML to DOCX with proper page size and margins
     const docxBuffer = await HTMLtoDOCX(content, null, {
-      table: { row: { cantSplit: true } },
-      footer: true,
-      pageNumber: true,
-      font: 'Calibri',
-      margins: marginInches,
-      pageSize: {
-        width: pageSizeTwips.width,
-        height: pageSizeTwips.height
-      },
       title: title,
       creator: 'SmartDocs',
       description: 'Document exported from SmartDocs',
       keywords: ['smartdocs', 'document'],
       lastModifiedBy: 'SmartDocs Export',
+      pageSize: {
+        width: pageSizeTwips.width,
+        height: pageSizeTwips.height
+      },
+      margins: marginTwips,
     });
 
     // Return the buffer as a blob
