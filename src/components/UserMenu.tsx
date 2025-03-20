@@ -60,6 +60,18 @@ export const UserMenu = () => {
             My Documents
           </Link>
         </li>
+        <li>
+          <Link 
+            href="/contact" 
+            className={`block w-full text-left px-3 py-1.5 text-sm rounded ${
+              pathname === '/contact' 
+                ? 'bg-blue-50 text-blue-700' 
+                : 'hover:bg-gray-100'
+            }`}
+          >
+            Contact us
+          </Link>
+        </li>
         <li className="border-t border-gray-200 mt-1 pt-1">
           <button 
             onClick={() => void signOut()}

@@ -24,11 +24,7 @@ import {
 import { UserProfile } from "@/components/UserProfile";
 import Link from "next/link";
 import toast from "react-hot-toast";
-
-interface ProfileFormModel {
-  name: string;
-  email: string;
-}
+import { getPaymentLink } from "@/lib/stripe";
 
 interface PromptCount {
   total: number;
@@ -125,7 +121,7 @@ export default function ProfileSettingsPage() {
             <div className="flex items-center space-x-4">
               {promptCount && !promptCount.isPremium && (
                 <Button
-                  onClick={() => window.location.href = "https://buy.stripe.com/test_00g02Pbdx65afzadQQ?prefilled_email=" + session?.user?.email}
+                  onClick={() => window.location.href = getPaymentLink(session?.user?.email || "")}
                   themeColor="primary"
                   size="small"
                 >
@@ -194,7 +190,7 @@ export default function ProfileSettingsPage() {
                     Join our premium community and unlock unlimited AI assistance!
                   </p>
                   <Button
-                    onClick={() => window.location.href = "https://buy.stripe.com/test_00g02Pbdx65afzadQQ?prefilled_email=" + session?.user?.email}
+                    onClick={() => window.location.href = getPaymentLink(session?.user?.email || "")}
                     themeColor="primary"
                   >
                     Upgrade to Premium

@@ -680,7 +680,7 @@ export default function HomePage() {
                 Choose the plan that's right for you
               </h2>
               <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                Early adopter special: Get lifetime access for just <span className="font-semibold text-indigo-700">$199</span> with <span className="font-semibold text-indigo-700">30,000 tokens/month included</span> plus 30% off any additional usage.
+                Get started with our Pro Plan for just <span className="font-semibold text-indigo-700">$5.99/month</span> and enjoy <span className="font-semibold text-indigo-700">30% off</span> any additional usage.
               </p>
             </div>
             
@@ -733,27 +733,7 @@ export default function HomePage() {
                           </svg>
                         </div>
                       </div>
-                      <span className="text-gray-700">Standard AI models only</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <div className="flex-shrink-0 mt-1">
-                        <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center">
-                          <svg className="w-3 h-3 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
-                          </svg>
-                        </div>
-                      </div>
-                      <span className="text-gray-700">Export to PDF only</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <div className="flex-shrink-0 mt-1">
-                        <div className="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center">
-                          <svg className="w-3 h-3 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </div>
-                      </div>
-                      <span className="text-gray-500">No advanced AI features</span>
+                      <span className="text-gray-700">Standard AI models</span>
                     </li>
                   </ul>
                   
@@ -770,27 +750,20 @@ export default function HomePage() {
               
               {/* Lifetime Tier */}
               <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl shadow-xl border border-indigo-100 overflow-hidden transform transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 relative">
-                <div className="absolute top-0 right-0 -mt-2 -mr-2 w-24 h-24 overflow-hidden">
-                  <div className="absolute top-0 right-0 bg-blue-600 text-white text-xs font-bold py-1 px-4 transform rotate-45 translate-y-8 translate-x-3">
-                    BEST DEAL
-                  </div>
-                </div>
-                
                 <div className="p-8">
                   <div className="flex justify-between items-start mb-5">
                     <div>
-                      <h3 className="text-xl font-bold text-gray-900">Lifetime Builder Plan</h3>
-                      <p className="text-gray-600 mt-1">Early adopter special</p>
+                      <h3 className="text-xl font-bold text-gray-900">Pro Plan</h3>
+                      <p className="text-gray-600 mt-1">Monthly subscription</p>
                     </div>
                     <span className="inline-block px-3 py-1 text-xs font-medium text-indigo-700 bg-indigo-100 rounded-full">
-                      LIMITED TIME
+                      BEST VALUE
                     </span>
                   </div>
                   
                   <div className="mb-6">
-                    <span className="text-4xl font-bold text-gray-900">$199</span>
-                    <span className="text-gray-600 ml-1">one-time payment</span>
-                    <p className="text-sm text-gray-500 mt-1">Includes 30k tokens/month</p>
+                    <span className="text-4xl font-bold text-gray-900">$5.99</span>
+                    <span className="text-gray-600 ml-1">/month</span>
                   </div>
                   
                   <ul className="space-y-3 mb-8">
@@ -802,7 +775,7 @@ export default function HomePage() {
                           </svg>
                         </div>
                       </div>
-                      <span className="text-gray-700">Full lifetime access to all features</span>
+                      <span className="text-gray-700">Full access to all features</span>
                     </li>
                     <li className="flex items-start gap-3">
                       <div className="flex-shrink-0 mt-1">
@@ -812,17 +785,7 @@ export default function HomePage() {
                           </svg>
                         </div>
                       </div>
-                      <span className="text-gray-700"><strong>30,000 tokens/month</strong> included forever</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <div className="flex-shrink-0 mt-1">
-                        <div className="w-5 h-5 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center justify-center">
-                          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
-                          </svg>
-                        </div>
-                      </div>
-                      <span className="text-gray-700"><strong>30% discount</strong> on additional token usage</span>
+                      <span className="text-gray-700"><strong>30% discount</strong> on additional usage</span>
                     </li>
                     <li className="flex items-start gap-3">
                       <div className="flex-shrink-0 mt-1">
@@ -842,7 +805,7 @@ export default function HomePage() {
                           </svg>
                         </div>
                       </div>
-                      <span className="text-gray-700">Create ~15 documents/month with included tokens</span>
+                      <span className="text-gray-700">Create unlimited documents</span>
                     </li>
                     <li className="flex items-start gap-3">
                       <div className="flex-shrink-0 mt-1">
@@ -854,16 +817,6 @@ export default function HomePage() {
                       </div>
                       <span className="text-gray-700">Priority access to new features</span>
                     </li>
-                    <li className="flex items-start gap-3">
-                      <div className="flex-shrink-0 mt-1">
-                        <div className="w-5 h-5 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center justify-center">
-                          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
-                          </svg>
-                        </div>
-                      </div>
-                      <span className="text-gray-700">All export formats (PDF, Word, etc.)</span>
-                    </li>
                   </ul>
                   
                   <Button
@@ -872,12 +825,12 @@ export default function HomePage() {
                     size="large"
                     className="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-xl shadow-lg hover:shadow-indigo-500/30 transition-all duration-300 hover:scale-[1.01] group overflow-hidden"
                   >
-                    <span className="relative z-10">Get lifetime access</span>
+                    <span className="relative z-10">Start your Pro subscription</span>
                     <span className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
                   </Button>
                   
                   <p className="text-center text-sm text-gray-500 mt-4">
-                    30-day money-back guarantee
+                    Cancel anytime. No commitments.
                   </p>
                 </div>
               </div>

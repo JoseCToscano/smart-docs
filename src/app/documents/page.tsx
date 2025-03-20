@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { Button } from "@/components/kendo/free";
@@ -16,6 +16,7 @@ import {
 
 export default function DocumentsPage() {
   const router = useRouter();
+  const { refToAction } = useParams();
   const { status } = useSession();
   const [documents, setDocuments] = useState<DocumentSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -68,6 +69,10 @@ export default function DocumentsPage() {
       setError("Failed to delete the document. Please try again.");
     }
   };
+
+  if (refToAction === "purchasePro") {
+    void router.push("/settings/profile");
+  }
   
   if (status === "loading") {
     return (

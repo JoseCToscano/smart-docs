@@ -375,13 +375,13 @@ const AISidebar = forwardRef<AISidebarHandle, AISidebarProps>(({
           </div>
           <div className="flex gap-2">
             <button
-              onClick={() => setPrompt("Generate a draft for a employee contract.")}
+              onClick={() => setPrompt("Generate a draft of a simple contractor agreement for a web developer.")}
               className="text-xs px-3 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors duration-200 flex items-center gap-1 border border-gray-200/60"
             >
               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
               </svg>
-              Generate a draft for a employee contract
+              Generate a draft of a simple contractor agreement
             </button>
             <button
               onClick={() => setPrompt("Can you help me find and fix any grammatical errors?")}
