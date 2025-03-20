@@ -3,6 +3,12 @@
 import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from "react";
 import { TextArea, Button, ProgressBar } from "@/components/kendo/free";
 
+interface PromptCount {
+  total: number;
+  remaining: number;
+  limit: number;
+}
+
 interface AISidebarProps {
   onPromptSubmit: (prompt: string) => void;
   isLoading?: boolean;
@@ -54,6 +60,7 @@ const AISidebar = forwardRef<AISidebarHandle, AISidebarProps>(({
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [promptCount, setPromptCount] = useState<PromptCount | null>(null);
 
   // Control artificial progress based on loading state
   useEffect(() => {
@@ -115,10 +122,37 @@ const AISidebar = forwardRef<AISidebarHandle, AISidebarProps>(({
     }
   }, [chatHistory]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Add function to fetch prompt count
+  const fetchPromptCount = async () => {
+    try {
+      const response = await fetch('/api/prompts/count');
+      if (!response.ok) throw new Error('Failed to fetch prompt count');
+      const data = await response.json();
+      setPromptCount(data);
+    } catch (error) {
+      console.error('Error fetching prompt count:', error);
+    }
+  };
+
+  // Fetch prompt count on mount and after each prompt submission
+  useEffect(() => {
+    fetchPromptCount();
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (prompt.trim() === "" || isLoading) return;
+
+    // Check if user has remaining prompts
+    if (promptCount && promptCount.remaining <= 0) {
+      setChatHistory(prev => [...prev, {
+        role: "assistant",
+        content: "⚠️ You have reached your limit of free prompts. Please try again later.",
+        timestamp: new Date()
+      }]);
+      return;
+    }
     
     // Add user message to chat history
     const userMessage: Message = {
@@ -130,7 +164,10 @@ const AISidebar = forwardRef<AISidebarHandle, AISidebarProps>(({
     setChatHistory(prev => [...prev, userMessage]);
     
     // Call the parent component's handler
-    onPromptSubmit(prompt);
+    await onPromptSubmit(prompt);
+    
+    // Update prompt count after submission
+    fetchPromptCount();
     
     // Clear the input
     setPrompt("");
@@ -164,7 +201,23 @@ const AISidebar = forwardRef<AISidebarHandle, AISidebarProps>(({
         <h2 className="text-lg font-semibold text-gray-800">AI Assistant</h2>
         <p className="text-xs text-gray-500 mt-1">Ask questions or request document changes</p>
         
-        {/* Removed document changes action buttons from here */}
+        {/* Add prompt count display */}
+        {promptCount && (
+          <div className={`mt-2 text-xs ${
+            promptCount.remaining <= 3 ? 'text-red-600' : 
+            promptCount.remaining <= 5 ? 'text-orange-600' : 
+            'text-gray-600'
+          }`}>
+            {promptCount.remaining > 0 ? (
+              <>
+                <span className="font-medium">{promptCount.remaining}</span> of{' '}
+                <span className="font-medium">{promptCount.limit}</span> free prompts remaining
+              </>
+            ) : (
+              <span className="font-medium">You have reached your limit of free prompts</span>
+            )}
+          </div>
+        )}
       </div>
       
       {/* Chat history - Make sure this takes available space and is scrollable */}

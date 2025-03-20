@@ -14,6 +14,22 @@ datasource db {
     url      = env("DATABASE_URL")
 }
 
+model Prompt {
+    id        String   @id @default(cuid())
+    userPrompt     String   @db.Text
+    inputTokens    Int
+    outputTokens   Int
+    modelUsed      String
+    cache_read_input_tokens Int?
+    cache_creation_input_tokens Int?
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    user User? @relation(fields: [user_id], references: [id])
+    user_id String?
+
+    @@index([user_id])
+}
+
 model Post {
     id        Int      @id @default(autoincrement())
     name      String
@@ -79,6 +95,7 @@ model User {
     emailVerified DateTime?
     image         String?
     isPremium     Boolean   @default(false)
+    promptCount   Int       @default(0)
     created_at    DateTime  @default(now())
     updated_at    DateTime  @updatedAt
 
@@ -86,6 +103,7 @@ model User {
     sessions      Session[]
     posts         Post[]
     documents     Document[]
+    prompts       Prompt[]
 }
 
 model VerificationToken {
