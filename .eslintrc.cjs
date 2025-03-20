@@ -42,6 +42,7 @@ module.exports = {
     "@typescript-eslint/prefer-nullish-coalescing": "off",
     "@typescript-eslint/no-unused-vars": "warn",
     "@next/next/no-img-element": "off",
-    "react/no-unescaped-entities": "off"
+    "react/no-unescaped-entities": "off",
+    'no-var': 'off',
   }
 }; 
