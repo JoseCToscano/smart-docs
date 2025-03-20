@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { 
@@ -19,7 +19,7 @@ import {
 import { 
   Input, 
   Button,
-  Avatar 
+  Avatar
 } from "@/components/kendo/free";
 
 interface ProfileFormModel {
@@ -36,6 +36,9 @@ export default function ProfileSettingsPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -43,33 +46,85 @@ export default function ProfileSettingsPage() {
     }
   }, [status, router]);
 
+  const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setAvatarFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const uploadAvatar = async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    
+    const response = await fetch("/api/upload", {
+      method: "POST",
+      body: formData,
+    });
+    
+    if (!response.ok) {
+      throw new Error("Failed to upload avatar");
+    }
+    
+    const data = await response.json();
+    return data.url;
+  };
+
   const handleSubmit = async (values: { [name: string]: any }) => {
     setIsLoading(true);
     setError(null);
     setSuccess(null);
 
     try {
+      let avatarUrl = session?.user?.image || undefined;
+
+      // Upload new avatar if one was selected
+      if (avatarFile) {
+        avatarUrl = await uploadAvatar(avatarFile);
+      }
+
       const data: ProfileFormModel = {
         name: values.name,
         email: values.email,
+        avatar: avatarUrl,
         timezone: values.timezone,
         language: values.language
       };
 
-      // Here you would typically make an API call to update the user's profile
-      // For now, we'll just simulate a delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Update profile in the backend
+      const response = await fetch("/api/user/profile", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: data.name,
+          avatar: data.avatar,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update profile");
+      }
+
+      const result = await response.json();
       
       // Update the session with new data
       await update({
         ...session,
         user: {
           ...session?.user,
-          name: data.name,
+          ...result.user,
         }
       });
 
       setSuccess("Profile updated successfully!");
+      setAvatarFile(null);
     } catch (err) {
       console.error("Error updating profile:", err);
       setError("Failed to update profile. Please try again.");
@@ -132,12 +187,44 @@ export default function ProfileSettingsPage() {
                         size="large"
                       >
                         <img 
-                          src={session?.user?.image || "/default-avatar.png"} 
+                          src={avatarPreview || session?.user?.image || "/default-avatar.png"} 
                           alt={session?.user?.name || "User avatar"}
                           className="w-full h-full object-cover rounded-full"
                         />
                       </Avatar>
-                      <Button>Change Avatar</Button>
+                      <div>
+                        <input
+                          type="file"
+                          ref={fileInputRef}
+                          className="hidden"
+                          accept="image/*"
+                          onChange={handleAvatarChange}
+                        />
+                        <Button
+                          onClick={() => fileInputRef.current?.click()}
+                          className="mb-2"
+                        >
+                          Change Avatar
+                        </Button>
+                        {avatarPreview && (
+                          <Button
+                            onClick={() => {
+                              setAvatarPreview(null);
+                              setAvatarFile(null);
+                              if (fileInputRef.current) {
+                                fileInputRef.current.value = "";
+                              }
+                            }}
+                            themeColor="error"
+                            className="ml-2"
+                          >
+                            Remove
+                          </Button>
+                        )}
+                        <p className="text-sm text-gray-500">
+                          Recommended: Square image, at least 400x400 pixels
+                        </p>
+                      </div>
                     </div>
 
                     {/* Name Field */}
