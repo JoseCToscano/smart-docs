@@ -62,7 +62,13 @@ export default function HomePage() {
               <div className="w-6 h-6 border-t-2 border-b-2 border-blue-500 rounded-full animate-spin"></div>
             </div>
           ) : (
-            <p className="text-gray-600">Sign in to get started</p>
+            <Button
+              themeColor="primary"
+              onClick={() => router.push("/api/auth/signin")}
+              size="large"
+            >
+              Sign in to get started
+            </Button>
           )}
         </div>
       </main>
