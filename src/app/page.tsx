@@ -24,7 +24,7 @@ export default function HomePage() {
   const router = useRouter();
   const [animationState, setAnimationState] = useState('initial');
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
-    { id: 1, sender: 'ai', message: "Hello! I'm your document assistant. How can I help with your document today?", visible: true }
+    { id: 1, sender: 'ai', message: "Hello! I'm your document assistant. I can help you create or edit any document.", visible: true }
   ]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   
@@ -36,106 +36,105 @@ export default function HomePage() {
     }
     
     if (animationState === 'initial') {
-      // Initial state - only first message is shown
+      // Initial state - only first message is shown with blank document
       setChatMessages([
-        { id: 1, sender: 'ai', message: "Hello! I'm your document assistant. How can I help with your document today?", visible: true },
-        { id: 2, sender: 'user', message: "Can you help me create a meeting agenda for tomorrow's team sync?", visible: false },
-        { id: 3, sender: 'ai', message: "Of course! I'll create a meeting agenda template for you. Would you like to include specific topics or just use a standard format?", visible: false },
-        { id: 4, sender: 'user', message: "Let's include project updates, roadmap planning, and action items review.", visible: false },
-        { id: 5, sender: 'ai', message: "Perfect! I'm creating your meeting agenda now...", visible: false, typing: false },
-        { id: 6, sender: 'ai', message: "I've added some details to each section. Would you like me to make any adjustments?", visible: false },
-        { id: 7, sender: 'user', message: "Can you update 'resource allocation' to be more specific? And add something about tracking progress.", visible: false },
-        { id: 8, sender: 'ai', message: "I've made those changes! I replaced 'resource allocation' with 'team capacity planning' and added a focus on accountability with SMART goals.", visible: false, typing: false }
+        { id: 1, sender: 'ai', message: "Hello! I'm your document assistant. I can help you create or edit any document.", visible: true },
+        { id: 2, sender: 'user', message: "I need a simple contractor agreement for a web developer.", visible: false },
+        { id: 3, sender: 'ai', message: "I'll create a short contractor agreement for your web developer project right away.", visible: false, typing: false },
+        { id: 4, sender: 'user', message: "Thanks! Here's the specific info: Client is TechStart Inc, contractor is Alex Rivera, rate is $85 per hour, invoiced bi-weekly, and payment due within 15 days.", visible: false },
+        { id: 5, sender: 'ai', message: "I've updated the agreement with TechStart Inc as the client, Alex Rivera as the contractor, $85/hour rate, bi-weekly invoicing, and 15-day payment terms.", visible: false, typing: false },
+        { id: 6, sender: 'user', message: "Great! For the timeline, start date is June 1, 2023, design approval by June 15, development complete by July 20, and final delivery on August 1.", visible: false },
+        { id: 7, sender: 'ai', message: "I've added all the timeline information to the contract. Is there anything else you'd like to modify?", visible: false, typing: false }
       ]);
       
       timerRef.current = setTimeout(() => {
-        setAnimationState('user-question');
+        setAnimationState('user-request');
       }, 2000);
     } 
-    else if (animationState === 'user-question') {
-      // Show user asking for help
+    else if (animationState === 'user-request') {
+      // Show user requesting a document
       setChatMessages(prev => prev.map(msg => 
         msg.id === 2 ? {...msg, visible: true} : msg
       ));
       
       timerRef.current = setTimeout(() => {
-        setAnimationState('ai-response');
+        setAnimationState('ai-creating');
       }, 2000);
     }
-    else if (animationState === 'ai-response') {
-      // Show AI responding
+    else if (animationState === 'ai-creating') {
+      // Show AI responding and creating document
       setChatMessages(prev => prev.map(msg => 
-        msg.id === 3 ? {...msg, visible: true} : msg
+        msg.id === 3 ? {...msg, visible: true, typing: true} : msg
       ));
       
       timerRef.current = setTimeout(() => {
-        setAnimationState('user-details');
-      }, 2500);
+        setAnimationState('document-initial');
+      }, 2000);
     }
-    else if (animationState === 'user-details') {
-      // User provides details
+    else if (animationState === 'document-initial') {
+      // Document shows initial content
+      setChatMessages(prev => prev.map(msg => 
+        msg.id === 3 ? {...msg, typing: false} : msg
+      ));
+      
+      timerRef.current = setTimeout(() => {
+        setAnimationState('user-addition');
+      }, 3500);
+    }
+    else if (animationState === 'user-addition') {
+      // User requests addition
       setChatMessages(prev => prev.map(msg => 
         msg.id === 4 ? {...msg, visible: true} : msg
       ));
       
       timerRef.current = setTimeout(() => {
-        setAnimationState('ai-typing');
+        setAnimationState('ai-adding');
       }, 2000);
     }
-    else if (animationState === 'ai-typing') {
-      // AI typing indicator
+    else if (animationState === 'ai-adding') {
+      // AI adding new sections
       setChatMessages(prev => prev.map(msg => 
         msg.id === 5 ? {...msg, visible: true, typing: true} : msg
       ));
       
       timerRef.current = setTimeout(() => {
-        setAnimationState('document-adding');
+        setAnimationState('document-additions');
       }, 2000);
     }
-    else if (animationState === 'document-adding') {
-      // Document starts showing changes
+    else if (animationState === 'document-additions') {
+      // Document shows new sections
       setChatMessages(prev => prev.map(msg => 
         msg.id === 5 ? {...msg, typing: false} : msg
       ));
       
       timerRef.current = setTimeout(() => {
-        setAnimationState('ai-review');
-      }, 3500);
+        setAnimationState('user-change');
+      }, 3000);
     }
-    else if (animationState === 'ai-review') {
-      // AI asks for review after creating document
+    else if (animationState === 'user-change') {
+      // User requests change
       setChatMessages(prev => prev.map(msg => 
         msg.id === 6 ? {...msg, visible: true} : msg
       ));
       
       timerRef.current = setTimeout(() => {
-        setAnimationState('user-feedback');
-      }, 3000);
-    }
-    else if (animationState === 'user-feedback') {
-      // User gives feedback on document
-      setChatMessages(prev => prev.map(msg => 
-        msg.id === 7 ? {...msg, visible: true} : msg
-      ));
-      
-      timerRef.current = setTimeout(() => {
-        setAnimationState('ai-final-typing');
-      }, 3000);
-    }
-    else if (animationState === 'ai-final-typing') {
-      // AI typing
-      setChatMessages(prev => prev.map(msg => 
-        msg.id === 8 ? {...msg, visible: true, typing: true} : msg
-      ));
-      
-      timerRef.current = setTimeout(() => {
-        setAnimationState('document-deleting');
+        setAnimationState('ai-changing');
       }, 2000);
     }
-    else if (animationState === 'document-deleting') {
-      // Document shows deletions/replacements
+    else if (animationState === 'ai-changing') {
+      // AI making changes
       setChatMessages(prev => prev.map(msg => 
-        msg.id === 8 ? {...msg, typing: false} : msg
+        msg.id === 7 ? {...msg, visible: true, typing: true} : msg
+      ));
+      
+      timerRef.current = setTimeout(() => {
+        setAnimationState('document-changes');
+      }, 2000);
+    }
+    else if (animationState === 'document-changes') {
+      // Document shows updated content
+      setChatMessages(prev => prev.map(msg => 
+        msg.id === 7 ? {...msg, typing: false} : msg
       ));
       
       timerRef.current = setTimeout(() => {
@@ -166,14 +165,16 @@ export default function HomePage() {
   
   // Get document state based on animation state
   const documentState = (() => {
-    if (animationState === 'document-adding' || animationState === 'ai-review' || animationState === 'user-feedback') {
-      return 'adding';
-    } else if (animationState === 'document-deleting' || animationState === 'ai-final-typing') {
-      return 'deleting';
-    } else if (animationState === 'document-final') {
+    if (['initial', 'user-request', 'ai-creating'].includes(animationState)) {
+      return 'blank';
+    } else if (['document-initial', 'user-addition', 'ai-adding'].includes(animationState)) {
+      return 'initial';
+    } else if (['document-additions', 'user-change', 'ai-changing'].includes(animationState)) {
+      return 'additions';
+    } else if (['document-changes', 'document-final'].includes(animationState)) {
       return 'final';
     } else {
-      return 'initial';
+      return 'blank';
     }
   })();
   
@@ -440,151 +441,180 @@ export default function HomePage() {
                 <div className="absolute bottom-20 -right-10 w-16 h-16 rounded-full bg-indigo-100 opacity-20"></div>
                 
                 {/* Floating Document */}
-                <div className="relative mx-auto transform-gpu transition-all duration-500 hover:rotate-1 [transform:rotateX(2deg)_rotateY(-1deg)]">
+                <div className="relative mx-auto transform-gpu transition-all duration-500 hover:rotate-1 [transform:rotateX(2deg)_rotateY(-1deg)] max-w-lg">
                   {/* Document Controls Bar */}
-                  <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-sm px-5 py-2 rounded-t-lg shadow-sm border border-gray-200 flex items-center gap-4 w-4/5 max-w-md">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-red-400"></div>
-                      <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
-                      <div className="w-3 h-3 rounded-full bg-green-400"></div>
+                  <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-sm px-4 py-1.5 rounded-t-lg shadow-sm border border-gray-200 flex items-center gap-3 w-[85%] max-w-sm">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-2.5 h-2.5 rounded-full bg-red-400"></div>
+                      <div className="w-2.5 h-2.5 rounded-full bg-yellow-400"></div>
+                      <div className="w-2.5 h-2.5 rounded-full bg-green-400"></div>
                     </div>
                     <div className="flex-1 text-center">
-                      <span className="text-sm font-medium text-gray-600">Team Meeting Agenda.docx</span>
+                      <span className="text-xs font-medium text-gray-600">
+                        {documentState === 'blank' ? 'New Document.docx' : 'Web Developer Contractor Agreement.docx'}
+                      </span>
                     </div>
                     <div className="text-blue-600 hover:text-blue-800 transition-colors">
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
                       </svg>
                     </div>
                   </div>
                   
                   {/* Paper Document */}
-                  <div className="max-w-2xl mx-auto bg-white shadow-xl rounded-md p-10 border border-gray-100 transform transition-all duration-500 
-                    [transform-style:preserve-3d]
-                    [box-shadow:0_10px_20px_rgba(0,0,0,0.08),0_6px_6px_rgba(0,0,0,0.12),0_-2px_6px_rgba(0,0,0,0.03)]">
+                  <div className="mx-auto bg-white shadow-xl rounded-md p-6 border border-gray-100 transform transition-all duration-500 
+                    [transform-style:preserve-3d] max-w-md
+                    [box-shadow:0_8px_16px_rgba(0,0,0,0.08),0_4px_4px_rgba(0,0,0,0.1),0_-2px_4px_rgba(0,0,0,0.03)]">
                     
                     {/* Paper texture and edge styling */}
                     <div className="absolute inset-0 bg-gradient-to-br from-gray-50 to-white rounded-md opacity-60 pointer-events-none"></div>
-                    <div className="absolute -left-1 top-10 bottom-10 w-1 bg-gradient-to-b from-gray-100 via-gray-200 to-gray-100 rounded-l-md transform -translate-x-0.5 shadow-sm pointer-events-none"></div>
+                    <div className="absolute -left-1 top-10 bottom-10 w-0.5 bg-gradient-to-b from-gray-100 via-gray-200 to-gray-100 rounded-l-md transform -translate-x-0.5 shadow-sm pointer-events-none"></div>
                     
-                    <h1 className="text-2xl font-bold text-center text-gray-800 mb-6 relative">Team Meeting Agenda</h1>
-                    <p className="text-gray-500 mb-8 text-center text-sm relative">Thursday, July 30, 2024 | 10:00 AM - 11:00 AM | Conference Room A</p>
-                    
-                    <div className="space-y-8 relative">
-                      <div className="transform transition-all duration-300 hover:-translate-y-1 hover:shadow-md rounded-lg p-4">
-                        <h2 className="text-lg font-semibold text-blue-700 mb-3">1. Project Updates (20 min)</h2>
-                        <ul className="list-disc pl-6 space-y-2 text-gray-700">
-                          <li>Status updates from each team lead</li>
-                          <li>Blockers and dependencies</li>
-                          <li>Timeline adjustments if needed</li>
-                          {documentState === 'adding' && (
-                            <li className="bg-green-50 border-l-4 border-green-500 pl-2 py-1 text-green-800 animate-pulse">
-                              <span className="font-medium">NEW:</span> Review of sprint velocity metrics
-                            </li>
-                          )}
-                          {(documentState === 'deleting' || documentState === 'final') && (
-                            <li>Review of sprint velocity metrics</li>
-                          )}
-                        </ul>
+                    {documentState === 'blank' ? (
+                      <div className="h-64 flex items-center justify-center">
+                        <p className="text-gray-400 text-sm italic">Blank document. Start by asking the AI to create content.</p>
                       </div>
-                      
-                      <div className="transform transition-all duration-300 hover:-translate-y-1 hover:shadow-md rounded-lg p-4">
-                        <h2 className="text-lg font-semibold text-blue-700 mb-3">2. Roadmap Planning (25 min)</h2>
-                        <ul className="list-disc pl-6 space-y-2 text-gray-700">
-                          <li>Review Q3 objectives</li>
-                          {documentState !== 'initial' && documentState !== 'adding' && (
-                            <li className="bg-red-50 border-l-4 border-red-500 pl-2 py-1 text-red-800 line-through opacity-70 animate-pulse">
-                              Discuss resource allocation
-                            </li>
-                          )}
-                          {documentState === 'initial' || documentState === 'adding' ? (
-                            <li>Discuss resource allocation</li>
-                          ) : documentState === 'deleting' || documentState === 'final' ? (
-                            <li className="bg-green-50 border-l-4 border-green-500 pl-2 py-1 text-green-800 animate-pulse">
-                              <span className="font-medium">NEW:</span> Team capacity planning and allocation
-                            </li>
-                          ) : null}
-                          <li>Prioritize upcoming features</li>
-                          {documentState === 'adding' && (
-                            <li className="bg-green-50 border-l-4 border-green-500 pl-2 py-1 text-green-800 animate-pulse">
-                              <span className="font-medium">NEW:</span> Feature dependencies mapping
-                            </li>
-                          )}
-                          {(documentState === 'deleting' || documentState === 'final') && (
-                            <li>Feature dependencies mapping</li>
-                          )}
-                        </ul>
-                      </div>
-                      
-                      <div className="transform transition-all duration-300 hover:-translate-y-1 hover:shadow-md rounded-lg p-4">
-                        <h2 className="text-lg font-semibold text-blue-700 mb-3">3. Action Items Review (15 min)</h2>
-                        {documentState === 'deleting' && (
-                          <div className="bg-green-50 border-l-4 border-green-500 pl-2 py-1 text-green-800 mb-3 animate-pulse">
-                            <span className="font-medium">NEW SECTION INTRO:</span> Focus on accountability and tracking progress
-                          </div>
-                        )}
-                        {documentState === 'final' && (
-                          <div className="text-gray-700 mb-3">
-                            Focus on accountability and tracking progress
-                          </div>
-                        )}
-                        <ul className="list-disc pl-6 space-y-2 text-gray-700">
-                          <li>Follow-up on last meeting's action items</li>
-                          <li>Assign new action items</li>
-                          {documentState !== 'initial' && documentState !== 'adding' && (
-                            <li className="bg-red-50 border-l-4 border-red-500 pl-2 py-1 text-red-800 line-through opacity-70 animate-pulse">
-                              Set deadlines and expectations
-                            </li>
-                          )}
-                          {documentState === 'initial' || documentState === 'adding' ? (
-                            <li>Set deadlines and expectations</li>
-                          ) : documentState === 'deleting' || documentState === 'final' ? (
-                            <li className="bg-green-50 border-l-4 border-green-500 pl-2 py-1 text-green-800 animate-pulse">
-                              <span className="font-medium">NEW:</span> Define SMART goals with clear timelines
-                            </li>
-                          ) : null}
-                        </ul>
-                      </div>
-                      
-                      <div className="pt-6 border-t border-gray-200">
-                        <p className="text-sm text-gray-500 italic">Note: Please come prepared with your updates. Send any materials you'd like to discuss to the team at least 2 hours before the meeting.</p>
+                    ) : (
+                      <>
+                        <h1 className={`text-lg font-bold text-center text-gray-800 mb-2 relative ${documentState === 'initial' ? 'animate-fade-in' : ''}`}>
+                          CONTRACTOR AGREEMENT
+                        </h1>
                         
-                        {/* Diff indicators */}
-                        {documentState === 'adding' && (
-                          <div className="mt-4 flex items-center justify-center gap-4 text-xs">
-                            <div className="flex items-center">
-                              <div className="w-3 h-3 bg-green-500 rounded-full mr-1"></div>
-                              <span>2 additions</span>
+                        <div className="space-y-3 relative">
+                          {/* Parties Section */}
+                          <div className={`transform transition-all duration-300 hover:-translate-y-1 hover:shadow-sm rounded-lg p-2 ${documentState === 'initial' ? 'animate-fade-in' : ''}`}
+                            style={{ animationDelay: '0.2s' }}>
+                            <h2 className="text-sm font-semibold text-gray-800 mb-1">1. PARTIES</h2>
+                            <p className="text-xs text-gray-700">
+                              This Agreement is between <span className={`font-medium ${documentState === 'initial' ? '' : 'bg-yellow-100'}`}>{documentState === 'initial' ? '[CLIENT NAME]' : 'TechStart Inc'}</span> ("Client") and <span className={`font-medium ${documentState === 'initial' ? '' : 'bg-yellow-100'}`}>{documentState === 'initial' ? '[CONTRACTOR NAME]' : 'Alex Rivera'}</span> ("Contractor") dated {new Date().toLocaleDateString()}.
+                            </p>
+                          </div>
+                          
+                          {/* Scope Section */}
+                          <div className={`transform transition-all duration-300 hover:-translate-y-1 hover:shadow-sm rounded-lg p-2 ${documentState === 'initial' ? 'animate-fade-in' : ''}`}
+                            style={{ animationDelay: '0.3s' }}>
+                            <h2 className="text-sm font-semibold text-gray-800 mb-1">2. SERVICES</h2>
+                            <p className="text-xs text-gray-700">
+                              Contractor will provide web development services including design, coding, testing, and deployment of website as specified by Client.
+                            </p>
+                          </div>
+                          
+                          {/* Compensation Section */}
+                          <div className={`transform transition-all duration-300 hover:-translate-y-1 hover:shadow-sm rounded-lg p-2 ${documentState === 'initial' ? 'animate-fade-in' : ''}`}
+                            style={{ animationDelay: '0.4s' }}>
+                            <h2 className="text-sm font-semibold text-gray-800 mb-1">3. COMPENSATION</h2>
+                            <p className="text-xs text-gray-700">
+                              Client will pay Contractor <span className={`font-medium ${documentState === 'initial' ? '' : 'bg-yellow-100'}`}>{documentState === 'initial' ? '$[RATE]' : '$85'}</span> per hour, invoiced <span className={`font-medium ${documentState === 'initial' ? '' : 'bg-yellow-100'}`}>{documentState === 'initial' ? '[FREQUENCY]' : 'bi-weekly'}</span>. Payment due within <span className={`font-medium ${documentState === 'initial' ? '' : 'bg-yellow-100'}`}>{documentState === 'initial' ? '[DAYS]' : '15'}</span> days of invoice receipt.
+                            </p>
+                          </div>
+                          
+                          {/* Deliverables Section - Added in second stage */}
+                          {(documentState === 'additions' || documentState === 'final') && (
+                            <div className={`transform transition-all duration-300 hover:-translate-y-1 hover:shadow-sm rounded-lg p-2 bg-green-50 border-l-2 border-green-500 ${documentState === 'additions' ? 'animate-fade-in' : ''}`}
+                              style={{ animationDelay: '0.2s' }}>
+                              <h2 className="text-sm font-semibold text-gray-800 mb-1">4. DELIVERABLES</h2>
+                              <ul className="list-disc text-xs pl-4 space-y-0.5 text-gray-700">
+                                <li>Responsive website with [NUMBER] pages</li>
+                                <li>User authentication system</li>
+                                <li>Content management system</li>
+                                <li>All source code and documentation</li>
+                              </ul>
+                            </div>
+                          )}
+                          
+                          {/* Timeline Section - Added in second stage */}
+                          {(documentState === 'additions' || documentState === 'final') && (
+                            <div className={`transform transition-all duration-300 hover:-translate-y-1 hover:shadow-sm rounded-lg p-2 bg-green-50 border-l-2 border-green-500 ${documentState === 'additions' ? 'animate-fade-in' : ''}`}
+                              style={{ animationDelay: '0.3s' }}>
+                              <h2 className="text-sm font-semibold text-gray-800 mb-1">5. TIMELINE</h2>
+                              <p className="text-xs text-gray-700 mb-1">
+                                The project will be completed according to the following schedule:
+                              </p>
+                              <ul className="list-disc text-xs pl-4 space-y-0.5 text-gray-700">
+                                <li><span className="font-medium">Project Start:</span> <span className={`${documentState === 'final' ? 'bg-yellow-100' : ''}`}>{documentState === 'final' ? 'June 1, 2023' : '[START DATE]'}</span></li>
+                                <li><span className="font-medium">Design Approval:</span> <span className={`${documentState === 'final' ? 'bg-yellow-100' : ''}`}>{documentState === 'final' ? 'June 15, 2023' : '[MILESTONE 1]'}</span></li>
+                                <li><span className="font-medium">Development Complete:</span> <span className={`${documentState === 'final' ? 'bg-yellow-100' : ''}`}>{documentState === 'final' ? 'July 20, 2023' : '[MILESTONE 2]'}</span></li>
+                                <li><span className="font-medium">Final Delivery:</span> <span className={`${documentState === 'final' ? 'bg-yellow-100' : ''}`}>{documentState === 'final' ? 'August 1, 2023' : '[END DATE]'}</span></li>
+                              </ul>
+                            </div>
+                          )}
+                          
+                          {/* Confidentiality Section - Added in final stage */}
+                          {documentState === 'final' && (
+                            <div className={`transform transition-all duration-300 hover:-translate-y-1 hover:shadow-sm rounded-lg p-2 animate-fade-in`}
+                              style={{ animationDelay: '0.2s' }}>
+                              <h2 className="text-sm font-semibold text-gray-800 mb-1">6. CONFIDENTIALITY</h2>
+                              <p className="text-xs text-gray-700">
+                                Contractor agrees to keep confidential all proprietary information, business data, and trade secrets received from Client during the term of this Agreement and for [TIME PERIOD] thereafter. Contractor shall not disclose such information to any third party without Client's prior written consent.
+                              </p>
+                            </div>
+                          )}
+
+                          {/* Termination Section */}
+                          <div className={`transform transition-all duration-300 hover:-translate-y-1 hover:shadow-sm rounded-lg p-2 ${documentState === 'initial' ? 'animate-fade-in' : ''}`}
+                            style={{ animationDelay: '0.5s' }}>
+                            <h2 className="text-sm font-semibold text-gray-800 mb-1">
+                              {documentState === 'initial' ? '4' : documentState === 'additions' ? '6' : '7'}. TERMINATION
+                            </h2>
+                            <p className="text-xs text-gray-700">
+                              Either party may terminate this Agreement with [NOTICE] days written notice. Client shall pay for all services completed prior to termination.
+                            </p>
+                          </div>
+                          
+                          {/* Signatures */}
+                          <div className={`transform transition-all duration-300 hover:-translate-y-1 hover:shadow-sm rounded-lg p-2 ${documentState === 'initial' ? 'animate-fade-in' : ''}`}
+                            style={{ animationDelay: '0.6s' }}>
+                            <div className="flex justify-between items-center">
+                              <div className="text-xs">
+                                <p className="font-medium">CLIENT</p>
+                                <p className="text-gray-400">________________</p>
+                                <p className="text-gray-400 text-[10px]">Date: ________</p>
+                              </div>
+                              <div className="text-xs">
+                                <p className="font-medium">CONTRACTOR</p>
+                                <p className="text-gray-400">________________</p>
+                                <p className="text-gray-400 text-[10px]">Date: ________</p>
+                              </div>
                             </div>
                           </div>
-                        )}
-                        {documentState === 'deleting' && (
-                          <div className="mt-4 flex items-center justify-center gap-4 text-xs">
-                            <div className="flex items-center">
-                              <div className="w-3 h-3 bg-green-500 rounded-full mr-1"></div>
-                              <span>3 additions</span>
-                            </div>
-                            <div className="flex items-center">
-                              <div className="w-3 h-3 bg-red-500 rounded-full mr-1"></div>
-                              <span>2 deletions</span>
-                            </div>
+                          
+                          {/* Document footer with edit indicators */}
+                          <div className="pt-2 border-t border-gray-200">
+                            {documentState === 'initial' && (
+                              <div className="text-xs text-center text-green-600 animate-fade-in">
+                                <span>✓ Contract draft created</span>
+                              </div>
+                            )}
+                            
+                            {documentState === 'additions' && (
+                              <div className="mt-1 flex items-center justify-center gap-4 text-xs animate-fade-in">
+                                <div className="flex items-center">
+                                  <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
+                                  <span>Added deliverables & timeline</span>
+                                </div>
+                              </div>
+                            )}
+                            
+                            {documentState === 'final' && (
+                              <div className="mt-1 flex items-center justify-center gap-4 text-xs animate-fade-in">
+                                <div className="flex items-center">
+                                  <div className="w-2 h-2 bg-yellow-500 rounded-full mr-1"></div>
+                                  <span>Updated with specific contract details</span>
+                                </div>
+                              </div>
+                            )}
                           </div>
-                        )}
-                        {documentState === 'final' && (
-                          <div className="mt-4 text-xs text-center text-green-600">
-                            <span>✓ Changes saved</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    
-                    {/* Page number */}
-                    <div className="absolute bottom-4 right-4 text-sm text-gray-400">1</div>
+                        </div>
+                        
+                        {/* Page number */}
+                        <div className="absolute bottom-1 right-1 text-xs text-gray-300">1</div>
+                      </>
+                    )}
                   </div>
                   
                   {/* Shadow paper underneath - creates depth effect */}
-                  <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 w-[95%] h-[98%] bg-white rounded-md -z-10
-                    opacity-70 shadow-md [transform:rotateX(5deg)] blur-[1px]"></div>
+                  <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-[95%] h-[98%] bg-white rounded-md -z-10
+                    opacity-70 shadow-md [transform:rotateX(5deg)] blur-[1px] max-w-md"></div>
                 </div>
               </div>
             </div>
