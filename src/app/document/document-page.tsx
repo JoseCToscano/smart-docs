@@ -62,6 +62,7 @@ export default function DocumentPage({ documentId }: { documentId?: string }) {
     createdAt: new Date(),
     updatedAt: new Date(),
   });
+  const [conversationId, setConversationId] = useState<string | null>(null);  
   const [isSaving, setIsSaving] = useState(false);
   const [isTitleSaving, setIsTitleSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(documentId ? true : false);
@@ -726,13 +727,6 @@ const handleExport = useCallback(async () => {
     setOriginalContentBeforeChanges(tempContainer.innerHTML);
     console.log("[handleAIPrompt] Saved normalized original content", tempContainer.innerHTML.substring(0, 100));
     
-    // Enhance the prompt to explicitly address newline handling and placeholders
-    const enhancedPrompt = `${prompt}
-    
-IMPORTANT GUIDELINES:
-1. When including line breaks in your response, please use actual newlines (\\n), not the literal text "___NEWLINE___".
-2. NEVER use placeholders like "[... rest of the document remains the same ...]". Always include the complete document with only the changes marked using XML tags.
-3. Be precise with your XML tags - only mark the specific text that changes.`;
     
     try {
       // Call the Anthropic API through our backend
@@ -742,8 +736,9 @@ IMPORTANT GUIDELINES:
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          prompt: enhancedPrompt,
+          prompt,
           content: tempContainer.innerHTML,
+          conversation_id: conversationId
         }),
       });
       
@@ -754,7 +749,9 @@ IMPORTANT GUIDELINES:
       const data = await response.json();
       
       // Extract both parts of the response
-      const { xmlContent, userMessage, containsPlaceholders } = data;
+      const { xmlContent, userMessage, containsPlaceholders, conversation_id } = data;
+
+      setConversationId(conversation_id);
       
       console.log("[DocumentPage] Received response:", {
         hasXmlContent: Boolean(xmlContent) && xmlContent.length > 0,

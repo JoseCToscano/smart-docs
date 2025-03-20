@@ -4,6 +4,8 @@ import { db } from "@/server/db";
 import { auth } from "@/server/auth";
 import Anthropic from "@anthropic-ai/sdk";
 
+const MODEL = "claude-3-5-haiku-latest";
+
 export const maxDuration = 60; // 60 seconds timeout for Edge function
 
 export async function POST(req: NextRequest) {
@@ -20,6 +22,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Generate a new conversation ID if none provided
+    const currentConversationId = conversation_id || `conv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
     // Fetch previous messages if conversation_id is provided
     let previousMessages = [];
     if (conversation_id) {
@@ -35,7 +40,8 @@ export async function POST(req: NextRequest) {
           userPrompt: true,
           aiResponse: true,
           createdAt: true
-        }
+        }, 
+        take: 8
       });
     }
 
@@ -77,9 +83,13 @@ If the user is asking you to make changes to the document, use XML tags to mark 
 - <addition>added text</addition> - For new text being added
 - <deletion>removed text</deletion> - For text being removed
 
-Return the COMPLETE document with XML tags marking ONLY the changes. Include ALL original text, marking only the changes with XML tags.
+IMPORTANT GUIDELINES:
+1. NEVER use placeholders like "[... rest of the document remains the same ...]" or similar. Always include the ENTIRE document content, only marking the specific changes with XML tags.
+2. When including line breaks in your response, please use actual newlines (\\n), not the literal text "___NEWLINE___".
+3. NEVER use placeholders like "[... rest of the document remains the same ...]". Always include the complete document with only the changes marked using XML tags.
+4. Be precise with your XML tags - only mark the specific text that changes.
+5. Always return the COMPLETE document with XML tags marking ONLY the changes. Include ALL original text, marking only the changes with XML tags.
 
-IMPORTANT: NEVER use placeholders like "[... rest of the document remains the same ...]" or similar. Always include the ENTIRE document content, only marking the specific changes with XML tags.
 
 ### Part 2: Response to User
 After the document changes, include a line with exactly "<<<USER_MESSAGE>>>" followed by your conversational response to the user explaining what you did or answering their question.
@@ -192,20 +202,22 @@ Always prioritize the USER's specific requests while using your expertise to hel
 `;
 
     // Convert previous messages to Anthropic format
-    const conversationHistory = previousMessages.map(msg => ([
+    const conversationHistory: Array<Anthropic.MessageParam> = previousMessages.map(msg => ([
       {
-        role: "user",
-        content: msg.userPrompt
+        role: "user" as const,
+        content: String(msg.userPrompt)
       },
       {
-        role: "assistant",
-        content: msg.aiResponse
+        role: "assistant" as const,
+        content: String(msg.aiResponse)
       }
     ])).flat();
 
+    console.log("Conversation History:", conversationHistory);
+
     const response = await anthropic.messages.create({
-      model: "claude-3-5-haiku-latest",
-      max_tokens: 4000,
+      model: MODEL,
+      max_tokens: 8000,
       temperature: 0.7,
       system: [{
         type: "text",
@@ -295,14 +307,14 @@ If my request is just a question with no document changes, only include the seco
     await db.prompt.create({
       data: {
         userPrompt: prompt,
-        aiResponse: responseText,
+        aiResponse: userMessage,
         user_id: userId,
-        conversation_id: conversation_id || null,
+        conversation_id: currentConversationId,
         inputTokens: response.usage.input_tokens,
         outputTokens: response.usage.output_tokens,
         cache_read_input_tokens: response.usage.cache_read_input_tokens,
         cache_creation_input_tokens: response.usage.cache_creation_input_tokens,
-        modelUsed: "claude-3-5-haiku-latest",
+        modelUsed: MODEL,
       },
     });
     
@@ -373,7 +385,8 @@ If my request is just a question with no document changes, only include the seco
     return NextResponse.json({
       xmlContent,
       userMessage,
-      containsPlaceholders
+      containsPlaceholders,
+      conversation_id: currentConversationId
     });
   } catch (error) {
     console.error("Error with Anthropic API:", error);

@@ -63,6 +63,7 @@ const AISidebar = forwardRef<AISidebarHandle, AISidebarProps>(({
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [promptCount, setPromptCount] = useState<PromptCount | null>(null);
 
+
   // Control artificial progress based on loading state
   useEffect(() => {
     if (isLoading) {
@@ -112,6 +113,7 @@ const AISidebar = forwardRef<AISidebarHandle, AISidebarProps>(({
         suggestions,
       };
       
+      
       setChatHistory(prev => [...prev, assistantMessage]);
     }
   }));
@@ -149,7 +151,7 @@ const AISidebar = forwardRef<AISidebarHandle, AISidebarProps>(({
     if (promptCount && promptCount.remaining <= 0) {
       setChatHistory(prev => [...prev, {
         role: "assistant",
-        content: "⚠️ You have reached your limit of free prompts. Please try again later.",
+        content: "⚠️ You have reached your limit of free prompts. Please upgrade to continue using the AI assistant.",
         timestamp: new Date()
       }]);
       return;
@@ -159,7 +161,7 @@ const AISidebar = forwardRef<AISidebarHandle, AISidebarProps>(({
     const userMessage: Message = {
       role: "user", 
       content: prompt,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
     
     setChatHistory(prev => [...prev, userMessage]);
