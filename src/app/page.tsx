@@ -191,9 +191,9 @@ export default function HomePage() {
         </section>
         
         {/* AI Chat Editor Section */}
-        <section className="py-16 md:py-24 bg-white/40 backdrop-blur-sm relative z-10">
+        <section className="py-16 md:py-24 bg-gradient-to-br from-blue-50 to-indigo-50 relative z-10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-12">
+            <div className="text-center mb-16">
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Edit Documents with AI Chat</h2>
               <p className="text-lg text-gray-700 max-w-3xl mx-auto">
                 Simply tell our AI assistant what you want to change, and watch as your document transforms in real-time.
@@ -201,35 +201,39 @@ export default function HomePage() {
             </div>
             
             <div className="flex flex-col lg:flex-row gap-8 items-start">
-              {/* Chat Interface - Left Side */}
-              <div className="lg:w-1/2 bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
-                <div className="bg-blue-600 text-white px-6 py-4 flex items-center justify-between">
-                  <h3 className="font-medium">Chat with Document AI</h3>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-green-400"></div>
-                    <span className="text-sm">Online</span>
-                  </div>
-                </div>
+              {/* Floating Chat Interface - Left Side */}
+              <div className="lg:w-1/2 relative min-h-[500px]">
+                {/* Floating decorative elements */}
+                <div className="absolute -top-6 -left-6 w-12 h-12 rounded-full bg-blue-100 opacity-40"></div>
+                <div className="absolute top-20 -right-4 w-8 h-8 rounded-full bg-indigo-100 opacity-60"></div>
+                <div className="absolute bottom-12 left-8 w-10 h-10 rounded-full bg-purple-100 opacity-50"></div>
                 
-                <div className="h-[400px] overflow-y-auto p-4 flex flex-col gap-4 bg-gray-50">
+                {/* Chat Message bubbles */}
+                <div className="space-y-8 relative">
                   {/* AI Message */}
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                      <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <div 
+                    className="flex items-start gap-3 max-w-md transform transition-all duration-500 hover:-translate-y-1"
+                    data-aos="fade-right"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-md">
+                      <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                       </svg>
                     </div>
-                    <div className="bg-white rounded-lg px-4 py-2 shadow-sm">
+                    <div className="bg-white rounded-2xl px-5 py-3 shadow-lg border border-gray-100">
                       <p className="text-gray-800">Hello! I'm your document assistant. How can I help with your document today?</p>
                     </div>
                   </div>
                   
                   {/* User Message */}
-                  <div className="flex items-start gap-3 justify-end">
-                    <div className="bg-blue-600 rounded-lg px-4 py-2 shadow-sm text-white">
+                  <div 
+                    className="flex items-start gap-3 justify-end max-w-md ml-auto transform transition-all duration-500 hover:-translate-y-1"
+                    data-aos="fade-left"
+                  >
+                    <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl px-5 py-3 shadow-lg text-white">
                       <p>Can you help me create a meeting agenda for tomorrow's team sync?</p>
                     </div>
-                    <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
+                    <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0 shadow-md">
                       <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                       </svg>
@@ -237,23 +241,31 @@ export default function HomePage() {
                   </div>
                   
                   {/* AI Message */}
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                      <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <div 
+                    className="flex items-start gap-3 max-w-md transform transition-all duration-500 hover:-translate-y-1"
+                    data-aos="fade-right" 
+                    data-aos-delay="200"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-md">
+                      <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                       </svg>
                     </div>
-                    <div className="bg-white rounded-lg px-4 py-2 shadow-sm">
+                    <div className="bg-white rounded-2xl px-5 py-3 shadow-lg border border-gray-100">
                       <p className="text-gray-800">Of course! I'll create a meeting agenda template for you. Would you like to include specific topics or just use a standard format?</p>
                     </div>
                   </div>
                   
                   {/* User Message */}
-                  <div className="flex items-start gap-3 justify-end">
-                    <div className="bg-blue-600 rounded-lg px-4 py-2 shadow-sm text-white">
+                  <div 
+                    className="flex items-start gap-3 justify-end max-w-md ml-auto transform transition-all duration-500 hover:-translate-y-1"
+                    data-aos="fade-left"
+                    data-aos-delay="200"
+                  >
+                    <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl px-5 py-3 shadow-lg text-white">
                       <p>Let's include project updates, roadmap planning, and action items review.</p>
                     </div>
-                    <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
+                    <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0 shadow-md">
                       <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                       </svg>
@@ -261,15 +273,19 @@ export default function HomePage() {
                   </div>
                   
                   {/* AI Message with "typing" animation */}
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                      <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <div 
+                    className="flex items-start gap-3 max-w-md transform transition-all duration-500 hover:-translate-y-1"
+                    data-aos="fade-right"
+                    data-aos-delay="400"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-md">
+                      <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                       </svg>
                     </div>
-                    <div className="bg-white rounded-lg px-4 py-2 shadow-sm">
+                    <div className="bg-white rounded-2xl px-5 py-3 shadow-lg border border-gray-100">
                       <p className="text-gray-800">Perfect! I'm creating your meeting agenda now...</p>
-                      <div className="flex gap-1 mt-1">
+                      <div className="flex gap-2 mt-2">
                         <div className="w-2 h-2 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: '0s' }}></div>
                         <div className="w-2 h-2 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                         <div className="w-2 h-2 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: '0.4s' }}></div>
@@ -279,14 +295,14 @@ export default function HomePage() {
                 </div>
                 
                 {/* Chat Input */}
-                <div className="px-4 py-3 border-t border-gray-200 bg-white">
-                  <div className="flex gap-2">
+                <div className="mt-8 max-w-lg mx-auto">
+                  <div className="flex gap-3 items-center bg-white rounded-full py-2 px-4 shadow-lg border border-gray-100">
                     <input 
                       type="text" 
                       placeholder="Type your message here..." 
-                      className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="flex-1 py-2 px-2 focus:outline-none bg-transparent"
                     />
-                    <button className="bg-blue-600 text-white rounded-lg px-4 py-2 hover:bg-blue-700 transition-colors">
+                    <button className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-full p-2 hover:shadow-lg transition-all duration-200 transform hover:scale-105">
                       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                       </svg>
@@ -296,30 +312,35 @@ export default function HomePage() {
               </div>
               
               {/* Document Preview - Right Side */}
-              <div className="lg:w-1/2 bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
-                <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-                  <h3 className="font-medium text-gray-800">Team Meeting Agenda.docx</h3>
+              <div className="lg:w-1/2 bg-white rounded-xl shadow-xl overflow-hidden border border-gray-200 transition-all duration-300 hover:shadow-2xl">
+                <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-blue-50 to-indigo-50">
+                  <div className="flex items-center gap-3">
+                    <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <h3 className="font-medium text-gray-800">Team Meeting Agenda.docx</h3>
+                  </div>
                   <div className="flex gap-2">
-                    <button className="text-blue-600 hover:text-blue-800 transition-colors">
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <button className="text-blue-600 hover:text-blue-800 transition-colors p-1 hover:bg-blue-50 rounded">
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
                       </svg>
                     </button>
-                    <button className="text-blue-600 hover:text-blue-800 transition-colors">
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <button className="text-blue-600 hover:text-blue-800 transition-colors p-1 hover:bg-blue-50 rounded">
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                       </svg>
                     </button>
                   </div>
                 </div>
                 
-                <div className="p-6 h-[400px] overflow-y-auto bg-gray-50">
-                  <div className="max-w-2xl mx-auto bg-white shadow-sm rounded-lg p-8 border border-gray-100">
+                <div className="p-6 h-[500px] overflow-y-auto bg-gray-50">
+                  <div className="max-w-2xl mx-auto bg-white shadow-sm rounded-lg p-8 border border-gray-100 transition-all duration-300 hover:shadow-md">
                     <h1 className="text-2xl font-bold text-center text-gray-800 mb-6">Team Meeting Agenda</h1>
                     <p className="text-gray-500 mb-6 text-center text-sm">Thursday, July 30, 2024 | 10:00 AM - 11:00 AM | Conference Room A</p>
                     
                     <div className="space-y-6">
-                      <div>
+                      <div className="transform transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm rounded-lg p-3">
                         <h2 className="text-lg font-semibold text-blue-700 mb-2">1. Project Updates (20 min)</h2>
                         <ul className="list-disc pl-5 space-y-1 text-gray-700">
                           <li>Status updates from each team lead</li>
@@ -328,7 +349,7 @@ export default function HomePage() {
                         </ul>
                       </div>
                       
-                      <div>
+                      <div className="transform transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm rounded-lg p-3">
                         <h2 className="text-lg font-semibold text-blue-700 mb-2">2. Roadmap Planning (25 min)</h2>
                         <ul className="list-disc pl-5 space-y-1 text-gray-700">
                           <li>Review Q3 objectives</li>
@@ -337,7 +358,7 @@ export default function HomePage() {
                         </ul>
                       </div>
                       
-                      <div>
+                      <div className="transform transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm rounded-lg p-3">
                         <h2 className="text-lg font-semibold text-blue-700 mb-2">3. Action Items Review (15 min)</h2>
                         <ul className="list-disc pl-5 space-y-1 text-gray-700">
                           <li>Follow-up on last meeting's action items</li>
