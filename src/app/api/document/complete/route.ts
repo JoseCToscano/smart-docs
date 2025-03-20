@@ -11,13 +11,32 @@ export async function POST(req: NextRequest) {
     const session = await auth();
     const userId = session?.user?.id;
 
-    const { prompt, content } = await req.json();
+    const { prompt, content, conversation_id } = await req.json();
 
     if (!prompt || !content) {
       return NextResponse.json(
         { error: "Missing required fields: prompt and content" },
         { status: 400 }
       );
+    }
+
+    // Fetch previous messages if conversation_id is provided
+    let previousMessages = [];
+    if (conversation_id) {
+      previousMessages = await db.prompt.findMany({
+        where: {
+          conversation_id,
+          user_id: userId,
+        },
+        orderBy: {
+          createdAt: 'asc'
+        },
+        select: {
+          userPrompt: true,
+          aiResponse: true,
+          createdAt: true
+        }
+      });
     }
 
     const anthropic = new Anthropic({
@@ -172,6 +191,18 @@ When appropriate, you can:
 Always prioritize the USER's specific requests while using your expertise to help them achieve their writing goals.
 `;
 
+    // Convert previous messages to Anthropic format
+    const conversationHistory = previousMessages.map(msg => ([
+      {
+        role: "user",
+        content: msg.userPrompt
+      },
+      {
+        role: "assistant",
+        content: msg.aiResponse
+      }
+    ])).flat();
+
     const response = await anthropic.messages.create({
       model: "claude-3-5-haiku-latest",
       max_tokens: 4000,
@@ -184,6 +215,7 @@ Always prioritize the USER's specific requests while using your expertise to hel
         },
       }],
       messages: [
+        ...conversationHistory,
         {
           role: "user",
           content: `Here is my document:
@@ -220,18 +252,6 @@ If my request is just a question with no document changes, only include the seco
       hasCacheCreation: (response.usage.cache_creation_input_tokens ?? 0) > 0,
     });
 
-    await db.prompt.create({
-      data: {
-        userPrompt: prompt,
-        user_id: userId,
-        inputTokens: response.usage.input_tokens,
-        outputTokens: response.usage.output_tokens,
-        cache_read_input_tokens: response.usage.cache_read_input_tokens,
-        cache_creation_input_tokens: response.usage.cache_creation_input_tokens,
-        modelUsed: "claude-3-5-haiku-latest",
-      },
-    });
-    
     // Get the content from the response safely
     const responseText = response.content[0]?.type === 'text' 
       ? response.content[0].text 
@@ -270,6 +290,21 @@ If my request is just a question with no document changes, only include the seco
         userMessage = responseText;
       }
     }
+    
+    // Store the new prompt and response in the database
+    await db.prompt.create({
+      data: {
+        userPrompt: prompt,
+        aiResponse: responseText,
+        user_id: userId,
+        conversation_id: conversation_id || null,
+        inputTokens: response.usage.input_tokens,
+        outputTokens: response.usage.output_tokens,
+        cache_read_input_tokens: response.usage.cache_read_input_tokens,
+        cache_creation_input_tokens: response.usage.cache_creation_input_tokens,
+        modelUsed: "claude-3-5-haiku-latest",
+      },
+    });
     
     // Remove common prefixes from XML content
     const prefixesToRemove = [

@@ -17,6 +17,8 @@ datasource db {
 model Prompt {
     id        String   @id @default(cuid())
     userPrompt     String   @db.Text
+    aiResponse     String?  @db.Text
+    conversation_id String?
     inputTokens    Int
     outputTokens   Int
     modelUsed      String
@@ -28,6 +30,7 @@ model Prompt {
     user_id String?
 
     @@index([user_id])
+    @@index([conversation_id])
 }
 
 model Post {
