@@ -25,6 +25,7 @@ import PremiumCheck from "@/components/PremiumCheck";
 import { Session } from "next-auth";
 import { UserProfile } from "@/components/UserProfile";
 import Link from "next/link";
+import { useNotifications } from "@/utils/notificationService";
 
 interface ExtendedSession extends Session {
   user: {
@@ -39,9 +40,6 @@ interface ExtendedSession extends Session {
 interface ProfileFormModel {
   name: string;
   email: string;
-  avatar?: string;
-  timezone: string;
-  language: string;
 }
 
 interface PromptCount {
@@ -53,17 +51,13 @@ interface PromptCount {
 
 export default function ProfileSettingsPage() {
   const router = useRouter();
-  const { data: session, status, update } = useSession() as { 
+  const { data: session, status, update: updateSession } = useSession() as { 
     data: ExtendedSession | null;
     status: "loading" | "authenticated" | "unauthenticated";
     update: (data?: any) => Promise<ExtendedSession | null>;
   };
+  const notifications = useNotifications();
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [avatarFile, setAvatarFile] = useState<File | null>(null);
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [promptCount, setPromptCount] = useState<PromptCount | null>(null);
 
   // Fetch prompt count
@@ -88,57 +82,10 @@ export default function ProfileSettingsPage() {
     }
   }, [status, router]);
 
-  const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setAvatarFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setAvatarPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const uploadAvatar = async (file: File): Promise<string> => {
-    const formData = new FormData();
-    formData.append("file", file);
-    
-    const response = await fetch("/api/upload", {
-      method: "POST",
-      body: formData,
-    });
-    
-    if (!response.ok) {
-      throw new Error("Failed to upload avatar");
-    }
-    
-    const data = await response.json();
-    return data.url;
-  };
-
-  const handleSubmit = async (values: { [name: string]: any }) => {
+  const handleSubmit = async (data: { [name: string]: any }) => {
     setIsLoading(true);
-    setError(null);
-    setSuccess(null);
 
     try {
-      let avatarUrl = session?.user?.image || undefined;
-
-      // Upload new avatar if one was selected
-      if (avatarFile) {
-        avatarUrl = await uploadAvatar(avatarFile);
-      }
-
-      const data: ProfileFormModel = {
-        name: values.name,
-        email: values.email,
-        avatar: avatarUrl,
-        timezone: values.timezone,
-        language: values.language
-      };
-
-      // Update profile in the backend
       const response = await fetch("/api/user/profile", {
         method: "PATCH",
         headers: {
@@ -146,7 +93,6 @@ export default function ProfileSettingsPage() {
         },
         body: JSON.stringify({
           name: data.name,
-          avatar: data.avatar,
         }),
       });
 
@@ -154,22 +100,12 @@ export default function ProfileSettingsPage() {
         throw new Error("Failed to update profile");
       }
 
-      const result = await response.json();
+      await updateSession();
       
-      // Update the session with new data
-      await update({
-        ...session,
-        user: {
-          ...session?.user,
-          ...result.user,
-        }
-      });
-
-      setSuccess("Profile updated successfully!");
-      setAvatarFile(null);
-    } catch (err) {
-      console.error("Error updating profile:", err);
-      setError("Failed to update profile. Please try again.");
+      notifications.success("Your profile has been updated successfully");
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      notifications.error("Failed to update your profile. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -221,18 +157,6 @@ export default function ProfileSettingsPage() {
 
       {/* Main content */}
       <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
-            {error}
-          </div>
-        )}
-
-        {success && (
-          <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded mb-6">
-            {success}
-          </div>
-        )}
-
         {/* Prompt Count Card for non-premium users */}
         {promptCount && !promptCount.isPremium && (
           <Card className="mb-6">
@@ -307,14 +231,12 @@ export default function ProfileSettingsPage() {
               initialValues={{
                 name: session?.user?.name || "",
                 email: session?.user?.email || "",
-                timezone: "UTC",
-                language: "English"
               }}
               onSubmit={handleSubmit}
               render={(formRenderProps: FormRenderProps) => (
                 <FormElement>
                   <div className="space-y-6">
-                    {/* Avatar Section */}
+                    {/* Avatar Display Only */}
                     <div className="flex items-center space-x-4">
                       <Avatar
                         type="image"
@@ -326,42 +248,6 @@ export default function ProfileSettingsPage() {
                           className="w-full h-full object-cover rounded-full"
                         />
                       </Avatar>
-                      <div>
-                          <>
-                            <input
-                              type="file"
-                              ref={fileInputRef}
-                              className="hidden"
-                              accept="image/*"
-                              onChange={handleAvatarChange}
-                            />
-                            <Button
-                              onClick={() => fileInputRef.current?.click()}
-                              className="mb-2"
-                            >
-                              Change Avatar
-                            </Button>
-                            {avatarPreview && (
-                              <Button
-                                onClick={() => {
-                                  setAvatarPreview(null);
-                                  setAvatarFile(null);
-                                  if (fileInputRef.current) {
-                                    fileInputRef.current.value = "";
-                                  }
-                                }}
-                                themeColor="error"
-                                className="ml-2"
-                              >
-                                Remove
-                              </Button>
-                            )}
-                            <p className="text-sm text-gray-500">
-                              Recommended: Square image, at least 400x400 pixels
-                            </p>
-                          </>
-                      
-                      </div>
                     </div>
 
                     {/* Name Field */}
@@ -378,24 +264,6 @@ export default function ProfileSettingsPage() {
                       id="email"
                       name="email"
                       label="Email"
-                      component={Input}
-                      disabled
-                    />
-
-                    {/* Timezone Field */}
-                    <Field
-                      id="timezone"
-                      name="timezone"
-                      label="Timezone"
-                      component={Input}
-                      disabled
-                    />
-
-                    {/* Language Field */}
-                    <Field
-                      id="language"
-                      name="language"
-                      label="Language"
                       component={Input}
                       disabled
                     />
