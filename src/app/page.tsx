@@ -225,131 +225,81 @@ export default function HomePage() {
       </header>
 
       <main className="relative">
-        {/* Centered Hero Section */}
-        <section className="py-16 md:py-20 relative z-10">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 tracking-tight mb-6">
-              Document{" "}
-              <span className="block">Management,</span>
-              <span className="text-blue-600">
-                Reimagined
-              </span>
-            </h1>
-            <p className="text-lg md:text-xl text-gray-700 mb-8 leading-relaxed max-w-3xl mx-auto">
-              Experience the future of intelligent document collaboration with AI-powered assistance,
-              real-time editing, and enterprise-grade security.
-            </p>
+               
+    
+        
+        {/* AI Chat Editor Section - Now more prominent */}
+        <section className="py-12 md:py-20 lg:py-24 relative z-10 overflow-hidden">
+          {/* Decorative background elements */}
+          <div className="absolute inset-0 opacity-30">
+            <div className="absolute top-20 right-[10%] w-64 h-64 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl"></div>
+            <div className="absolute bottom-20 left-[10%] w-72 h-72 bg-indigo-200 rounded-full mix-blend-multiply filter blur-3xl"></div>
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-purple-100 rounded-full mix-blend-multiply filter blur-3xl"></div>
+          </div>
 
-            
-            {/* CTA Button */}
-            <div className="mt-6 mb-12">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+            <div className="text-center mb-12 md:mb-16 max-w-3xl mx-auto">
+              <span className="inline-block px-4 py-1.5 text-sm font-medium text-blue-700 bg-blue-100 rounded-full mb-4 shadow-sm">
+                AI-Powered Document Editor
+              </span>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 tracking-tight leading-tight">
+                Create & Edit Documents with <span className="text-blue-600 relative inline-block">
+                  AI
+                  <svg className="absolute -bottom-2 left-0 w-full h-2 text-blue-200" viewBox="0 0 100 12" preserveAspectRatio="none">
+                    <path d="M0,0 Q50,12 100,0" fill="currentColor" />
+                  </svg>
+                </span>
+              </h1>
+              <p className="text-lg md:text-xl text-gray-700 max-w-3xl mx-auto leading-relaxed mb-8">
+                Simply describe what you need, and watch as your document transforms in real-time. 
+                No more starting from scratch or struggling with formatting.
+              </p>
+
+             {/* CTA Button */}
+             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mt-8 mb-6">
               {status === "authenticated" ? (
                 <div className="flex gap-4 justify-center">
                   <Button
                     themeColor="primary"
                     onClick={() => router.push("/documents")}
                     size="large"
-                    className="px-8 py-3 bg-blue-600 hover:bg-blue-700"
-                  >
+                    className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-base font-medium shadow-lg"
+                    >
                     My Documents
                   </Button>
                   <Button
                     themeColor="base"
                     onClick={() => router.push("/document")}
                     size="large"
-                    className="px-8 py-3"
-                  >
+                    className="px-8 py-3 text-base font-medium shadow-md"
+                    >
                     Create New Document
                   </Button>
                 </div>
               ) : status === "loading" ? (
-                <div className="flex justify-center items-center py-4">
-                  <div className="w-6 h-6 border-t-2 border-b-2 border-blue-500 rounded-full animate-spin"></div>
+                <div className="flex justify-center items-center py-6">
+                  <div className="w-7 h-7 border-t-2 border-b-2 border-blue-500 rounded-full animate-spin"></div>
                 </div>
               ) : (
-                <Button
-                  themeColor="primary"
-                  onClick={signIn}
-                  size="large"
-                  className="px-8 py-3 bg-blue-600 hover:bg-blue-700"
-                >
-                  Get Started
-                </Button>
+                <>
+                  <Button
+                    themeColor="primary"
+                    onClick={signIn}
+                    size="large"
+                    className="px-10 py-4 bg-blue-600 hover:bg-blue-700 text-base font-semibold shadow-lg transition-all duration-300 transform hover:scale-105"
+                  >
+                    Get Started
+                  </Button>
+                  <a href="#demo" className="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-2 py-2">
+                    See how it works
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </a>
+                </>
               )}
             </div>
-
-            {/* Decorative Elements */}
-            <div className="relative">
-              <div className="absolute -left-20 top-0 w-16 h-16 bg-blue-200 rounded-full opacity-20"></div>
-              <div className="absolute -right-12 bottom-12 w-20 h-20 bg-indigo-200 rounded-full opacity-30"></div>
-            </div>
-          </div>
-        </section>
-        
-        {/* Try it out section with zoomed-in document */}
-        <section className="py-8 md:py-12 relative z-10 overflow-hidden ">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="relative">
-              {/* Zoomed document preview */}
-              <div className="relative mx-auto max-w-4xl overflow-hidden">
-                {/* Document top part (zoomed in) */}
-                <div className="relative mx-auto bg-white rounded-t-lg shadow-xl border border-gray-200 w-full max-w-4xl h-[250px] transform origin-top transition-all scale-105">
-                  {/* Document controls bar */}
-                  <div className="bg-white border-b border-gray-200 px-6 py-3 rounded-t-lg flex items-center gap-4">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-red-400"></div>
-                      <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
-                      <div className="w-3 h-3 rounded-full bg-green-400"></div>
-                    </div>
-                    <div className="flex-1 text-center">
-                      <span className="text-sm font-medium text-gray-600">New Document.docx</span>
-                    </div>
-                    <div className="text-blue-600">
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" />
-                      </svg>
-                    </div>
-                  </div>
-                  
-                  {/* Document content - blank state with typing animation */}
-                  <div className="p-4 flex flex-col items-center ">
-                    {/* Simple typing animation with JS state */}
-                    <div className="relative w-full max-w-md mx-auto">
-                      <div className="flex flex-col items-center">
-                        <div className="relative inline-flex">
-                          <h2 className="text-3xl md:text-4xl font-bold text-gray-800">
-                            {typedText}
-                            <span className="inline-block w-[2px] h-[1.2em] bg-gray-800 ml-1 animate-pulse" 
-                                  style={{ animationDuration: '0.75s' }}></span>
-                          </h2>
-                        </div>
-                      </div>
-                    </div>
-                    
-                  </div>
-                  
-                  {/* Document gradient fade at bottom to create cut-off effect */}
-                  <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-b from-transparent to-white pointer-events-none"></div>
-                </div>
-                
-                {/* Decorative elements */}
               </div>
-            </div>
-          </div>
-        </section>
-        
-        {/* AI Chat Editor Section - Now more prominent */}
-        <section className="py-12 md:py-16 relative z-10">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
-              <span className="inline-block px-3 py-1 text-sm font-medium text-blue-700 bg-blue-100 rounded-full mb-3">
-                AI-Powered
-              </span>
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Edit Documents with AI Chat</h2>
-              <p className="text-lg text-gray-700 max-w-3xl mx-auto">
-                Simply tell our AI assistant what you want to change, and watch as your document transforms in real-time.
-              </p>
-            </div>
             
             <div className="flex flex-col lg:flex-row gap-8 items-start">
               {/* Floating Chat Interface - Left Side */}
@@ -597,6 +547,57 @@ export default function HomePage() {
           </div>
         </section>
         
+         {/* Try it out section with zoomed-in document */}
+         <section className="py-8 md:py-12 relative z-10 overflow-hidden ">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="relative">
+              {/* Zoomed document preview */}
+              <div className="relative mx-auto max-w-4xl overflow-hidden">
+                {/* Document top part (zoomed in) */}
+                <div className="relative mx-auto bg-white rounded-t-lg shadow-xl border border-gray-200 w-full max-w-4xl h-[250px] transform origin-top transition-all scale-105">
+                  {/* Document controls bar */}
+                  <div className="bg-white border-b border-gray-200 px-6 py-3 rounded-t-lg flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-red-400"></div>
+                      <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
+                      <div className="w-3 h-3 rounded-full bg-green-400"></div>
+                    </div>
+                    <div className="flex-1 text-center">
+                      <span className="text-sm font-medium text-gray-600">New Document.docx</span>
+                    </div>
+                    <div className="text-blue-600">
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" />
+                      </svg>
+                    </div>
+                  </div>
+                  
+                  {/* Document content - blank state with typing animation */}
+                  <div className="p-4 flex flex-col items-center ">
+                    {/* Simple typing animation with JS state */}
+                    <div className="relative w-full max-w-md mx-auto">
+                      <div className="flex flex-col items-center">
+                        <div className="relative inline-flex">
+                          <h2 className="text-3xl md:text-4xl font-bold text-gray-800">
+                            {typedText}
+                            <span className="inline-block w-[2px] h-[1.2em] bg-gray-800 ml-1 animate-pulse" 
+                                  style={{ animationDuration: '0.75s' }}></span>
+                          </h2>
+                        </div>
+                      </div>
+                    </div>
+                    
+                  </div>
+                  
+                  {/* Document gradient fade at bottom to create cut-off effect */}
+                  <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-b from-transparent to-white pointer-events-none"></div>
+                </div>
+                
+                {/* Decorative elements */}
+              </div>
+            </div>
+          </div>
+        </section>
         {/* Footer */}
         <section className="relative z-10 py-8 text-center text-gray-600 text-sm">
           <p>&copy; {new Date().getFullYear()} Smart Docs. All rights reserved.</p>
