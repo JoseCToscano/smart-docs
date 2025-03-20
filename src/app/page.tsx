@@ -43,7 +43,7 @@ export default function HomePage() {
         { id: 3, sender: 'ai', message: "I'll create a short contractor agreement for your web developer project right away.", visible: false, typing: false },
         { id: 4, sender: 'user', message: "Thanks! Here's the specific info: Client is TechStart Inc, contractor is Alex Rivera, rate is $85 per hour, invoiced bi-weekly, and payment due within 15 days.", visible: false },
         { id: 5, sender: 'ai', message: "I've updated the agreement with TechStart Inc as the client, Alex Rivera as the contractor, $85/hour rate, bi-weekly invoicing, and 15-day payment terms.", visible: false, typing: false },
-        { id: 6, sender: 'user', message: "Great! For the timeline, start date is June 1, 2023, design approval by June 15, development complete by July 20, and final delivery on August 1.", visible: false },
+        { id: 6, sender: 'user', message: "For the timeline, start date is June 1, 2023, design approval by June 15, development complete by July 20, and final delivery on August 1.", visible: false },
         { id: 7, sender: 'ai', message: "I've added all the timeline information to the contract. Is there anything else you'd like to modify?", visible: false, typing: false }
       ]);
       
@@ -169,9 +169,7 @@ export default function HomePage() {
       return 'blank';
     } else if (['document-initial', 'user-addition', 'ai-adding'].includes(animationState)) {
       return 'initial';
-    } else if (['document-additions', 'user-change', 'ai-changing'].includes(animationState)) {
-      return 'additions';
-    } else if (['document-changes', 'document-final'].includes(animationState)) {
+    } else if (['document-additions', 'user-change', 'ai-changing', 'document-changes', 'document-final', 'reset'].includes(animationState)) {
       return 'final';
     } else {
       return 'blank';
@@ -508,54 +506,34 @@ export default function HomePage() {
                             </p>
                           </div>
                           
-                          {/* Deliverables Section - Added in second stage */}
-                          {(documentState === 'additions' || documentState === 'final') && (
-                            <div className={`transform transition-all duration-300 hover:-translate-y-1 hover:shadow-sm rounded-lg p-2 bg-green-50 border-l-2 border-green-500 ${documentState === 'additions' ? 'animate-fade-in' : ''}`}
-                              style={{ animationDelay: '0.2s' }}>
-                              <h2 className="text-sm font-semibold text-gray-800 mb-1">4. DELIVERABLES</h2>
-                              <ul className="list-disc text-xs pl-4 space-y-0.5 text-gray-700">
-                                <li>Responsive website with [NUMBER] pages</li>
-                                <li>User authentication system</li>
-                                <li>Content management system</li>
-                                <li>All source code and documentation</li>
-                              </ul>
-                            </div>
-                          )}
+                          {/* Timeline Section */}
+                          <div className={`transform transition-all duration-300 hover:-translate-y-1 hover:shadow-sm rounded-lg p-2 ${documentState === 'initial' ? 'animate-fade-in' : documentState === 'final' ? 'bg-green-50 border-l-2 border-green-500' : ''}`}
+                            style={{ animationDelay: '0.5s' }}>
+                            <h2 className="text-sm font-semibold text-gray-800 mb-1">4. TIMELINE</h2>
+                            <p className="text-xs text-gray-700 mb-1">
+                              The project will be completed according to the following schedule:
+                            </p>
+                            <ul className="list-disc text-xs pl-4 space-y-0.5 text-gray-700">
+                              <li><span className="font-medium">Project Start:</span> <span className={`${documentState === 'final' ? 'bg-yellow-100' : ''}`}>{documentState === 'final' ? 'June 1, 2023' : '[START DATE]'}</span></li>
+                              <li><span className="font-medium">Design Approval:</span> <span className={`${documentState === 'final' ? 'bg-yellow-100' : ''}`}>{documentState === 'final' ? 'June 15, 2023' : '[MILESTONE 1]'}</span></li>
+                              <li><span className="font-medium">Development Complete:</span> <span className={`${documentState === 'final' ? 'bg-yellow-100' : ''}`}>{documentState === 'final' ? 'July 20, 2023' : '[MILESTONE 2]'}</span></li>
+                              <li><span className="font-medium">Final Delivery:</span> <span className={`${documentState === 'final' ? 'bg-yellow-100' : ''}`}>{documentState === 'final' ? 'August 1, 2023' : '[END DATE]'}</span></li>
+                            </ul>
+                          </div>
                           
-                          {/* Timeline Section - Added in second stage */}
-                          {(documentState === 'additions' || documentState === 'final') && (
-                            <div className={`transform transition-all duration-300 hover:-translate-y-1 hover:shadow-sm rounded-lg p-2 bg-green-50 border-l-2 border-green-500 ${documentState === 'additions' ? 'animate-fade-in' : ''}`}
-                              style={{ animationDelay: '0.3s' }}>
-                              <h2 className="text-sm font-semibold text-gray-800 mb-1">5. TIMELINE</h2>
-                              <p className="text-xs text-gray-700 mb-1">
-                                The project will be completed according to the following schedule:
-                              </p>
-                              <ul className="list-disc text-xs pl-4 space-y-0.5 text-gray-700">
-                                <li><span className="font-medium">Project Start:</span> <span className={`${documentState === 'final' ? 'bg-yellow-100' : ''}`}>{documentState === 'final' ? 'June 1, 2023' : '[START DATE]'}</span></li>
-                                <li><span className="font-medium">Design Approval:</span> <span className={`${documentState === 'final' ? 'bg-yellow-100' : ''}`}>{documentState === 'final' ? 'June 15, 2023' : '[MILESTONE 1]'}</span></li>
-                                <li><span className="font-medium">Development Complete:</span> <span className={`${documentState === 'final' ? 'bg-yellow-100' : ''}`}>{documentState === 'final' ? 'July 20, 2023' : '[MILESTONE 2]'}</span></li>
-                                <li><span className="font-medium">Final Delivery:</span> <span className={`${documentState === 'final' ? 'bg-yellow-100' : ''}`}>{documentState === 'final' ? 'August 1, 2023' : '[END DATE]'}</span></li>
-                              </ul>
-                            </div>
-                          )}
-                          
-                          {/* Confidentiality Section - Added in final stage */}
-                          {documentState === 'final' && (
-                            <div className={`transform transition-all duration-300 hover:-translate-y-1 hover:shadow-sm rounded-lg p-2 animate-fade-in`}
-                              style={{ animationDelay: '0.2s' }}>
-                              <h2 className="text-sm font-semibold text-gray-800 mb-1">6. CONFIDENTIALITY</h2>
-                              <p className="text-xs text-gray-700">
-                                Contractor agrees to keep confidential all proprietary information, business data, and trade secrets received from Client during the term of this Agreement and for [TIME PERIOD] thereafter. Contractor shall not disclose such information to any third party without Client's prior written consent.
-                              </p>
-                            </div>
-                          )}
+                          {/* Confidentiality Section */}
+                          <div className={`transform transition-all duration-300 hover:-translate-y-1 hover:shadow-sm rounded-lg p-2 ${documentState === 'initial' ? 'animate-fade-in' : ''}`}
+                            style={{ animationDelay: '0.6s' }}>
+                            <h2 className="text-sm font-semibold text-gray-800 mb-1">5. CONFIDENTIALITY</h2>
+                            <p className="text-xs text-gray-700">
+                              Contractor agrees to keep confidential all proprietary information, business data, and trade secrets received from Client during the term of this Agreement and for [TIME PERIOD] thereafter. Contractor shall not disclose such information to any third party without Client's prior written consent.
+                            </p>
+                          </div>
 
                           {/* Termination Section */}
                           <div className={`transform transition-all duration-300 hover:-translate-y-1 hover:shadow-sm rounded-lg p-2 ${documentState === 'initial' ? 'animate-fade-in' : ''}`}
-                            style={{ animationDelay: '0.5s' }}>
-                            <h2 className="text-sm font-semibold text-gray-800 mb-1">
-                              {documentState === 'initial' ? '4' : documentState === 'additions' ? '6' : '7'}. TERMINATION
-                            </h2>
+                            style={{ animationDelay: '0.7s' }}>
+                            <h2 className="text-sm font-semibold text-gray-800 mb-1">6. TERMINATION</h2>
                             <p className="text-xs text-gray-700">
                               Either party may terminate this Agreement with [NOTICE] days written notice. Client shall pay for all services completed prior to termination.
                             </p>
@@ -563,7 +541,7 @@ export default function HomePage() {
                           
                           {/* Signatures */}
                           <div className={`transform transition-all duration-300 hover:-translate-y-1 hover:shadow-sm rounded-lg p-2 ${documentState === 'initial' ? 'animate-fade-in' : ''}`}
-                            style={{ animationDelay: '0.6s' }}>
+                            style={{ animationDelay: '0.8s' }}>
                             <div className="flex justify-between items-center">
                               <div className="text-xs">
                                 <p className="font-medium">CLIENT</p>
@@ -586,20 +564,11 @@ export default function HomePage() {
                               </div>
                             )}
                             
-                            {documentState === 'additions' && (
-                              <div className="mt-1 flex items-center justify-center gap-4 text-xs animate-fade-in">
-                                <div className="flex items-center">
-                                  <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
-                                  <span>Added deliverables & timeline</span>
-                                </div>
-                              </div>
-                            )}
-                            
                             {documentState === 'final' && (
                               <div className="mt-1 flex items-center justify-center gap-4 text-xs animate-fade-in">
                                 <div className="flex items-center">
                                   <div className="w-2 h-2 bg-yellow-500 rounded-full mr-1"></div>
-                                  <span>Updated with specific contract details</span>
+                                  <span>Added client details and timeline</span>
                                 </div>
                               </div>
                             )}
