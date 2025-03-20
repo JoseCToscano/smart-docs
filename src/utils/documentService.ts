@@ -20,7 +20,7 @@ export interface Margins {
  */
 export async function updateDocumentTitle(documentId: string, title: string) {
   const response = await fetch(`/api/document/${documentId}`, {
-    method: 'PATCH',
+    method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
     },

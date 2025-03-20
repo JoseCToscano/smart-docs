@@ -173,7 +173,7 @@ Always prioritize the USER's specific requests while using your expertise to hel
 `;
 
     const response = await anthropic.messages.create({
-      model: "claude-3-haiku-20240307",
+      model: "claude-3-5-haiku-latest",
       max_tokens: 4000,
       temperature: 0.7,
       system: [{
@@ -228,7 +228,7 @@ If my request is just a question with no document changes, only include the seco
         outputTokens: response.usage.output_tokens,
         cache_read_input_tokens: response.usage.cache_read_input_tokens,
         cache_creation_input_tokens: response.usage.cache_creation_input_tokens,
-        modelUsed: "claude-3-haiku-20240307",
+        modelUsed: "claude-3-5-haiku-latest",
       },
     });
     

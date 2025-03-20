@@ -21,9 +21,10 @@ export async function GET(
   }
   
   try {
+    const id = await params.id;
     const document = await db.document.findUnique({
       where: {
-        id: params.id,
+        id,
         userId: session.user.id, // Ensure the document belongs to the user
       },
     });
@@ -39,6 +40,7 @@ export async function GET(
   }
 }
 
+
 // PUT /api/document/[id] - Update a document
 export async function PUT(
   req: NextRequest,
@@ -52,9 +54,10 @@ export async function PUT(
   
   try {
     // First check if the document exists and belongs to the user
+    const id = await params.id;
     const existingDocument = await db.document.findUnique({
       where: {
-        id: params.id,
+        id,
         userId: session.user.id,
       },
       select: { id: true },
@@ -69,7 +72,7 @@ export async function PUT(
     
     const updatedDocument = await db.document.update({
       where: {
-        id: params.id,
+        id,
       },
       data: {
         ...validatedData,
@@ -101,9 +104,10 @@ export async function DELETE(
   
   try {
     // First check if the document exists and belongs to the user
+    const id = await params.id;
     const existingDocument = await db.document.findUnique({
       where: {
-        id: params.id,
+        id,
         userId: session.user.id,
       },
       select: { id: true },
@@ -115,7 +119,7 @@ export async function DELETE(
     
     await db.document.delete({
       where: {
-        id: params.id,
+        id,
       },
     });
     

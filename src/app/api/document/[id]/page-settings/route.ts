@@ -2,12 +2,13 @@ import { NextResponse } from "next/server";
 import { auth } from "@/server/auth";
 import { db } from "@/server/db";
 
-
+// 
 export async function PATCH(
   request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
+    console.log("PATCH, params:", params);
     const session = await auth();
     if (!session?.user?.email) {
       return new NextResponse("Unauthorized", { status: 401 });
