@@ -2,7 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { Button } from "@/components/kendo/free";
@@ -13,6 +13,32 @@ import DirectNotificationTest from "@/components/DirectNotificationTest";
 export default function HomePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const [documentState, setDocumentState] = useState('initial');
+  
+  // Animation for document changes
+  useEffect(() => {
+    if (documentState === 'initial') {
+      const timer = setTimeout(() => {
+        setDocumentState('adding');
+      }, 3000);
+      return () => clearTimeout(timer);
+    } else if (documentState === 'adding') {
+      const timer = setTimeout(() => {
+        setDocumentState('deleting');
+      }, 3000);
+      return () => clearTimeout(timer);
+    } else if (documentState === 'deleting') {
+      const timer = setTimeout(() => {
+        setDocumentState('final');
+      }, 3000);
+      return () => clearTimeout(timer);
+    } else if (documentState === 'final') {
+      const timer = setTimeout(() => {
+        setDocumentState('initial');
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [documentState]);
   
   // Redirect to documents page if authenticated
   useEffect(() => {
@@ -355,6 +381,14 @@ export default function HomePage() {
                           <li>Status updates from each team lead</li>
                           <li>Blockers and dependencies</li>
                           <li>Timeline adjustments if needed</li>
+                          {documentState === 'adding' && (
+                            <li className="bg-green-50 border-l-4 border-green-500 pl-2 py-1 text-green-800 animate-pulse">
+                              <span className="font-medium">NEW:</span> Review of sprint velocity metrics
+                            </li>
+                          )}
+                          {(documentState === 'deleting' || documentState === 'final') && (
+                            <li>Review of sprint velocity metrics</li>
+                          )}
                         </ul>
                       </div>
                       
@@ -362,22 +396,89 @@ export default function HomePage() {
                         <h2 className="text-lg font-semibold text-blue-700 mb-3">2. Roadmap Planning (25 min)</h2>
                         <ul className="list-disc pl-6 space-y-2 text-gray-700">
                           <li>Review Q3 objectives</li>
-                          <li>Discuss resource allocation</li>
+                          {documentState !== 'initial' && documentState !== 'adding' && (
+                            <li className="bg-red-50 border-l-4 border-red-500 pl-2 py-1 text-red-800 line-through opacity-70 animate-pulse">
+                              Discuss resource allocation
+                            </li>
+                          )}
+                          {documentState === 'initial' || documentState === 'adding' ? (
+                            <li>Discuss resource allocation</li>
+                          ) : documentState === 'deleting' || documentState === 'final' ? (
+                            <li className="bg-green-50 border-l-4 border-green-500 pl-2 py-1 text-green-800 animate-pulse">
+                              <span className="font-medium">NEW:</span> Team capacity planning and allocation
+                            </li>
+                          ) : null}
                           <li>Prioritize upcoming features</li>
+                          {documentState === 'adding' && (
+                            <li className="bg-green-50 border-l-4 border-green-500 pl-2 py-1 text-green-800 animate-pulse">
+                              <span className="font-medium">NEW:</span> Feature dependencies mapping
+                            </li>
+                          )}
+                          {(documentState === 'deleting' || documentState === 'final') && (
+                            <li>Feature dependencies mapping</li>
+                          )}
                         </ul>
                       </div>
                       
                       <div className="transform transition-all duration-300 hover:-translate-y-1 hover:shadow-md rounded-lg p-4">
                         <h2 className="text-lg font-semibold text-blue-700 mb-3">3. Action Items Review (15 min)</h2>
+                        {documentState === 'deleting' && (
+                          <div className="bg-green-50 border-l-4 border-green-500 pl-2 py-1 text-green-800 mb-3 animate-pulse">
+                            <span className="font-medium">NEW SECTION INTRO:</span> Focus on accountability and tracking progress
+                          </div>
+                        )}
+                        {documentState === 'final' && (
+                          <div className="text-gray-700 mb-3">
+                            Focus on accountability and tracking progress
+                          </div>
+                        )}
                         <ul className="list-disc pl-6 space-y-2 text-gray-700">
                           <li>Follow-up on last meeting's action items</li>
                           <li>Assign new action items</li>
-                          <li>Set deadlines and expectations</li>
+                          {documentState !== 'initial' && documentState !== 'adding' && (
+                            <li className="bg-red-50 border-l-4 border-red-500 pl-2 py-1 text-red-800 line-through opacity-70 animate-pulse">
+                              Set deadlines and expectations
+                            </li>
+                          )}
+                          {documentState === 'initial' || documentState === 'adding' ? (
+                            <li>Set deadlines and expectations</li>
+                          ) : documentState === 'deleting' || documentState === 'final' ? (
+                            <li className="bg-green-50 border-l-4 border-green-500 pl-2 py-1 text-green-800 animate-pulse">
+                              <span className="font-medium">NEW:</span> Define SMART goals with clear timelines
+                            </li>
+                          ) : null}
                         </ul>
                       </div>
                       
                       <div className="pt-6 border-t border-gray-200">
                         <p className="text-sm text-gray-500 italic">Note: Please come prepared with your updates. Send any materials you'd like to discuss to the team at least 2 hours before the meeting.</p>
+                        
+                        {/* Diff indicators */}
+                        {documentState === 'adding' && (
+                          <div className="mt-4 flex items-center justify-center gap-4 text-xs">
+                            <div className="flex items-center">
+                              <div className="w-3 h-3 bg-green-500 rounded-full mr-1"></div>
+                              <span>2 additions</span>
+                            </div>
+                          </div>
+                        )}
+                        {documentState === 'deleting' && (
+                          <div className="mt-4 flex items-center justify-center gap-4 text-xs">
+                            <div className="flex items-center">
+                              <div className="w-3 h-3 bg-green-500 rounded-full mr-1"></div>
+                              <span>3 additions</span>
+                            </div>
+                            <div className="flex items-center">
+                              <div className="w-3 h-3 bg-red-500 rounded-full mr-1"></div>
+                              <span>2 deletions</span>
+                            </div>
+                          </div>
+                        )}
+                        {documentState === 'final' && (
+                          <div className="mt-4 text-xs text-center text-green-600">
+                            <span>✓ Changes saved</span>
+                          </div>
+                        )}
                       </div>
                     </div>
                     
