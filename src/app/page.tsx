@@ -284,7 +284,7 @@ export default function HomePage() {
                 <>
                   <Button
                     themeColor="primary"
-                    onClick={signIn}
+                    onClick={()=>signIn('google')}
                     size="large"
                     className="relative px-10 py-4 bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 text-white text-base font-bold rounded-xl shadow-lg hover:shadow-blue-500/30 transition-all duration-300 hover:scale-[1.03] group overflow-hidden"
                   >
@@ -297,12 +297,6 @@ export default function HomePage() {
                       </svg>
                     </span>
                   </Button>
-                  <a href="#demo" className="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-2 py-2 hover:underline transition-all duration-200">
-                    See how it works
-                    <svg className="w-4 h-4 transition-transform duration-200 group-hover:translate-y-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </a>
                 </>
               )}
             </div>
@@ -553,6 +547,77 @@ export default function HomePage() {
             </div>
           </div>
         </section>
+
+        <section className="py-8 md:py-12 relative z-10 overflow-hidden">
+          {/* Subtle background effects */}
+          <div className="absolute inset-0 opacity-30">
+            <div className="absolute bottom-0 right-[15%] w-48 h-48 bg-blue-100 rounded-full mix-blend-multiply filter blur-3xl"></div>
+            <div className="absolute top-10 left-[20%] w-32 h-32 bg-indigo-100 rounded-full mix-blend-multiply filter blur-2xl"></div>
+          </div>
+          
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200/60 overflow-hidden">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-0">  
+                {/* Left side: Content */}
+                <div className="p-8 md:p-10 lg:p-12 flex flex-col justify-center">
+                  <span className="inline-block px-3 py-1 text-xs font-medium text-indigo-700 bg-indigo-100 rounded-full mb-4">
+                    PREMIUM FEATURES
+                  </span>
+                  <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4 tracking-tight">
+                    Ready to transform your document workflow?
+                  </h2>
+                  <p className="text-lg text-gray-600 mb-8">
+                    Join thousands of professionals who save hours each week with AI-powered document creation. No credit card required to get started.
+                  </p>
+                  
+                  <div className="flex flex-col sm:flex-row gap-4 items-start">
+                    <Button
+                      themeColor="primary"
+                      onClick={()=>signIn('google')}
+                      size="large"
+                      className="relative px-8 py-3 bg-gradient-to-r from-indigo-600 to-blue-500 text-white text-base font-semibold rounded-xl shadow-lg hover:shadow-indigo-500/30 transition-all duration-300 hover:scale-[1.02] group overflow-hidden"
+                    >
+                      <span className="relative z-10">Create your first document</span>
+                      <span className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                    </Button>
+                    
+                    <a href="#pricing" className="group flex items-center gap-1 text-blue-600 hover:text-blue-800 font-medium py-2 pl-2 transition-colors">
+                      View pricing plans
+                      <svg className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                      </svg>
+                    </a>
+                  </div>
+                </div>
+                
+                {/* Right side: Feature highlights */}
+                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-8 md:p-10 lg:p-12 border-t md:border-t-0 md:border-l border-gray-200">
+                  <h3 className="font-semibold text-gray-900 mb-4">Everything you need:</h3>
+                  <ul className="space-y-4">
+                    {[
+                      "AI-powered document creation and editing",
+                      "Real-time collaboration with your team",
+                      "Templates for common business documents",
+                      "Seamless integration with Google Drive",
+                      "Export to PDF, Word, and more"
+                    ].map((feature, index) => (
+                      <li key={index} className="flex items-start gap-3">
+                        <div className="flex-shrink-0 mt-1">
+                          <div className="w-5 h-5 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center justify-center">
+                            <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                            </svg>
+                          </div>
+                        </div>
+                        <span className="text-gray-700">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
         
          {/* Try it out section with zoomed-in document */}
          <section className="py-8 md:py-12 relative z-10 overflow-hidden ">
@@ -585,11 +650,11 @@ export default function HomePage() {
                     <div className="relative w-full max-w-md mx-auto">
                       <div className="flex flex-col items-center">
                         <div className="relative inline-flex">
-                          <h2 className="text-3xl md:text-4xl font-bold text-gray-800">
+                          <p className="font-mono text-gray-800">
                             {typedText}
                             <span className="inline-block w-[2px] h-[1.2em] bg-gray-800 ml-1 animate-pulse" 
                                   style={{ animationDuration: '0.75s' }}></span>
-                          </h2>
+                          </p>
                         </div>
                       </div>
                     </div>
