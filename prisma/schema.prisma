@@ -60,6 +60,10 @@ model User {
     email         String?   @unique
     emailVerified DateTime?
     image         String?
+    created_at           DateTime    @default(now())
+    updated_at          DateTime    @updatedAt
+
+
     accounts      Account[]
     sessions      Session[]
     posts         Post[]

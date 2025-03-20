@@ -1,9 +1,8 @@
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { type DefaultSession, type NextAuthConfig } from "next-auth";
-import DiscordProvider from "next-auth/providers/discord";
-
+import GoogleProvider, { type GoogleProfile } from "next-auth/providers/google";
 import { db } from "@/server/db";
-
+import { env } from "@/env";
 /**
  * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
  * object and keep type safety.
@@ -31,8 +30,37 @@ declare module "next-auth" {
  * @see https://next-auth.js.org/configuration/options
  */
 export const authConfig = {
+  session: {
+    // Choose how you want to save the user session.
+    // The default is `"jwt"`, an encrypted JWT (JWE) stored in the session cookie.
+    // If you use an `adapter` however, we default it to `"database"` instead.
+    // You can still force a JWT session by explicitly defining `"jwt"`.
+    // When using `"database"`, the session cookie will only contain a `sessionToken` value,
+    // which is used to look up the session in the database.
+    strategy: "jwt",
+
+    // Seconds - How long until an idle session expires and is no longer valid.
+    maxAge: 2 * 24 * 60 * 60, // 2 days
+
+    // Seconds - Throttle how frequently to write to database to extend a session.
+    // Use it to limit write operations. Set to 0 to always update the database.
+    // Note: This option is ignored if using JSON Web Tokens
+    updateAge: 24 * 60 * 60, // 24 hours
+  },
+  
   providers: [
-    DiscordProvider,
+    GoogleProvider({
+      clientId: env.GOOGLE_CLIENT_ID,
+      clientSecret: env.GOOGLE_CLIENT_SECRET,
+      profile(profile: GoogleProfile) {
+        return {
+          id: profile.sub,
+          email: profile?.email,
+          image: profile?.picture,
+          name: profile?.name,
+        };
+      },
+    }),
     /**
      * ...add more providers here.
      *
@@ -45,12 +73,23 @@ export const authConfig = {
   ],
   adapter: PrismaAdapter(db),
   callbacks: {
-    session: ({ session, user }) => ({
-      ...session,
-      user: {
-        ...session.user,
-        id: user.id,
-      },
-    }),
+    async session({ session, token }) {
+      if (session.user) {
+        // session.user.role = user.role; <-- put other properties on the session here
+        const authedUser = await db.user.findUnique({
+          where: {
+            email: token.email as string,
+          },
+        });
+        if (!authedUser) {
+          throw new Error("User not found");
+        }
+        session.user.id = authedUser.id;
+        session.user.name = authedUser.name as string;
+        session.user.email = authedUser.email as string;
+        session.user.image = authedUser.image as string;
+      }
+      return session;
+    },
   },
 } satisfies NextAuthConfig;

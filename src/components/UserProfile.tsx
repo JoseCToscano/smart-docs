@@ -6,11 +6,13 @@ import {
 } from "@/components/kendo";
 import { UserMenu } from "@/components/UserMenu";
 import { useState, useRef } from "react";
-
+import { useSession } from "next-auth/react";
 
 export const UserProfile = () => {
   const [showUserMenu, setShowUserMenu] = useState(false);
     const avatarRef = useRef<HTMLDivElement | null>(null);
+    const { data: session } = useSession();
+
     const toggleUserMenu = () => {
         setShowUserMenu(!showUserMenu);
       };
@@ -22,15 +24,19 @@ export const UserProfile = () => {
               aria-expanded={showUserMenu}
             >
               <Avatar
-                type="image"
+                type={session?.user?.image ? "image" : "text"}
                 size="medium"
                 rounded="full"
                 style={{ backgroundColor: "#0747A6" }}
                 themeColor="info"
                 showTooltip={true}
-                tooltip="John Doe - Account Settings"
+                tooltip={session?.user?.name ?? "Guest"}
               >
-                JD
+                {session?.user?.image ? (
+                  <img src={session?.user?.image} alt="User Avatar" />
+                ) : (
+                  session?.user?.name?.charAt(0)
+                )}
               </Avatar>
             </div>
             <Popup
