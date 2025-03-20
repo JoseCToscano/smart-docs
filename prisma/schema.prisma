@@ -134,3 +134,18 @@ model VerificationToken {
 
     @@unique([identifier, token])
 }
+
+model StripeWebhookEvent {
+    id            String   @id @default(cuid())
+    type          String
+    data          Json
+    signature     String?
+    createdAt     DateTime @default(now())
+    processedAt   DateTime @default(now())
+    status        String   @default("processed") // processed, failed
+    error         String?  @db.Text
+
+    @@index([type])
+    @@index([status])
+    @@index([createdAt])
+}
