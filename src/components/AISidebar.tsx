@@ -12,7 +12,7 @@ interface PromptCount {
 }
 
 interface AISidebarProps {
-  onPromptSubmit: (prompt: string, selectedContext?: string | null) => void;
+  onPromptSubmit: (prompt: string, selectedContext?: { text: string; html: string; range?: { start: number; end: number } } | null) => void;
   isLoading?: boolean;
   editorRef?: React.RefObject<any>;
   onApplyChanges?: (changes: DocumentChanges) => void;
@@ -20,7 +20,7 @@ interface AISidebarProps {
   onFinalizeChanges?: () => void;
   onRevertChanges?: () => void;
   hasActiveChanges?: boolean;
-  selectedContext?: string | null;
+  selectedContext?: { text: string; html: string; range?: { start: number; end: number } } | null;
   onClearContext?: () => void;
 }
 
@@ -162,12 +162,12 @@ const AISidebar = forwardRef<AISidebarHandle, AISidebarProps>(({
       return;
     }
     
-    console.log("[AISidebar] Selected context:", selectedContext);
-
     // Add user message to chat history with context if available
     const userMessage: Message = {
       role: "user", 
-      content: prompt,
+      content: selectedContext 
+        ? `[Context HTML: "${selectedContext.html}"\nRange: ${JSON.stringify(selectedContext.range)}]\n\n${prompt}`
+        : prompt,
       timestamp: new Date(),
     };
     
@@ -411,18 +411,22 @@ const AISidebar = forwardRef<AISidebarHandle, AISidebarProps>(({
               <div className="mb-2">
                 <div className="inline-flex items-center gap-2 px-2 py-1 rounded-full bg-blue-50 text-blue-700 text-xs border border-blue-100">
                   <span className="bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded-full text-[10px] font-medium">context</span>
-                  <span className="truncate max-w-[300px]" title={selectedContext}>
-                    "{selectedContext}"
-                  </span>
-                  <button
-                    type="button"
-                    onClick={onClearContext}
-                    className="ml-1 p-0.5 hover:bg-blue-100 rounded-full transition-colors"
-                  >
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <span 
+                      className="truncate max-w-[300px]" 
+                      title={selectedContext.text}
+                      dangerouslySetInnerHTML={{ __html: selectedContext.html }}
+                    />
+                    <button
+                      type="button"
+                      onClick={onClearContext}
+                      className="ml-1 p-0.5 hover:bg-blue-100 rounded-full transition-colors"
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -430,7 +434,7 @@ const AISidebar = forwardRef<AISidebarHandle, AISidebarProps>(({
               value={prompt}
               onChange={handleChange}
               onKeyDown={handleKeyDown}
-              placeholder={selectedContext ? "Ask about the selected text..." : "Ask the AI assistant..."}
+              placeholder={selectedContext ? "Ask about the selected content..." : "Ask the AI assistant..."}
               disabled={isLoading}
               rows={3}
               minLength={1}

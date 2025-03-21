@@ -91,7 +91,11 @@ export default function DocumentPage({ documentId }: { documentId?: string }) {
   ]);
   // Add a state to track when margins are updated for animation effects
   const [marginUpdateAnimation, setMarginUpdateAnimation] = useState(false);
-  const [selectedContext, setSelectedContext] = useState<string | null>(null);
+  const [selectedContext, setSelectedContext] = useState<{
+    text: string;
+    html: string;
+    range?: { start: number; end: number };
+  } | null>(null);
 
   // Add handlers for margin changes
   const handleMarginChange = (margin: 'top' | 'right' | 'bottom' | 'left', value: number) => {
@@ -682,7 +686,7 @@ const handleExport = useCallback(async () => {
     return textNodes;
   };
 
-  const handleAIPrompt = useCallback(async (prompt: string, selectedContext?: string | null) => {
+  const handleAIPrompt = useCallback(async (prompt: string, selectedContext?: { text: string; html: string; range?: { start: number; end: number; }; } | null) => {
     setIsAIProcessing(true);
     
     // Get current content from the editor
@@ -1885,10 +1889,14 @@ const handleExport = useCallback(async () => {
   }, [toggleSidebar]);
 
   // Add handler for selection changes
-  const handleSelectionChange = useCallback((selectedText: string) => {
+  const handleSelectionChange = useCallback((selection: {
+    text: string;
+    html: string;
+    range?: { start: number; end: number };
+  }) => {
     // Only update if the selection is different
-    if (selectedText !== selectedContext) {
-      setSelectedContext(selectedText);
+    if (selection.text !== selectedContext?.text || selection.html !== selectedContext?.html) {
+      setSelectedContext(selection);
     }
   }, [selectedContext]);
 

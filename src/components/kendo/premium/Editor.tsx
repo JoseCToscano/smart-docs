@@ -11,7 +11,7 @@ export interface EditorProps {
   defaultContent?: string;
   contentStyle?: React.CSSProperties;
   onChange?: (event: any) => void;
-  onSelectionChange?: (selectedText: string) => void;
+  onSelectionChange?: (selection: { text: string; html: string; range?: { start: number; end: number } }) => void;
   tools?: any[];
   [key: string]: any;
 }
@@ -39,13 +39,36 @@ const Editor: React.FC<EditorProps> = ({
     const iframeDoc = (iframe as HTMLIFrameElement).contentDocument;
     if (!iframeDoc) return;
     
-    // Get selected text
+    // Get selected text and range
     const selection = iframeDoc.getSelection();
-    if (!selection) return;
+    if (!selection || selection.rangeCount === 0) return;
     
+    const range = selection.getRangeAt(0);
     const selectedText = selection.toString().trim();
+    
     if (selectedText) {
-      onSelectionChange(selectedText);
+      // Create a temporary container to get HTML
+      const container = iframeDoc.createElement('div');
+      container.appendChild(range.cloneContents());
+      
+      // Get the HTML content
+      const selectedHtml = container.innerHTML;
+      
+      // Calculate range positions
+      const preSelectionRange = range.cloneRange();
+      preSelectionRange.selectNodeContents(iframeDoc.body);
+      preSelectionRange.setEnd(range.startContainer, range.startOffset);
+      const start = preSelectionRange.toString().length;
+      
+      // Send selection info to parent
+      onSelectionChange({
+        text: selectedText,
+        html: selectedHtml,
+        range: {
+          start,
+          end: start + selectedText.length
+        }
+      });
     }
   };
 

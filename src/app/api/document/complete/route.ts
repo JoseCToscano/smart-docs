@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
     console.log("[DocumentComplete] Prompt:", prompt);
     console.log("[DocumentComplete] Content:", content);
     console.log("[DocumentComplete] Conversation ID:", conversation_id);
-    console.log("[DocumentComplete] Conversation ID:", referenceContext);
+    console.log("[DocumentComplete] Context:", referenceContext);
 
     if (!prompt || !content) {
       return NextResponse.json(
@@ -241,7 +241,7 @@ ${content}
 \`\`\`
 ${referenceContext ? `Here is the context of the text I want to change:
 \`\`\`
-${referenceContext}
+${JSON.stringify(referenceContext)}
 \`\`\`
 ` : ''}
 My request:
