@@ -1,3 +1,3 @@
 export const getPaymentLink = (email: string) => {
-  return `https://buy.stripe.com/test_8wMg1N95p1OU72E6op?prefilled_email=${encodeURIComponent(email)}`;
+  return `https://buy.stripe.com/7sI3dl3IGaqW8N2dQQ?prefilled_email=${encodeURIComponent(email)}`;
 };
