@@ -1,7 +1,7 @@
 # SmartDocs
 
 <p align="center">
-  <img src="public/images/smartdocs-logo.svg" alt="SmartDocs Logo" width="200"/>
+  <img src="https://b4slusdeu7.ufs.sh/f/WtrbKSQbxOe7AHhjy7KFm0YBwnQ79yXJkIAhE4HlV2sCqfog" alt="SmartDocs Logo" width="200"/>
 </p>
 
 A context-aware, AI-powered document editor that understands your content and provides intelligent assistance throughout your writing process.
@@ -44,17 +44,17 @@ SmartDocs leverages KendoReact's rich component library to deliver a professiona
 
 ### Free Components
 
-- **AppBar**: Main navigation and toolbar component for document actions
-- **Avatar**: User profile representation in the application header
-- **Button**: Action buttons throughout the interface
-- **Card**:  
--- **Dialog**: Modal dialogs for help and settings
--- **Dropdown**:
-- **Input/TextArea**: Form inputs for document title and AI prompts
-- **ProgressBar**: Visual feedback during AI processing
-- **Popup**: Context menus and dropdown functionality
-- **Splitter**: Resizable panels for editor and AI sidebar
-- **Tooltip**: Contextual help and information
+**AppBar** – Used as the main navigation
+**Avatar** – Displays the user profile in the header
+**Button** – Drives interactions across the UI
+**Card** – Showcases document previews
+**Dialog** – For File upload Modal
+**Drawer** – Hosts the sliding AI assistant panel
+**DropDownList** – Allows users to select and configure document's page and format
+**Input** – Used for titles and AI prompt fields
+**Popup** – Powers context menus like user's dropdown and page configuration
+**Splitter** – Enables resizable layout between the editor and AI panel
+**Tooltip** – Provides helpful context and in-app guidance
 
 ### Premium Components
 
