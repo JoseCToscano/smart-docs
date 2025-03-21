@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { AppBar as KendoAppBar, AppBarSection as KendoAppBarSection } from "@progress/kendo-react-layout";
 import clsx from 'clsx';
 
 export interface AppBarProps {
@@ -21,18 +22,18 @@ export const AppBarSection: React.FC<AppBarSectionProps> = ({
   style
 }) => {
   return (
-    <div className={clsx('flex items-center', className)} style={style}>
+    <KendoAppBarSection className={clsx('flex items-center', className)} style={style}>
       {children}
-    </div>
+    </KendoAppBarSection>
   );
 };
 
 export const AppBarSpacer: React.FC = () => {
-  return <div className="flex-1"></div>;
+  return <KendoAppBarSection className="flex-1" />;
 };
 
 export const AppBarSeparator: React.FC = () => {
-  return <div className="h-6 w-px bg-gray-300 mx-3"></div>;
+  return <div className="h-6 w-px bg-gray-300 mx-3" />;
 };
 
 const AppBar: React.FC<AppBarProps> = ({
@@ -62,17 +63,19 @@ const AppBar: React.FC<AppBarProps> = ({
   };
 
   return (
-    <div 
+    <KendoAppBar
       className={clsx(
-        'flex items-center py-2 px-4 shadow-sm',
+        'py-2 px-4 shadow-sm',
         positionClasses[position],
         colorClasses[themeColor],
         className
-      )} 
+      )}
       style={style}
+      themeColor={themeColor === 'light' ? 'base' : themeColor}
+      positionMode={position === 'fixed' ? 'fixed' : position === 'sticky' ? 'sticky' : 'static'}
     >
       {children}
-    </div>
+    </KendoAppBar>
   );
 };
 
