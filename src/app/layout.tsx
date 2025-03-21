@@ -7,8 +7,8 @@ import { Toaster } from 'react-hot-toast'
 import { Providers } from "@/components/Providers";
 
 export const metadata: Metadata = {
-  title: "Document AI",
-  description: "Document AI",
+  title: "Smart Document Editor",
+  description: "AI Document Editor: Edit your documents with ease",
 };
 
 export default function RootLayout({

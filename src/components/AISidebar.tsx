@@ -415,8 +415,11 @@ const AISidebar = forwardRef<AISidebarHandle, AISidebarProps>(({
                     <span 
                       className="truncate max-w-[300px]" 
                       title={selectedContext.text}
-                      dangerouslySetInnerHTML={{ __html: selectedContext.html }}
-                    />
+                    >
+                      {selectedContext.text.length > 50 
+                        ? selectedContext.text.substring(0, 50) + '...' 
+                        : selectedContext.text}
+                    </span>
                     <button
                       type="button"
                       onClick={onClearContext}
