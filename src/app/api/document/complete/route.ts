@@ -13,7 +13,12 @@ export async function POST(req: NextRequest) {
     const session = await auth();
     const userId = session?.user?.id;
 
-    const { prompt, content, conversation_id } = await req.json();
+    const { prompt, content, conversation_id, referenceContext } = await req.json();
+
+    console.log("[DocumentComplete] Prompt:", prompt);
+    console.log("[DocumentComplete] Content:", content);
+    console.log("[DocumentComplete] Conversation ID:", conversation_id);
+    console.log("[DocumentComplete] Conversation ID:", referenceContext);
 
     if (!prompt || !content) {
       return NextResponse.json(
@@ -234,7 +239,11 @@ Always prioritize the USER's specific requests while using your expertise to hel
 \`\`\`
 ${content}
 \`\`\`
-
+${referenceContext ? `Here is the context of the text I want to change:
+\`\`\`
+${referenceContext}
+\`\`\`
+` : ''}
 My request:
 ${prompt}
 

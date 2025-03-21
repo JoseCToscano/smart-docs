@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from "react";
 import { TextArea, Button, ProgressBar } from "@/components/kendo/free";
+import { useSession } from "next-auth/react";
 
 interface PromptCount {
   total: number;
@@ -11,7 +12,7 @@ interface PromptCount {
 }
 
 interface AISidebarProps {
-  onPromptSubmit: (prompt: string) => void;
+  onPromptSubmit: (prompt: string, selectedContext?: string | null) => void;
   isLoading?: boolean;
   editorRef?: React.RefObject<any>;
   onApplyChanges?: (changes: DocumentChanges) => void;
@@ -19,6 +20,8 @@ interface AISidebarProps {
   onFinalizeChanges?: () => void;
   onRevertChanges?: () => void;
   hasActiveChanges?: boolean;
+  selectedContext?: string | null;
+  onClearContext?: () => void;
 }
 
 type Message = {
@@ -44,7 +47,9 @@ const AISidebar = forwardRef<AISidebarHandle, AISidebarProps>(({
   isLoading = false,
   onFinalizeChanges,
   onRevertChanges,
-  hasActiveChanges = false
+  hasActiveChanges = false,
+  selectedContext = null,
+  onClearContext
 }, ref) => {
   const [prompt, setPrompt] = useState("");
   const [chatHistory, setChatHistory] = useState<Message[]>([
@@ -148,7 +153,7 @@ const AISidebar = forwardRef<AISidebarHandle, AISidebarProps>(({
     if (prompt.trim() === "" || isLoading) return;
 
     // Check if user has remaining prompts
-    if (promptCount && promptCount.remaining <= 0) {
+    if (promptCount && promptCount.remaining <= 0 && !promptCount.isPremium) {
       setChatHistory(prev => [...prev, {
         role: "assistant",
         content: "⚠️ You have reached your limit of free prompts. Please upgrade to continue using the AI assistant.",
@@ -157,7 +162,9 @@ const AISidebar = forwardRef<AISidebarHandle, AISidebarProps>(({
       return;
     }
     
-    // Add user message to chat history
+    console.log("[AISidebar] Selected context:", selectedContext);
+
+    // Add user message to chat history with context if available
     const userMessage: Message = {
       role: "user", 
       content: prompt,
@@ -167,13 +174,16 @@ const AISidebar = forwardRef<AISidebarHandle, AISidebarProps>(({
     setChatHistory(prev => [...prev, userMessage]);
     
     // Call the parent component's handler
-    await onPromptSubmit(prompt);
+    await onPromptSubmit(prompt, selectedContext);
     
     // Update prompt count after submission
     fetchPromptCount();
     
-    // Clear the input
+    // Clear the input and context
     setPrompt("");
+    if (onClearContext) {
+      onClearContext();
+    }
   };
 
   // Handle keyboard shortcuts
@@ -366,7 +376,7 @@ const AISidebar = forwardRef<AISidebarHandle, AISidebarProps>(({
       {/* Input area - Fixed at the bottom */}
       <div className="p-4 border-t border-gray-200 bg-white mt-auto">
         {/* Prompt suggestions header and buttons */}
-        <div className="mb-4">
+        <div className="mb-4 hidden lg:block">
           <div className="flex items-center gap-2 mb-2">
             <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
@@ -397,11 +407,30 @@ const AISidebar = forwardRef<AISidebarHandle, AISidebarProps>(({
         
         <form onSubmit={handleSubmit}>
           <div className="relative">
+            {selectedContext && (
+              <div className="mb-2">
+                <div className="inline-flex items-center gap-2 px-2 py-1 rounded-full bg-blue-50 text-blue-700 text-xs border border-blue-100">
+                  <span className="bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded-full text-[10px] font-medium">context</span>
+                  <span className="truncate max-w-[300px]" title={selectedContext}>
+                    "{selectedContext}"
+                  </span>
+                  <button
+                    type="button"
+                    onClick={onClearContext}
+                    className="ml-1 p-0.5 hover:bg-blue-100 rounded-full transition-colors"
+                  >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            )}
             <TextArea
               value={prompt}
               onChange={handleChange}
               onKeyDown={handleKeyDown}
-              placeholder="Ask the AI assistant..."
+              placeholder={selectedContext ? "Ask about the selected text..." : "Ask the AI assistant..."}
               disabled={isLoading}
               rows={3}
               minLength={1}

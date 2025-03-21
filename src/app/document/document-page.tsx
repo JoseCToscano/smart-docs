@@ -91,6 +91,7 @@ export default function DocumentPage({ documentId }: { documentId?: string }) {
   ]);
   // Add a state to track when margins are updated for animation effects
   const [marginUpdateAnimation, setMarginUpdateAnimation] = useState(false);
+  const [selectedContext, setSelectedContext] = useState<string | null>(null);
 
   // Add handlers for margin changes
   const handleMarginChange = (margin: 'top' | 'right' | 'bottom' | 'left', value: number) => {
@@ -681,7 +682,7 @@ const handleExport = useCallback(async () => {
     return textNodes;
   };
 
-  const handleAIPrompt = useCallback(async (prompt: string) => {
+  const handleAIPrompt = useCallback(async (prompt: string, selectedContext?: string | null) => {
     setIsAIProcessing(true);
     
     // Get current content from the editor
@@ -737,6 +738,7 @@ const handleExport = useCallback(async () => {
         },
         body: JSON.stringify({
           prompt,
+          referenceContext: selectedContext,
           content: tempContainer.innerHTML,
           conversation_id: conversationId
         }),
@@ -1882,6 +1884,19 @@ const handleExport = useCallback(async () => {
     };
   }, [toggleSidebar]);
 
+  // Add handler for selection changes
+  const handleSelectionChange = useCallback((selectedText: string) => {
+    // Only update if the selection is different
+    if (selectedText !== selectedContext) {
+      setSelectedContext(selectedText);
+    }
+  }, [selectedContext]);
+
+  // Add handler to clear context
+  const handleClearContext = useCallback(() => {
+    setSelectedContext(null);
+  }, []);
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-100">
       {/* Main App Toolbar */}
@@ -2185,6 +2200,7 @@ const handleExport = useCallback(async () => {
                   }}
                   defaultContent={document.content}
                   onChange={handleContentChange}
+                  onSelectionChange={handleSelectionChange}
                 />
               </div>
             </div>
@@ -2206,6 +2222,8 @@ const handleExport = useCallback(async () => {
                 onRevertChanges={revertChanges}
                 hasActiveChanges={hasActiveChanges}
                 ref={aiSidebarRef}
+                selectedContext={selectedContext}
+                onClearContext={handleClearContext}
               />
             </div>
           </div>
