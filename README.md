@@ -4,38 +4,38 @@
   <img src="public/images/smartdocs-logo.svg" alt="SmartDocs Logo" width="200"/>
 </p>
 
-An intelligent document editor powered by AI to help create, edit, and enhance documents with minimal effort.
+A context-aware, AI-powered document editor that understands your content and provides intelligent assistance throughout your writing process.
 
 ## Overview
 
-SmartDocs is a modern document editing application that combines the power of Anthropic's Claude AI with KendoReact components to create a seamless, intuitive writing experience. The app allows users to write and edit documents while leveraging AI assistance for content generation, refinement, and formatting.
+SmartDocs is a sophisticated document editing platform that harnesses multiple state-of-the-art AI models to create an intuitive, context-aware writing environment. Similar to Cursor's intelligent coding experience, SmartDocs understands your document's context and provides real-time, relevant assistance for content creation, editing, and enhancement.
 
 ## Features
 
-### 🚀 Core Capabilities
+### 🤖 AI-Powered Intelligence
 
-- **Rich Text Editing**: Full-featured WYSIWYG document editor with formatting tools
-- **AI-Assisted Writing**: Integrated Claude AI to help write, edit, and improve content
-- **Intelligent Suggestions**: Get content recommendations based on your document context
-- **Change Management**: Visualize and review AI suggestions before accepting them
-- **Modern UI/UX**: Clean, responsive interface built with KendoReact components
+- **Multi-Model AI Integration**: Leverages multiple AI models for specialized tasks
+- **Context-Aware Assistance**: Understands document structure and content context
+- **Intelligent Code Handling**: Special support for technical documentation
+- **Smart Formatting**: AI-powered formatting suggestions based on content type
+- **Semantic Search**: Find relevant content across your documents instantly
 
-### 💡 Smart Features
+### 📝 Advanced Editing
 
-- **Real-time Collaboration**: Work with AI as your writing partner
-- **Document Versioning**: Save and track document versions
-- **Export Options**: Share your work in various formats
-- **Custom Styling**: Format your documents with extensive styling options
-- **Responsive Design**: Works seamlessly across devices
+- **Rich Text Editing**: Full-featured WYSIWYG editor with professional formatting
+- **Real-time AI Suggestions**: Contextual writing improvements as you type
+- **Smart Templates**: AI-generated document templates based on your needs
+- **Version Control**: Track changes with intelligent diff highlighting
+- **Collaborative Features**: Real-time collaboration with AI assistance
 
 ## Technology Stack
 
 SmartDocs is built using a modern technology stack:
 
-- **Framework**: [Next.js](https://nextjs.org/) (React-based framework)
 - **UI Components**: [KendoReact](https://www.telerik.com/kendo-react-ui/) (Enterprise-grade React UI)
-- **Styling**: [Tailwind CSS](https://tailwindcss.com/) for utility-first styling
 - **AI Integration**: [Anthropic Claude](https://www.anthropic.com/) via API
+- **Framework**: [Next.js](https://nextjs.org/) (React-based framework)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/) for utility-first styling
 - **TypeScript**: For type safety and developer experience
 
 ## KendoReact Components
@@ -47,6 +47,9 @@ SmartDocs leverages KendoReact's rich component library to deliver a professiona
 - **AppBar**: Main navigation and toolbar component for document actions
 - **Avatar**: User profile representation in the application header
 - **Button**: Action buttons throughout the interface
+- **Card**:  
+-- **Dialog**: Modal dialogs for help and settings
+-- **Dropdown**:
 - **Input/TextArea**: Form inputs for document title and AI prompts
 - **ProgressBar**: Visual feedback during AI processing
 - **Popup**: Context menus and dropdown functionality
@@ -56,8 +59,6 @@ SmartDocs leverages KendoReact's rich component library to deliver a professiona
 ### Premium Components
 
 - **Editor**: Rich text editing with comprehensive formatting tools
-- **Dialog/Window**: Modal dialogs for help and settings
-- **Notification**: System feedback notifications
 
 ## Architecture
 
@@ -71,12 +72,21 @@ SmartDocs follows a modular architecture:
 
 ## AI Integration
 
-The application integrates with Anthropic's Claude AI through a custom API:
+SmartDocs leverages multiple AI models for specialized tasks:
 
-- **Prompt Engineering**: Specialized prompts for document editing
-- **Response Processing**: Parsing XML-formatted changes from AI responses
-- **Change Visualization**: Highlighting additions and deletions in the document
-- **User Interaction**: Natural language interface for requests
+- **Content Generation**: Advanced language models for high-quality writing
+- **Code Understanding**: Specialized models for technical content
+- **Context Analysis**: AI-powered document structure understanding
+- **Smart Formatting**: Intelligent layout and styling suggestions
+- **Research Assistant**: AI-powered fact-checking and reference gathering
+
+## How It Works
+
+1. **Context Understanding**: AI continuously analyzes your document's content and structure
+2. **Intelligent Suggestions**: Receives contextual recommendations for improvements
+3. **Code-Aware**: Special handling for code blocks and technical content
+4. **Smart Formatting**: Automatic formatting suggestions based on content type
+5. **Version Management**: AI-powered diff tracking and change management
 
 ## Getting Started
 
@@ -135,11 +145,12 @@ SmartDocs extends KendoReact with custom components:
 
 ## Future Roadmap
 
-- Collaborative editing with multiple users
-- Advanced document templates
-- Offline support
-- Mobile applications
-- Enhanced AI capabilities
+- Integration with additional specialized AI models
+- Enhanced context awareness capabilities
+- Advanced technical documentation features
+- Real-time collaboration improvements
+- Mobile-first experience
+- Offline capabilities with local AI processing
 
 ## Contributing
 
