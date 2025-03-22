@@ -15,8 +15,6 @@ interface AISidebarProps {
   onPromptSubmit: (prompt: string, selectedContext?: { text: string; html: string; range?: { start: number; end: number } } | null) => void;
   isLoading?: boolean;
   editorRef?: React.RefObject<any>;
-  onApplyChanges?: (changes: DocumentChanges) => void;
-  onApplyXmlChanges?: (xmlContent: string) => void;
   onFinalizeChanges?: () => void;
   onRevertChanges?: () => void;
   hasActiveChanges?: boolean;
@@ -165,9 +163,7 @@ const AISidebar = forwardRef<AISidebarHandle, AISidebarProps>(({
     // Add user message to chat history with context if available
     const userMessage: Message = {
       role: "user", 
-      content: selectedContext 
-        ? `[Context HTML: "${selectedContext.html}"\nRange: ${JSON.stringify(selectedContext.range)}]\n\n${prompt}`
-        : prompt,
+      content: prompt,
       timestamp: new Date(),
     };
     

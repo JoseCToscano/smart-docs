@@ -155,27 +155,6 @@ export default function DocumentPage({ documentId }: { documentId?: string }) {
 
     // Add more detailed logging of editor iframe initialization
     if (editorRef.current) {
-      // Get more details about the editor structure
-      console.log("[DocumentPage] Editor contentChange event triggered");
-      console.log("[DocumentPage] Editor ref keys:", Object.keys(editorRef.current));
-      
-      // Check editor DOM structure
-      if (editorRef.current.element) {
-        console.log("[DocumentPage] Editor element found:", editorRef.current.element);
-        
-        // Try to locate the iframe
-        const iframe = editorRef.current.element.querySelector('iframe');
-        console.log("[DocumentPage] Editor iframe via element query:", iframe);
-        
-        if (iframe) {
-          console.log("[DocumentPage] Iframe contentDocument:", Boolean(iframe.contentDocument));
-          console.log("[DocumentPage] Iframe contentWindow:", Boolean(iframe.contentWindow));
-        }
-      }
-      
-      // Direct iframe access attempt
-      console.log("[DocumentPage] Editor direct iframe property:", editorRef.current.iframe);
-      
       // Try to access document through any available method
       try {
         // Get the iframe using different methods
@@ -204,38 +183,9 @@ export default function DocumentPage({ documentId }: { documentId?: string }) {
           }
         }
                          
-        if (iframeElement) {
-          const editorDoc = iframeElement.contentDocument || iframeElement.contentWindow?.document;
-          console.log("[DocumentPage] Successfully accessed editor document:", Boolean(editorDoc));
-          
-          // Check if there's any content in the editor
-          if (editorDoc) {
-            console.log("[DocumentPage] Editor body:", editorDoc.body.innerHTML.substring(0, 100) + "...");
-          }
-        } else {
-          console.log("[DocumentPage] Could not locate iframe element by any method");
-        }
+
       } catch (err) {
         console.error("[DocumentPage] Error accessing editor document:", err);
-      }
-      
-      // Try to find any info about editor's structure and API
-      try {
-        if (typeof editorRef.current.getSelection === 'function') {
-          console.log("[DocumentPage] Editor has getSelection method");
-        }
-        
-        if (typeof editorRef.current.getDocument === 'function') {
-          console.log("[DocumentPage] Editor has getDocument method");
-          try {
-            const doc = editorRef.current.getDocument();
-            console.log("[DocumentPage] Got document via getDocument:", Boolean(doc));
-          } catch (e) {
-            console.error("[DocumentPage] Error calling getDocument:", e);
-          }
-        }
-      } catch (err) {
-        console.error("[DocumentPage] Error examining editor API methods:", err);
       }
     }
   };
@@ -444,229 +394,6 @@ const handleExport = useCallback(async () => {
     }
   }, [document.id, document.title, getEditorContent]);
 
-
-  // Apply changes to the editor
-  const applyChangesToEditor = (changes: DocumentChanges | null) => {
-    if (!changes) {
-      console.log("[DocumentPage] No changes to apply to editor");
-      return;
-    }
-
-    try {
-      // Get the current editor document
-      const editorDoc = getEditorDocument();
-      if (!editorDoc) {
-        console.error("[DocumentPage] Failed to get editor document");
-        return;
-      }
-
-      // Create a new container to work with the HTML
-      const tempContainer = window.document.createElement('div');
-      
-      // Get the current content
-      const currentHTML = editorDoc.body.innerHTML;
-      tempContainer.innerHTML = currentHTML;
-      
-      // Track if we made any changes
-      let hasChanges = false;
-      
-      // Process replacements (highest priority)
-      if (changes.replacements && changes.replacements.length > 0) {
-        console.log("[DocumentPage] Applying replacements:", changes.replacements);
-        
-        for (const replacement of changes.replacements) {
-          const { oldText, newText } = replacement;
-          
-          // Create a span for the new text
-          const span = window.document.createElement('span');
-          span.className = 'ai-addition';
-          span.innerHTML = newText.replace(/\n/g, '<br />');
-          
-          // Find the text to replace
-          const textNodes = Array.from(tempContainer.querySelectorAll('*'))
-            .filter((node: Element) => 
-              node.nodeType === Node.TEXT_NODE || 
-              (node.children && node.children.length === 0)
-            )
-            .map((node: Element) => node.textContent || '')
-            .join('');
-            
-          const textContent = tempContainer.textContent || '';
-          const index = textContent.indexOf(oldText);
-          
-          if (index !== -1) {
-            // We need more advanced logic here to replace text that spans multiple nodes
-            // For simplicity, we're just going to update the whole HTML for now
-            const htmlContent = tempContainer.innerHTML;
-            const newHtml = htmlContent.replace(
-              oldText,
-              `<span class="ai-addition">${newText.replace(/\n/g, '<br />')}</span>`
-            );
-            tempContainer.innerHTML = newHtml;
-            hasChanges = true;
-          }
-        }
-      }
-      
-      // Process additions
-      if (changes.additions && changes.additions.length > 0) {
-        console.log("[DocumentPage] Applying additions:", changes.additions);
-        hasChanges = true;
-        
-        // For this simplified version, we'll just append additions to the end
-        // A more complex version would use the range property to insert at the correct position
-        for (const addition of changes.additions) {
-          const { text, range } = addition;
-          
-          // Create span for the addition
-          const span = window.document.createElement('span');
-          span.className = 'ai-addition';
-          span.innerHTML = text.replace(/\n/g, '<br />');
-          
-          // Append to the end or try to use the range
-          if (range) {
-            // Try to find where to insert using the simplified range
-            // This is a simplified approach - production code would be more sophisticated
-            const position = range.start;
-            const nodeInfo = findNodeAndOffset(tempContainer, position);
-            
-            if (nodeInfo) {
-              const { node, offset } = nodeInfo;
-              
-              if (node.nodeType === Node.TEXT_NODE) {
-                // Split the text node
-                const textNode = node as Text;
-                const beforeText = textNode.nodeValue?.substring(0, offset) || '';
-                const afterText = textNode.nodeValue?.substring(offset) || '';
-                
-                const beforeNode = window.document.createTextNode(beforeText);
-                const afterNode = window.document.createTextNode(afterText);
-                
-                const parent = textNode.parentNode;
-                if (parent) {
-                  parent.insertBefore(beforeNode, textNode);
-                  parent.insertBefore(span, textNode);
-                  parent.insertBefore(afterNode, textNode);
-                  parent.removeChild(textNode);
-                }
-              } else {
-                // Insert into element
-                const children = node.childNodes;
-                if (offset >= 0 && offset <= children.length) {
-                  node.insertBefore(span, children[offset] || null);
-                } else {
-                  node.appendChild(span);
-                }
-              }
-            } else {
-              // Fallback: append to the end
-              tempContainer.appendChild(span);
-            }
-          } else {
-            // If no range is specified, append to the end
-            tempContainer.appendChild(span);
-          }
-        }
-      }
-      
-      // Process deletions
-      if (changes.deletions && changes.deletions.length > 0) {
-        console.log("[DocumentPage] Applying deletions:", changes.deletions);
-        hasChanges = true;
-        
-        for (const deletion of changes.deletions) {
-          const { text, range } = deletion;
-          
-          // Create span for the deletion
-          const span = window.document.createElement('span');
-          span.className = 'ai-deletion';
-          span.innerHTML = text.replace(/\n/g, '<br />');
-          
-          // Try to use the range if available
-          if (range) {
-            // Find the range in the content
-            const startPos = range.start;
-            const endPos = range.end;
-            
-            const startInfo = findNodeAndOffset(tempContainer, startPos);
-            
-            if (startInfo) {
-              const { node, offset } = startInfo;
-              
-              if (node.nodeType === Node.TEXT_NODE) {
-                // Split the text node
-                const textNode = node as Text;
-                const beforeText = textNode.nodeValue?.substring(0, offset) || '';
-                
-                // Calculate where deletion ends
-                const length = endPos - startPos;
-                const afterText = textNode.nodeValue?.substring(offset + length) || '';
-                
-                const beforeNode = window.document.createTextNode(beforeText);
-                const afterNode = window.document.createTextNode(afterText);
-                
-                const parent = textNode.parentNode;
-                if (parent) {
-                  parent.insertBefore(beforeNode, textNode);
-                  parent.insertBefore(span, textNode);
-                  parent.insertBefore(afterNode, textNode);
-                  parent.removeChild(textNode);
-                }
-              } else {
-                // For now, just insert the deletion marker at the position
-                const children = node.childNodes;
-                if (offset >= 0 && offset <= children.length) {
-                  node.insertBefore(span, children[offset] || null);
-                } else {
-                  node.appendChild(span);
-                }
-              }
-            } else {
-              // Fallback: append to the end
-              tempContainer.appendChild(span);
-            }
-          } else {
-            // If no range is provided, try to find the text in the content
-            const textContent = tempContainer.textContent || '';
-            const index = textContent.indexOf(text);
-            
-            if (index !== -1) {
-              // Use a simple string replacement for now
-              // A more advanced implementation would carefully handle DOM nodes
-              const htmlContent = tempContainer.innerHTML;
-              const newHtml = htmlContent.replace(
-                text,
-                `<span class="ai-deletion">${text.replace(/\n/g, '<br />')}</span>`
-              );
-              tempContainer.innerHTML = newHtml;
-            } else {
-              // Fallback: append to the end
-              tempContainer.appendChild(span);
-            }
-          }
-        }
-      }
-      
-      // If we made changes, update the editor
-      if (hasChanges) {
-        // Get the updated HTML and update the editor
-        const updatedHTML = tempContainer.innerHTML;
-        console.log("[DocumentPage] Applying updated HTML to editor");
-        
-        // Update editor content using our new method
-        updateEditorContent(updatedHTML);
-        
-        // Set the has changes flag
-        setHasActiveChanges(true);
-      } else {
-        console.log("[DocumentPage] No changes were applied to the editor");
-      }
-      
-    } catch (err) {
-      console.error("[DocumentPage] Error applying changes to editor:", err);
-    }
-  };
-  
   // Helper function to get all text nodes under a parent element
   const getAllTextNodes = (node: Node): Text[] => {
     const textNodes: Text[] = [];
@@ -730,8 +457,6 @@ const handleExport = useCallback(async () => {
     
     // Save the cleaned original content for later comparison
     setOriginalContentBeforeChanges(tempContainer.innerHTML);
-    console.log("[handleAIPrompt] Saved normalized original content", tempContainer.innerHTML.substring(0, 100));
-    
     
     try {
       // Call the Anthropic API through our backend
@@ -759,19 +484,10 @@ const handleExport = useCallback(async () => {
 
       setConversationId(conversation_id);
       
-      console.log("[DocumentPage] Received response:", {
-        hasXmlContent: Boolean(xmlContent) && xmlContent.length > 0,
-        userMessage: userMessage?.substring(0, 100) + "...",
-        containsPlaceholders,
-        xmlContent: xmlContent?.substring(0, 200) + "..."
-      });
-      
       // Only apply XML changes if there are any
       let changes = null;
       
       if (xmlContent && xmlContent.length > 0) {
-        console.log("[DocumentPage] Applying XML changes to editor");
-        
         // Pre-process the content: replace literal ___NEWLINE___ with actual newlines
         let processedXmlContent = xmlContent.replace(/___NEWLINE___/g, '\n');
         
@@ -831,7 +547,6 @@ const handleExport = useCallback(async () => {
   const applyXmlChangesToEditor = (xmlContent: string) => {
     const editorDoc = getEditorDocument();
     if (!editorDoc) {
-      console.error("Failed to get editor document for applying changes");
       return;
     }
     
@@ -933,16 +648,11 @@ const handleExport = useCallback(async () => {
           
           // Append style to the head of the iframe document
           editorDoc.head.appendChild(styleEl);
-          console.log("[DocumentPage] Injected AI diff styles into editor document");
         }
       };
       
       // Ensure styles are present
       ensureStyles();
-      
-      console.log("[DocumentPage] Processing XML content, length:", xmlContent.length);
-      console.log("[DocumentPage] XML content contains addition tags:", xmlContent.includes("<addition>"));
-      console.log("[DocumentPage] XML content contains deletion tags:", xmlContent.includes("<deletion>"));
       
       // Save the current content as original content if not already set
       if (!originalContentBeforeChanges) {
@@ -969,7 +679,6 @@ const handleExport = useCallback(async () => {
         });
         
         setOriginalContentBeforeChanges(tempContainer.innerHTML);
-        console.log("[applyXmlChangesToEditor] Saved normalized original content");
       }
       
       // Check if there are XML tags in the content
@@ -981,18 +690,14 @@ const handleExport = useCallback(async () => {
         // Parse XML to HTML with styled spans
         processedContent = parseXmlDiff(xmlContent);
         
-        console.log("[DocumentPage] Parsed HTML contains addition spans:", processedContent.includes("ai-addition"));
-        console.log("[DocumentPage] Parsed HTML contains deletion spans:", processedContent.includes("ai-deletion"));
       } else {
         // Even if there are no XML tags, we still process the content
         // This handles cases where there were direct HTML changes like adding <u> tags
         processedContent = xmlContent;
-        console.log("[DocumentPage] No XML tags found, but still updating content to show changes");
       }
       
       // Make sure the editor is ready
       if (!editorRef.current) {
-        console.error("[DocumentPage] Editor reference is not available");
         return;
       }
       
@@ -1006,24 +711,20 @@ const handleExport = useCallback(async () => {
         
         if (hasChanges) {
           setHasActiveChanges(true);
-          console.log("[DocumentPage] hasAIChanges detected changes");
         } else if (originalContentBeforeChanges) {
           // If no changes were detected but we have original content, do an explicit content comparison
           const currentContent = getEditorContent();
           const contentChanged = contentHasMeaningfulChanges(originalContentBeforeChanges, currentContent);
           
           setHasActiveChanges(contentChanged);
-          console.log("[DocumentPage] Direct content comparison detected changes:", contentChanged);
           
           if (!contentChanged && !hasXmlTags) {
             // If we couldn't find changes at all, but got a response without XML tags
             // (could be identical content returned), clear the original content
             setOriginalContentBeforeChanges(null);
-            console.log("[DocumentPage] No changes detected and no XML tags, clearing original content");
           }
         } else {
           setHasActiveChanges(hasChanges);
-          console.log("[DocumentPage] Updated hasActiveChanges:", hasChanges);
         }
       }, 100);
       
@@ -1037,7 +738,6 @@ const handleExport = useCallback(async () => {
     try {
       // Log if the incoming content contains mark tags
       const hasMark = newContent.includes('<mark>');
-      console.log("[updateEditorContent] Input content contains mark tags:", hasMark);
       
       // Create a temporary div to sanitize the content
       const tempDiv = window.document.createElement('div');
@@ -1061,11 +761,6 @@ const handleExport = useCallback(async () => {
             }
           }
         }
-        
-        // Special handling for mark tags - ensure they're preserved
-        if (el.tagName.toLowerCase() === 'mark') {
-          console.log("[updateEditorContent] Preserving mark tag:", el.outerHTML.substring(0, 50));
-        }
       });
       
       // Get the cleaned content
@@ -1073,14 +768,10 @@ const handleExport = useCallback(async () => {
       
       // Verify mark tags are still present after cleaning
       const cleanedHasMark = cleanedContent.includes('<mark>');
-      console.log("[updateEditorContent] Cleaned content contains mark tags:", cleanedHasMark);
-      
-      console.log("[DocumentPage] Updating editor with cleaned content");
       
       // Get the editor document
       const editorDoc = getEditorDocument();
       if (!editorDoc || !editorDoc.body) {
-        console.error("[DocumentPage] Cannot get editor document");
         return;
       }
       
@@ -1163,12 +854,6 @@ const handleExport = useCallback(async () => {
               updatedAt: new Date()
             }));
             
-            // 9. Check if mark tags were preserved after updating
-            const finalContent = editorDoc.body.innerHTML;
-            const finalHasMark = finalContent.includes('<mark>');
-            console.log("[updateEditorContent] Final editor content has mark tags:", finalHasMark);
-            
-            console.log("[DocumentPage] Editor content updated successfully using Kendo's approach");
           } catch (innerErr) {
             console.error("[DocumentPage] Error during final editor setup:", innerErr);
           }
@@ -1203,10 +888,8 @@ const handleExport = useCallback(async () => {
       // Attempt to use editor's built-in methods if available
       if (typeof editorRef.current.recreate === 'function') {
         editorRef.current.recreate();
-        console.log("[DocumentPage] Editor recreated");
       } else if (typeof editorRef.current.refresh === 'function') {
         editorRef.current.refresh();
-        console.log("[DocumentPage] Editor refreshed");
       }
       
       // Make sure the document is editable
@@ -1262,11 +945,6 @@ const handleExport = useCallback(async () => {
       const additionSpans = editorDoc.querySelectorAll('.ai-addition');
       const deletionSpans = editorDoc.querySelectorAll('.ai-deletion');
       
-      console.log("[DocumentPage] Found spans to fix:", {
-        additions: additionSpans.length,
-        deletions: deletionSpans.length
-      });
-      
       // Check for mark tags inside additions
       let hasMarkTags = false;
       additionSpans.forEach(span => {
@@ -1276,7 +954,6 @@ const handleExport = useCallback(async () => {
         }
       });
       
-      console.log("[DocumentPage] Document has mark tags inside additions:", hasMarkTags);
       
       // Make sure all spans have the correct display style
       [...additionSpans, ...deletionSpans].forEach(span => {
@@ -1307,7 +984,6 @@ const handleExport = useCallback(async () => {
       // Check for and fix any XML tags that weren't properly converted
       const editorContent = editorDoc.body.innerHTML;
       if (editorContent.includes('<addition>') || editorContent.includes('<deletion>')) {
-        console.log("[DocumentPage] Found unconverted XML tags, fixing...");
         
         // Apply a direct fix
         const fixedContent = editorContent
@@ -1320,31 +996,18 @@ const handleExport = useCallback(async () => {
         reinitializeEditor();
       }
       
-      // Check if mark tags are present after all fixes
-      const finalContent = editorDoc.body.innerHTML;
-      console.log("[DocumentPage] Final content has mark tags:", finalContent.includes('<mark>'));
-      
     } catch (error) {
       console.error("[DocumentPage] Error fixing span styling:", error);
     }
   };
 
-  // Update the handleApplyChanges function to handle both formats
-  const handleApplyChanges = useCallback((changes: DocumentChanges) => {
-    // This handles the original format with structured changes
-    applyChangesToEditor(changes);
-  }, []);
-  
-
   // Function to finalize and accept all AI changes
   const finalizeChanges = useCallback(() => {
-    console.log("[finalizeChanges] Starting to process changes");
     
     try {
       // Get the editor document
       const editorDoc = getEditorDocument();
       if (!editorDoc) {
-        console.error("[finalizeChanges] Failed to get editor document");
         return;
       }
       
@@ -1354,18 +1017,11 @@ const handleExport = useCallback(async () => {
       
       // Step 2: Find and process all AI additions (keep content, remove highlighting)
       const additions = tempContainer.querySelectorAll('.ai-addition');
-      console.log(`[finalizeChanges] Found ${additions.length} additions to apply`);
       
       additions.forEach((addition) => {
         // Keep the HTML content (including <br> tags and other HTML tags) but remove the span
         const content = addition.innerHTML;
-        console.log(`[finalizeChanges] Processing addition with content: ${content.substring(0, 50)}...`);
         
-        // Check for mark tags in the content to ensure they're preserved
-        const hasMark = content.includes('<mark>') || content.includes('</mark>');
-        if (hasMark) {
-          console.log(`[finalizeChanges] Addition contains mark tags, ensuring preservation`);
-        }
         
         // Create a new temporary container to handle the HTML content properly
         const contentContainer = window.document.createElement('span');
@@ -1391,7 +1047,6 @@ const handleExport = useCallback(async () => {
       
       // Step 3: Find and process all AI deletions (remove them completely)
       const deletions = tempContainer.querySelectorAll('.ai-deletion');
-      console.log(`[finalizeChanges] Found ${deletions.length} deletions to remove`);
       
       deletions.forEach((deletion) => {
         if (deletion.parentNode) {
@@ -1401,9 +1056,6 @@ const handleExport = useCallback(async () => {
       
       // Step 4: Get the clean HTML with changes applied
       const cleanedHtml = tempContainer.innerHTML;
-      
-      // Log whether the final HTML contains mark tags
-      console.log(`[finalizeChanges] Final HTML contains mark tags: ${cleanedHtml.includes('<mark>')}`);
       
       // Step 5: Save this content to the state so it will be used for the new editor
       setDocument(prev => ({
@@ -1438,13 +1090,10 @@ const handleExport = useCallback(async () => {
   
   // Function to revert all AI changes
   const revertChanges = useCallback(() => {
-    console.log("[revertChanges] Starting to revert changes");
-    
     try {
       // Get the editor document
       const editorDoc = getEditorDocument();
       if (!editorDoc) {
-        console.error("[revertChanges] Failed to get editor document");
         return;
       }
       
@@ -1454,11 +1103,9 @@ const handleExport = useCallback(async () => {
       
       // Check for mark tags in the content
       const hasMark = tempContainer.innerHTML.includes('<mark>');
-      console.log("[revertChanges] Content contains mark tags:", hasMark);
       
       // Step 2: Find and process all AI additions (remove them completely)
       const additions = tempContainer.querySelectorAll('.ai-addition');
-      console.log(`[revertChanges] Found ${additions.length} additions to remove`);
       
       additions.forEach((addition) => {
         // Before removing, check if it contains mark tags that might need special handling
@@ -1476,17 +1123,10 @@ const handleExport = useCallback(async () => {
       
       // Step 3: Find and process all AI deletions (keep content, remove highlighting)
       const deletions = tempContainer.querySelectorAll('.ai-deletion');
-      console.log(`[revertChanges] Found ${deletions.length} deletions to restore`);
       
       deletions.forEach((deletion) => {
         // Keep the HTML content (including <br> tags) but remove the span
         const content = deletion.innerHTML;
-        
-        // Check if deletion contains mark tags that need preservation
-        const deletionHasMark = content.includes('<mark>') || content.includes('</mark>');
-        if (deletionHasMark) {
-          console.log("[revertChanges] Deletion with mark tags:", content.substring(0, 50));
-        }
         
         // Create a new temporary container to handle the HTML content properly
         const contentContainer = window.document.createElement('span');
@@ -1511,11 +1151,6 @@ const handleExport = useCallback(async () => {
       
       // Step 4: Get the clean HTML with changes reverted
       const cleanedHtml = tempContainer.innerHTML;
-      
-      // Check if mark tags were preserved in the final content
-      const finalHasMark = cleanedHtml.includes('<mark>');
-      console.log("[revertChanges] Final content contains mark tags:", finalHasMark);
-      
       // Step 5: Update the document state with the clean content
       setDocument(prev => ({
         ...prev,
@@ -1553,23 +1188,11 @@ const handleExport = useCallback(async () => {
     const normalizedOriginal = normalizeContent(original);
     const normalizedCurrent = normalizeContent(current);
     
-    // Log normalized content for debugging
-    console.log("[contentHasMeaningfulChanges] Normalized original:", normalizedOriginal.substring(0, 100));
-    console.log("[contentHasMeaningfulChanges] Normalized current:", normalizedCurrent.substring(0, 100));
-    
     // Compare the normalized contents
     const contentChanged = normalizedOriginal !== normalizedCurrent;
     
     if (contentChanged) {
-      // Log the differences for debugging
-      console.log("[contentHasMeaningfulChanges] Content has changed");
       
-      // You could implement a more detailed diff here to show what changed
-      if (normalizedOriginal.length !== normalizedCurrent.length) {
-        console.log(
-          `[contentHasMeaningfulChanges] Length difference: Original=${normalizedOriginal.length}, Current=${normalizedCurrent.length}`
-        );
-      }
       
       // Add additional debugging for content comparison
       let mismatchIndex = -1;
@@ -1582,16 +1205,6 @@ const handleExport = useCallback(async () => {
         }
       }
       
-      if (mismatchIndex >= 0) {
-        const contextStart = Math.max(0, mismatchIndex - 20);
-        const contextEnd = Math.min(minLength, mismatchIndex + 20);
-        
-        console.log(
-          `[contentHasMeaningfulChanges] First difference at index ${mismatchIndex}:\n` +
-          `Original: ...${normalizedOriginal.substring(contextStart, contextEnd)}...\n` +
-          `Current: ...${normalizedCurrent.substring(contextStart, contextEnd)}...`
-        );
-      }
     }
     
     return contentChanged;
@@ -1640,21 +1253,16 @@ const handleExport = useCallback(async () => {
     }
     setShowSidebar(currentState => !currentState);
     
-    // Debug the state change
-    console.log("Toggling sidebar, new state:", !showSidebar);
-    
   }, [showSidebar]);
 
   // Add a useEffect to manually trigger a focus and autocompletion on initial load
   useEffect(() => {
     // Wait for the editor to be fully initialized
     if (editorRef.current) {
-      console.log("[DocumentPage] Editor ref is available in useEffect");
       
       // Try to focus the editor
       try {
         if (typeof editorRef.current.focus === 'function') {
-          console.log("[DocumentPage] Focusing editor");
           editorRef.current.focus();
         }
       } catch (err) {
@@ -1685,19 +1293,16 @@ const handleExport = useCallback(async () => {
       // If the editor content has changed but hasAIChanges returns false,
       // let's do a direct comparison
       if (!hasChanges && originalContentBeforeChanges) {
-        console.log("[DocumentPage] hasAIChanges returned false, doing direct comparison");
         const currentContent = getEditorContent();
         const contentChanged = contentHasMeaningfulChanges(originalContentBeforeChanges, currentContent);
         
         if (contentChanged) {
-          console.log("[DocumentPage] Direct comparison found changes");
           setHasActiveChanges(true);
           return;
         }
       }
       
       setHasActiveChanges(hasChanges);
-      console.log("[DocumentPage] Active AI changes detected:", hasChanges);
     };
     
     // Initial check
@@ -1708,7 +1313,6 @@ const handleExport = useCallback(async () => {
     if (editorDoc) {
       const observer = new MutationObserver((mutations) => {
         // Log some debugging info about the mutations
-        console.log("[DocumentPage] Mutation observer triggered with", mutations.length, "mutations");
         
         // For HTML structure changes like adding <u> tags, we need a special check
         const hasStructuralChanges = mutations.some(mutation => {
@@ -1724,13 +1328,11 @@ const handleExport = useCallback(async () => {
         });
         
         if (hasStructuralChanges) {
-          console.log("[DocumentPage] Detected HTML structure changes (like <u> tags)");
           // Force content comparison
           const currentContent = getEditorContent();
           if (originalContentBeforeChanges) {
             const contentChanged = contentHasMeaningfulChanges(originalContentBeforeChanges, currentContent);
             if (contentChanged) {
-              console.log("[DocumentPage] Content changed with HTML structure modifications");
               setHasActiveChanges(true);
               return;
             }
@@ -1794,10 +1396,6 @@ const handleExport = useCallback(async () => {
     }
   }, [document.content]);
 
-  useEffect(() => {
-    console.log("[DocumentPage] Splitter should update with showSidebar =", showSidebar);
-  }, [showSidebar]);
-
   // Add a useEffect to update the editor when margins change
   useEffect(() => {
     // Skip the initial render
@@ -1806,7 +1404,6 @@ const handleExport = useCallback(async () => {
       const editorDoc = getEditorDocument();
       if (editorDoc && editorDoc.body) {
         editorDoc.body.style.padding = `${margins.top}px ${margins.right}px ${margins.bottom}px ${margins.left}px`;
-        console.log("[DocumentPage] Updated editor margins:", margins);
       }
     }
   }, [margins, getEditorDocument]);
@@ -2225,7 +1822,6 @@ const handleExport = useCallback(async () => {
                 onPromptSubmit={handleAIPrompt}
                 isLoading={isAIProcessing}
                 editorRef={editorRef}
-                onApplyChanges={handleApplyChanges}
                 onFinalizeChanges={finalizeChanges}
                 onRevertChanges={revertChanges}
                 hasActiveChanges={hasActiveChanges}
