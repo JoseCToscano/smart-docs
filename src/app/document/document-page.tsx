@@ -545,6 +545,7 @@ const handleExport = useCallback(async () => {
 
   // Enhanced applyXmlChangesToEditor to handle the XML format
   const applyXmlChangesToEditor = (xmlContent: string) => {
+    console.log("[DocumentPage] Applying XML changes to editor:", xmlContent);
     const editorDoc = getEditorDocument();
     if (!editorDoc) {
       return;
@@ -657,7 +658,7 @@ const handleExport = useCallback(async () => {
       // Save the current content as original content if not already set
       if (!originalContentBeforeChanges) {
         const currentContent = getEditorContent();
-        // Normalize the content similar to handleAIPrompt
+        // Normalize the content
         const tempContainer = window.document.createElement('div');
         tempContainer.innerHTML = currentContent;
         
@@ -687,12 +688,17 @@ const handleExport = useCallback(async () => {
       let processedContent;
       
       if (hasXmlTags) {
-        // Parse XML to HTML with styled spans
-        processedContent = parseXmlDiff(xmlContent);
+        // Pre-process XML content before parsing to handle special cases for lists
+        // This step helps preserve proper list structure
+        const preprocessedXml = preprocessXmlForLists(xmlContent);
         
+        // Parse XML to HTML with styled spans
+        processedContent = parseXmlDiff(preprocessedXml);
+        
+        // Post-process to clean up any remaining unwanted line breaks
+        processedContent = cleanupProcessedContent(processedContent);
       } else {
         // Even if there are no XML tags, we still process the content
-        // This handles cases where there were direct HTML changes like adding <u> tags
         processedContent = xmlContent;
       }
       
@@ -701,36 +707,68 @@ const handleExport = useCallback(async () => {
         return;
       }
       
+      console.log("[DocumentPage] Applying processed content:", processedContent);
       // Properly update the editor with new content
       updateEditorContent(processedContent);
       
       // Update the hasActiveChanges state
       setTimeout(() => {
-        // First try the standard hasAIChanges function which checks for both visual markers and content changes
         const hasChanges = hasAIChanges();
-        
-        if (hasChanges) {
-          setHasActiveChanges(true);
-        } else if (originalContentBeforeChanges) {
-          // If no changes were detected but we have original content, do an explicit content comparison
-          const currentContent = getEditorContent();
-          const contentChanged = contentHasMeaningfulChanges(originalContentBeforeChanges, currentContent);
-          
-          setHasActiveChanges(contentChanged);
-          
-          if (!contentChanged && !hasXmlTags) {
-            // If we couldn't find changes at all, but got a response without XML tags
-            // (could be identical content returned), clear the original content
-            setOriginalContentBeforeChanges(null);
-          }
-        } else {
-          setHasActiveChanges(hasChanges);
-        }
+        setHasActiveChanges(hasChanges || (originalContentBeforeChanges && 
+            contentHasMeaningfulChanges(originalContentBeforeChanges, getEditorContent())));
       }, 100);
-      
     } catch (error) {
       console.error("[DocumentPage] Error applying XML changes to editor:", error);
     }
+  };
+  
+  // New helper function to preprocess XML for lists
+  const preprocessXmlForLists = (xmlContent: string): string => {
+    // Preserve line breaks only where they are semantically needed
+    // Remove line breaks before and after list tags to prevent extra <br> tags
+    return xmlContent
+      // Handle newlines around list elements
+      .replace(/>\s*\n\s*<(ul|ol|li)/g, '><$1')
+      .replace(/>(ul|ol|li)\s*\n\s*</g, '>$1<')
+      // Remove other excess whitespace that might cause issues
+      .replace(/>\s+</g, '><')
+      // Make sure whitespace is preserved inside text content
+      .replace(/(<\/?[^>]+>)(\s+)(<\/?[^>]+>)/g, '$1$3');
+  };
+
+  // New helper function to clean up processed content
+  const cleanupProcessedContent = (content: string): string => {
+    // Create a temporary container to work with the DOM
+    const tempDiv = window.document.createElement('div');
+    tempDiv.innerHTML = content;
+    
+    // Find all lists inside AI additions
+    const listsInAdditions = tempDiv.querySelectorAll('.ai-addition ul, .ai-addition ol');
+    
+    listsInAdditions.forEach(list => {
+      // Remove any direct <br> tags that are immediate children of the list
+      const directBrs = Array.from(list.children).filter(child => 
+        child.tagName.toLowerCase() === 'br' || 
+        (child.nodeType === Node.TEXT_NODE && child.textContent?.trim() === '')
+      );
+      
+      directBrs.forEach(br => br.parentNode?.removeChild(br));
+      
+      // Also clean up inside list items
+      const listItems = list.querySelectorAll('li');
+      listItems.forEach(li => {
+        // Keep only one <br> at the end of list items if needed
+        const brs = li.querySelectorAll('br');
+        if (brs.length > 0) {
+          // Keep only the last one if it's actually needed
+          for (let i = 0; i < brs.length - 1; i++) {
+            brs[i].parentNode?.removeChild(brs[i]);
+          }
+        }
+      });
+    });
+    
+    return tempDiv.innerHTML;
   };
   
   // New helper function to properly update editor content while preserving its functionality
@@ -1003,25 +1041,62 @@ const handleExport = useCallback(async () => {
 
   // Function to finalize and accept all AI changes
   const finalizeChanges = useCallback(() => {
-    
     try {
       // Get the editor document
       const editorDoc = getEditorDocument();
       if (!editorDoc) {
         return;
       }
+
+      console.log("[DocumentPage] Finalizing changes:", editorDoc.body.innerHTML);
       
       // Step 1: Create a temporary container to work with the content
       const tempContainer = window.document.createElement('div');
       tempContainer.innerHTML = editorDoc.body.innerHTML;
       
-      // Step 2: Find and process all AI additions (keep content, remove highlighting)
+      // Special handling for list structures
+      const processListAdditions = () => {
+        // Find all additions that contain lists or are inside lists
+        const listAdditions = tempContainer.querySelectorAll('.ai-addition ol, .ai-addition ul, ol .ai-addition, ul .ai-addition');
+        
+        listAdditions.forEach((listElement) => {
+          // Find the closest addition parent
+          const additionParent = listElement.closest('.ai-addition');
+          if (!additionParent) return;
+          
+          // If the addition contains a list, handle it specially
+          if (additionParent.querySelector('ol, ul')) {
+            // Create a proper container that will maintain list structure
+            const listContainer = window.document.createElement('div');
+            listContainer.innerHTML = additionParent.innerHTML;
+            
+            // Replace the addition with the clean list content
+            if (additionParent.parentNode) {
+              additionParent.parentNode.replaceChild(listContainer, additionParent);
+              
+              // Move the children out of the temporary container
+              while (listContainer.firstChild) {
+                listContainer.parentNode?.insertBefore(listContainer.firstChild, listContainer);
+              }
+              
+              // Remove the empty container
+              if (listContainer.parentNode) {
+                listContainer.parentNode.removeChild(listContainer);
+              }
+            }
+          }
+        });
+      };
+      
+      // Process list structures first
+      processListAdditions();
+      
+      // Step 2: Find and process any remaining AI additions (keep content, remove highlighting)
       const additions = tempContainer.querySelectorAll('.ai-addition');
       
       additions.forEach((addition) => {
-        // Keep the HTML content (including <br> tags and other HTML tags) but remove the span
+        // Keep the HTML content but remove the span
         const content = addition.innerHTML;
-        
         
         // Create a new temporary container to handle the HTML content properly
         const contentContainer = window.document.createElement('span');
@@ -1029,11 +1104,9 @@ const handleExport = useCallback(async () => {
         
         // Replace the AI addition span with its inner HTML content
         if (addition.parentNode) {
-          // Use replaceWith to preserve HTML structure including <br> tags and mark tags
           addition.parentNode.replaceChild(contentContainer, addition);
           
           // Now move all children out of the temporary span to the parent
-          // We need to be careful to preserve HTML structure
           while (contentContainer.firstChild && contentContainer.parentNode) {
             contentContainer.parentNode.insertBefore(contentContainer.firstChild, contentContainer);
           }
@@ -1054,33 +1127,51 @@ const handleExport = useCallback(async () => {
         }
       });
       
-      // Step 4: Get the clean HTML with changes applied
+      // Step 4: Clean up empty list items and unnecessary line breaks
+      const cleanupEmptyElements = () => {
+        // Find all empty list items
+        const emptyListItems = tempContainer.querySelectorAll('li:empty, li p:empty');
+        emptyListItems.forEach(item => {
+          if (item.parentNode) {
+            item.parentNode.removeChild(item);
+          }
+        });
+        
+        // Remove unnecessary line breaks
+        const unnecessaryBreaks = tempContainer.querySelectorAll('p:empty + p:empty, p > br.ProseMirror-trailingBreak + br.ProseMirror-trailingBreak');
+        unnecessaryBreaks.forEach(br => {
+          if (br.parentNode) {
+            br.parentNode.removeChild(br);
+          }
+        });
+      };
+      
+      cleanupEmptyElements();
+      
+      // Step 5: Get the clean HTML with changes applied
       const cleanedHtml = tempContainer.innerHTML;
       
-      // Step 5: Save this content to the state so it will be used for the new editor
+      // Step 6: Save this content to the state so it will be used for the new editor
       setDocument(prev => ({
         ...prev,
         content: cleanedHtml,
         updatedAt: new Date()
       }));
       
-      // Step 6: Force a full remount of the editor by changing a key
-      // This is handled in the render method with the editorKey state
-      
-      // Step 7: Update state to reflect no more active changes
+      // Update state to reflect no more active changes
       setHasActiveChanges(false);
       
       // Reset the original content since changes are now accepted
       setOriginalContentBeforeChanges(null);
       
-      // Step 8: Add a confirmation message to the AI sidebar
+      // Add a confirmation message to the AI sidebar
       if (aiSidebarRef.current && typeof aiSidebarRef.current.addAIResponse === 'function') {
         aiSidebarRef.current.addAIResponse(
           "I've applied all the suggested changes. Additions have been incorporated, and deletions have been removed."
         );
       }
       
-      // Step 9: Force a re-render of the editor component with a new key
+      // Force a re-render of the editor component with a new key
       setEditorKey(prevKey => prevKey + 1);
       
     } catch (error) {
