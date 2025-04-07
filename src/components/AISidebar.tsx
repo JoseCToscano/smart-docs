@@ -437,7 +437,7 @@ const AISidebar = forwardRef<AISidebarHandle, AISidebarProps>(({
               disabled={isLoading}
               rows={3}
               minLength={1}
-              maxLength={1000}
+              
               style={{ paddingRight: '3rem' }}
               className="w-full"
             />

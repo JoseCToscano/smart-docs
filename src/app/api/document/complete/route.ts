@@ -4,7 +4,7 @@ import { db } from "@/server/db";
 import { auth } from "@/server/auth";
 import Anthropic from "@anthropic-ai/sdk";
 
-const MODEL = "claude-3-5-haiku-latest";
+const MODEL = "claude-3-5-sonnet-latest";
 
 export const maxDuration = 60; // 60 seconds timeout for Edge function
 
